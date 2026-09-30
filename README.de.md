@@ -211,6 +211,13 @@ Dubletten und Ablehnungen unabhängig von diesen Kontextgrenzen.
 
 ## Offline und Synchronisierung
 
+Die Oberfläche folgt der bevorzugten Browsersprache: Deutsch (`de`, einschließlich
+regionaler Varianten) bleibt Deutsch; alle anderen Sprachen verwenden Englisch.
+Das gilt auch für Anmeldung, Dialoge, Feedback, Statusmeldungen und Datumsanzeigen
+sowie offline. Originale Stellentexte, Unternehmensangaben und persönliche Notizen
+werden nicht maschinell übersetzt. Nach Ändern der Geräte-/Browsersprache neu laden;
+es wird kein Übersetzungsdienst verwendet.
+
 Online anmelden und die Seite kurz geöffnet lassen, damit App-Dateien und der aktuelle
 Stellenstand im Browser gespeichert werden können. Die Vorbereitung läuft im Hintergrund
 ohne dauerhafte Statusmeldung; offene Änderungen und Fehler bleiben sichtbar. Vor der
@@ -295,6 +302,7 @@ neutrale Symbole vermeiden ungeklärte Bildrechte und externe Abrufe.
 .venv/bin/python tests/check_setup.py
 # Optionaler Node.js-Prüflauf, für den App-Betrieb nicht benötigt:
 node --experimental-vm-modules tests/check_offline.mjs
+node --experimental-vm-modules tests/check_i18n.mjs
 .venv/bin/python scripts/tools/audit_release.py
 ```
 

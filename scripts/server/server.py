@@ -44,6 +44,7 @@ ASSETS = {
     "/assets/api.js": ("assets/api.js", "text/javascript; charset=utf-8"),
     "/assets/offline.js": ("assets/offline.js", "text/javascript; charset=utf-8"),
     "/assets/ui.js": ("assets/ui.js", "text/javascript; charset=utf-8"),
+    "/assets/i18n.js": ("assets/i18n.js", "text/javascript; charset=utf-8"),
     "/sw.js": ("sw.js", "text/javascript; charset=utf-8"),
     "/manifest.webmanifest": ("manifest.webmanifest", "application/manifest+json; charset=utf-8"),
     "/assets/theme.js": ("assets/theme.js", "text/javascript; charset=utf-8"),
@@ -53,6 +54,7 @@ ASSETS = {
     "/login": ("login.html", "text/html; charset=utf-8"),
 }
 PUBLIC_ASSETS = {
+    "/assets/i18n.js",
     "/sw.js",
     "/manifest.webmanifest",
     "/login",

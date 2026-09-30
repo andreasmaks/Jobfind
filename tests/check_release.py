@@ -221,6 +221,9 @@ class ReleaseChecks(unittest.TestCase):
                 except OSError:
                     time.sleep(0.05)
             self.assertEqual(request("GET", "/api/jobs")[0], 401)
+            status, _, language_script = request("GET", "/assets/i18n.js?v=1")
+            self.assertEqual(status, 200, "Login language script must be public")
+            self.assertIn(b"JobfindI18n", language_script)
             self.assertEqual(request("GET", "/api/health", headers={"Host": "evil.example"})[0], 403)
             self.assertEqual(request("POST", "/login", "password=x", {"Origin": "https://evil.example", "Content-Type": "application/x-www-form-urlencoded"})[0], 403)
             status, headers, _ = request("POST", "/login", "password=" + password,

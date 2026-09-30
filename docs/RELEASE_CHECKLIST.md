@@ -23,6 +23,7 @@ without opening a browser, researching with Hermes or contacting employers:
 .venv/bin/python tests/check_release.py
 .venv/bin/python tests/check_setup.py
 node --experimental-vm-modules tests/check_offline.mjs
+node --experimental-vm-modules tests/check_i18n.mjs
 .venv/bin/python scripts/tools/audit_release.py
 ```
 
@@ -69,6 +70,7 @@ through your own deliberately configured SSH tunnel; no new public endpoint is r
 - On desktop and a narrow mobile screen: check cards, filters, details, source links, dialogs and light/dark appearance.
 - On a phone: logo, Alle/Gemerkte/Archiv and the info button share one row. Open the info dropdown, check the last-update text, switch appearance and close by tapping outside or pressing Escape. Desktop header actions remain inline. Check that the job count matches visible cards after tab, search and filter changes, including empty selections.
 - On a phone: the filter icon stays centered with and without its active-filter dot; the selected navigation underline touches the header's bottom edge. Filters stay open while adjusting selections and close on outside taps, Escape or moving keyboard focus outside; Escape returns focus to the filter button.
+- Reload with German, English and a third primary browser language: German stays German, every other language uses English. Check sign-in/errors, light/dark controls, navigation, filter options, cards, details, rejection reasons, undo, job counts and offline queue messages. Listing/company text and notes retain their original language. Prepare the updated shell online before checking English offline.
 - With the keyboard: check visible focus, cards/buttons, closing dialogs and undo; check the operating system's reduced-motion option.
 - Online: bookmark and like a job; reject another for distance and hours with a fictional note, then undo.
 - Keep the page open briefly online; no permanent offline-status banner should appear. Disconnect, reload, check details/filters, and store further actions including undo. Pending actions and errors should remain visible.

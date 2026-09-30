@@ -1,4 +1,5 @@
 // Lucide icons v1.47.0, ISC license: https://lucide.dev/license
+const { t, locale } = window.JobfindI18n;
 const icon = (paths) => `<svg class="lucide-icon" viewBox="0 0 24 24" aria-hidden="true">${paths}</svg>`;
 const bookmark = icon('<path d="M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z"/>');
 const trash = icon('<path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6"/>');
@@ -52,7 +53,7 @@ export function displayJobTitle(value) {
 export function shortDate(value) {
   if (!value) return "";
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "" : new Intl.DateTimeFormat("de-DE", { day: "2-digit", month: "short", year: "numeric" }).format(date);
+  return Number.isNaN(date.getTime()) ? "" : new Intl.DateTimeFormat(locale, { day: "2-digit", month: "short", year: "numeric" }).format(date);
 }
 
 function relativeDate(value) {
@@ -62,35 +63,35 @@ function relativeDate(value) {
   const today = new Date(current.getFullYear(), current.getMonth(), current.getDate());
   const day = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   const difference = Math.round((today - day) / 86400000);
-  if (difference === 0) return "Heute";
-  if (difference === 1) return "Gestern";
+  if (difference === 0) return t("Heute");
+  if (difference === 1) return t("Gestern");
   return shortDate(value);
 }
 
 function hoursLabel(value) {
   const hours = String(value || "");
   const range = hours.match(/(\d{1,2})\s*[-–]\s*(\d{1,2})\s*(?:Stunden|Std)/i);
-  if (range) return `${range[1]}–${range[2]} Std.`;
+  if (range) return t("{from}–{to} Std.", { from: range[1], to: range[2] });
   const minimum = hours.match(/(?:ab|mindestens)\s*(\d{1,2})\s*(?:Stunden|Std)/i);
-  if (minimum) return `ab ${minimum[1]} Std.`;
+  if (minimum) return t("ab {hours} Std.", { hours: minimum[1] });
   const exact = hours.match(/(\d{1,2})\s*(?:Stunden|Std)(?:\/Woche)?/i);
-  if (exact) return `${exact[1]} Std.`;
+  if (exact) return t("{hours} Std.", { hours: exact[1] });
   const percentage = hours.match(/\b(\d{2})\s*%/);
   if (percentage) return `${percentage[1]} %`;
-  if (/teilzeit/i.test(hours)) return "Teilzeit möglich";
-  if (/vollzeit/i.test(hours)) return "Vollzeit";
-  return "Stunden offen";
+  if (/teilzeit|part.?time/i.test(hours)) return t("Teilzeit möglich");
+  if (/vollzeit|full.?time/i.test(hours)) return t("Vollzeit");
+  return t("Stunden offen");
 }
 
 function remoteLabel(job) {
   const value = `${job.remote || ""} ${job.location || ""}`.toLocaleLowerCase("de-DE");
-  if (/hybrid|bürotag|präsenztag/.test(value)) return "Hybrid";
-  if (/remote|homeoffice|home office|mobiles arbeiten|ortsunabhängig/.test(value)) return "Remote möglich";
-  return "Arbeitsmodell offen";
+  if (/hybrid|bürotag|präsenztag/.test(value)) return t("Hybrid");
+  if (/remote|homeoffice|home office|mobiles arbeiten|ortsunabhängig/.test(value)) return t("Remote möglich");
+  return t("Arbeitsmodell offen");
 }
 
 function shortLocation(value) {
-  return String(value || "Ort nicht angegeben").split(";")[0].trim().slice(0, 70);
+  return String(value || t("Ort nicht angegeben")).split(";")[0].trim().slice(0, 70);
 }
 
 function chip(value, className = "") {
@@ -111,20 +112,20 @@ export function createCard(job, onOpen, onSave, onDelete, onLike) {
   const save = element("button", `save-button${job.user_status === "saved" ? " is-saved" : ""}`);
   save.type = "button";
   save.innerHTML = bookmark;
-  save.setAttribute("aria-label", job.user_status === "saved" ? "Aus Merkliste entfernen" : "Stelle merken");
+  save.setAttribute("aria-label", t(job.user_status === "saved" ? "Aus Merkliste entfernen" : "Stelle merken"));
   save.title = save.getAttribute("aria-label");
   save.addEventListener("click", () => onSave(job, job.user_status === "saved" ? "new" : "saved"));
   const remove = element("button", "save-button delete-button");
   remove.type = "button";
   remove.innerHTML = trash;
-  remove.setAttribute("aria-label", `Stelle löschen: ${displayJobTitle(job.title)}`);
-  remove.title = "Löschen · weniger ähnliche Jobs empfehlen";
+  remove.setAttribute("aria-label", t("Stelle löschen: {title}", { title: displayJobTitle(job.title) }));
+  remove.title = t("Löschen · weniger ähnliche Jobs empfehlen");
   remove.addEventListener("click", () => onDelete(job));
   const actions = element("div", "card-actions");
   const like = element("button", `save-button like-button${job.liked ? " is-liked" : ""}`);
   like.type = "button";
   like.innerHTML = heart;
-  like.setAttribute("aria-label", job.liked ? "Gefällt mir zurücknehmen" : "Gefällt mir · mehr ähnliche Jobs");
+  like.setAttribute("aria-label", t(job.liked ? "Gefällt mir zurücknehmen" : "Gefällt mir · mehr ähnliche Jobs"));
   like.setAttribute("aria-pressed", String(Boolean(job.liked)));
   like.title = like.getAttribute("aria-label");
   like.addEventListener("click", () => onLike(job));
@@ -135,7 +136,7 @@ export function createCard(job, onOpen, onSave, onDelete, onLike) {
   const match = element("p", "match-line");
   const matchSymbol = element("span", "match-symbol");
   matchSymbol.innerHTML = sparkles;
-  match.append(matchSymbol, document.createTextNode(job.score ? `${job.score}/10 Passung mit deinem Profil` : "Passung noch nicht bewertet"));
+  match.append(matchSymbol, document.createTextNode(job.score ? t("{score}/10 Passung mit deinem Profil", { score: job.score }) : t("Passung noch nicht bewertet")));
   card.append(match);
 
   const chips = element("div", "card-chips");
@@ -143,14 +144,14 @@ export function createCard(job, onOpen, onSave, onDelete, onLike) {
   chips.append(chip(hours, job.part_time_hint || /teilzeit/i.test(job.hours || "") ? "priority" : ""));
   const remote = remoteLabel(job);
   chips.append(chip(remote, /remote|hybrid/i.test(remote) ? "flexible" : ""));
-  if (job.availability === "closed") chips.append(chip("Nicht mehr verfügbar", "caution"));
+  if (job.availability === "closed") chips.append(chip(t("Nicht mehr verfügbar"), "caution"));
   card.append(chips);
 
-  const fit = element("p", "card-fit", job.fit || job.summary || "Weitere Einzelheiten stehen in der Originalanzeige.");
+  const fit = element("p", "card-fit", job.fit || job.summary || t("Weitere Einzelheiten stehen in der Originalanzeige."));
   card.append(fit);
 
   const bottom = element("div", "card-bottom");
-  const link = element("a", "card-cta", "Anzeige öffnen");
+  const link = element("a", "card-cta", t("Anzeige öffnen"));
   link.insertAdjacentHTML("beforeend", externalLink);
   link.href = job.original_url;
   link.target = "_blank";
@@ -171,7 +172,7 @@ export function showDetails(dialog, job, onStatus) {
   const saved = job.user_status === "saved";
   save.innerHTML = bookmark;
   save.classList.toggle("is-saved", saved);
-  save.setAttribute("aria-label", saved ? "Aus Merkliste entfernen" : "Stelle merken");
+  save.setAttribute("aria-label", t(saved ? "Aus Merkliste entfernen" : "Stelle merken"));
   save.setAttribute("aria-pressed", String(saved));
   save.title = save.getAttribute("aria-label");
   save.onclick = () => onStatus(job, saved ? "new" : "saved");
@@ -182,17 +183,17 @@ export function showDetails(dialog, job, onStatus) {
   const meta = element("div", "dialog-meta");
   const remote = remoteLabel(job);
   meta.append(chip(shortLocation(job.location)), chip(hoursLabel(job.hours)), chip(remote, /remote|hybrid/i.test(remote) ? "flexible" : ""));
-  if (job.score) meta.append(chip(`${job.score}/10 Passung`, "priority"));
+  if (job.score) meta.append(chip(t("{score}/10 Passung", { score: job.score }), "priority"));
   content.append(meta);
   const companySection = element("section", "dialog-section company-profile");
-  companySection.append(element("h3", "", "Über das Unternehmen"));
+  companySection.append(element("h3", "", t("Über das Unternehmen")));
   if (job.company_description) {
     companySection.append(element("p", "", job.company_description));
     if (job.company_products) {
-      companySection.append(element("h4", "", "Produkte & Dienstleistungen"), element("p", "", job.company_products));
+      companySection.append(element("h4", "", t("Produkte & Dienstleistungen")), element("p", "", job.company_products));
     }
     if (/^https?:\/\//i.test(job.company_source_url || "")) {
-      const citation = element("a", "company-profile-source", "Quelle zur Unternehmensbeschreibung");
+      const citation = element("a", "company-profile-source", t("Quelle zur Unternehmensbeschreibung"));
       citation.href = job.company_source_url;
       citation.target = "_blank";
       citation.rel = "noopener noreferrer";
@@ -201,9 +202,9 @@ export function showDetails(dialog, job, onStatus) {
     }
   } else {
     const undisclosed = /nicht offengelegt/i.test(job.company);
-    companySection.append(element("p", "company-profile-pending", undisclosed
+    companySection.append(element("p", "company-profile-pending", t(undisclosed
       ? "Der Arbeitgeber wurde in dieser Anzeige nicht offengelegt. Eine verlässliche Unternehmensbeschreibung ist deshalb nicht möglich."
-      : "Eine geprüfte Unternehmensbeschreibung liegt noch nicht vor. Hermes ergänzt die Angaben schrittweise."));
+      : "Eine geprüfte Unternehmensbeschreibung liegt noch nicht vor. Hermes ergänzt die Angaben schrittweise.")));
   }
   content.append(companySection);
   const sections = element("div", "dialog-sections");
@@ -212,23 +213,23 @@ export function showDetails(dialog, job, onStatus) {
   for (const [heading, body, column] of [["Aufgaben", job.summary, primary], ["Warum es passt", job.fit, secondary]]) {
     if (!body) continue;
     const section = element("section", "dialog-section");
-    section.append(element("h3", "", heading), element("p", "", body));
+    section.append(element("h3", "", t(heading)), element("p", "", body));
     column.append(section);
   }
   const source = element("section", "dialog-section");
-  source.append(element("h3", "", "Quelle und Funddatum"), element("p", "", `${job.source || "Originalanzeige"} · Gefunden am ${shortDate(job.first_seen_at) || "unbekannt"}${job.checked_at ? ` · Geprüft am ${shortDate(job.checked_at)}` : ""}`));
+  source.append(element("h3", "", t("Quelle und Funddatum")), element("p", "", `${job.source || t("Originalanzeige")} · ${t("Gefunden am {date}", { date: shortDate(job.first_seen_at) || t("unbekannt") })}${job.checked_at ? ` · ${t("Geprüft am {date}", { date: shortDate(job.checked_at) })}` : ""}`));
   secondary.append(source);
   if (!primary.childElementCount) primary.append(secondary.firstElementChild);
   sections.append(primary, secondary);
   content.append(sections);
   const actions = element("div", "dialog-actions");
-  const link = element("a", "button-primary", "Originalanzeige öffnen");
+  const link = element("a", "button-primary", t("Originalanzeige öffnen"));
   link.insertAdjacentHTML("beforeend", externalLink);
   link.href = job.original_url;
   link.target = "_blank";
   link.rel = "noopener noreferrer";
   actions.append(link);
-  const hide = element("button", "button-secondary", job.user_status === "hidden" ? "Wieder anzeigen" : "Ausblenden");
+  const hide = element("button", "button-secondary", t(job.user_status === "hidden" ? "Wieder anzeigen" : "Ausblenden"));
   hide.type = "button";
   hide.addEventListener("click", () => onStatus(job, job.user_status === "hidden" ? "new" : "hidden"));
   actions.append(hide);

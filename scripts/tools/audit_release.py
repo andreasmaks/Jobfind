@@ -13,13 +13,13 @@ PUBLIC_FILES = set("""
 .gitignore LICENSE LICENSE-lucide.txt README.md README.de.md THIRD_PARTY.md jobfind.py
 Screen-1.png Screen-2.png
 index.html login.html favicon.svg manifest.webmanifest sw.js requirements.txt
-assets/api.js assets/app.js assets/brand-mark.svg assets/login.js assets/offline.js
+assets/api.js assets/app.js assets/brand-mark.svg assets/login.js assets/offline.js assets/i18n.js
 assets/styles.css assets/theme.js assets/ui.js config/example.json
 examples/demo.json examples/empty.json examples/error.json
 hermes/context.py hermes/import_jobs.py hermes/prompt.txt
 scripts/modules/config.py scripts/modules/store.py scripts/modules/local_settings.py scripts/server/server.py
 scripts/tools/set_password.py scripts/tools/audit_release.py scripts/start_server.sh
-tests/check_release.py tests/check_setup.py tests/check_offline.mjs tests/check_local.py
+tests/check_release.py tests/check_setup.py tests/check_offline.mjs tests/check_local.py tests/check_i18n.mjs
 docs/HERMES.md docs/IMPORT_FORMAT.md docs/RELEASE_CHECKLIST.md docs/DEVELOPMENT.md
 """.split())
 REVIEWED_PNGS = {

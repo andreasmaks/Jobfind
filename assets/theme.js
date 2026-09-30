@@ -1,4 +1,5 @@
 (() => {
+  const { t } = window.JobfindI18n;
   const storageKey = "jobfind-theme-preference";
   const root = document.documentElement;
   let preference = "dark";
@@ -15,10 +16,10 @@
     document.querySelector('meta[name="theme-color"]')?.setAttribute("content", dark ? "#10141d" : "#f5f8f6");
     document.querySelectorAll("[data-theme-toggle]").forEach((button) => {
       button.setAttribute("aria-pressed", String(dark));
-      button.setAttribute("aria-label", dark ? "Helles Design einschalten" : "Dunkles Design einschalten");
-      button.title = dark ? "Helles Design einschalten" : "Dunkles Design einschalten";
+      button.setAttribute("aria-label", t(dark ? "Helles Design einschalten" : "Dunkles Design einschalten"));
+      button.title = t(dark ? "Helles Design einschalten" : "Dunkles Design einschalten");
       const label = button.querySelector(".theme-label");
-      if (label) label.textContent = dark ? "Hell" : "Dunkel";
+      if (label) label.textContent = t(dark ? "Hell" : "Dunkel");
     });
   }
 

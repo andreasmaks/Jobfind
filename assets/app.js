@@ -1,6 +1,9 @@
-import { changeDeletion, loadPortal, updateLike, updateStatus } from "/assets/api.js?v=4";
-import { clearOfflineData, prepareOffline, readPendingActions, removePendingAction, savePendingAction } from "/assets/offline.js?v=4";
-import { createCard, shortDate, showDetails } from "/assets/ui.js";
+import { changeDeletion, loadPortal, updateLike, updateStatus } from "/assets/api.js?v=5";
+import { clearOfflineData, prepareOffline, readPendingActions, removePendingAction, savePendingAction } from "/assets/offline.js?v=5";
+import { createCard, shortDate, showDetails } from "/assets/ui.js?v=2";
+
+const { t, locale, translatePage } = window.JobfindI18n;
+translatePage();
 
 const state = { jobs: [], meta: null, csrf: "", tab: "all", offline: false, savedAt: "", offlineReady: false, pendingActions: [], syncError: "" };
 let portalLoaded = false;
@@ -88,7 +91,7 @@ function filteredJobs() {
   const sort = $("sort-filter").value;
   items.sort((a, b) => {
     if (sort === "score") return (b.score || 0) - (a.score || 0) || b.first_seen_at.localeCompare(a.first_seen_at);
-    if (sort === "company") return a.company.localeCompare(b.company, "de");
+    if (sort === "company") return a.company.localeCompare(b.company, locale);
     return b.first_seen_at.localeCompare(a.first_seen_at);
   });
   return items;
@@ -99,7 +102,7 @@ function updateRunNote() {
   const note = $("run-note");
   note.hidden = run?.status !== "error";
   note.textContent = run?.status === "error"
-    ? "Der letzte Suchlauf hatte einen Fehler. Frühere Treffer bleiben sichtbar."
+    ? t("Der letzte Suchlauf hatte einen Fehler. Frühere Treffer bleiben sichtbar.")
     : "";
 }
 
@@ -109,13 +112,13 @@ function updateOfflineState() {
   note.hidden = !pending && !syncInFlight && !state.syncError;
   note.classList.toggle("is-offline", state.offline);
   if (state.offline && pending) {
-    note.textContent = `${pending} Änderung${pending === 1 ? "" : "en"} lokal gespeichert. Wird beim Verbinden übertragen.`;
+    note.textContent = t(pending === 1 ? "{count} Änderung lokal gespeichert. Wird beim Verbinden übertragen." : "{count} Änderungen lokal gespeichert. Wird beim Verbinden übertragen.", { count: pending });
   } else if (syncInFlight) {
-    note.textContent = `${pending} Offline-Änderung${pending === 1 ? "" : "en"} wird übertragen …`;
+    note.textContent = t(pending === 1 ? "{count} Offline-Änderung wird übertragen …" : "{count} Offline-Änderungen wird übertragen …", { count: pending });
   } else if (state.syncError) {
-    note.textContent = `${pending ? `${pending} Änderung${pending === 1 ? "" : "en"} noch nicht übertragen. ` : ""}${state.syncError}`;
+    note.textContent = `${pending ? t(pending === 1 ? "{count} Änderung noch nicht übertragen." : "{count} Änderungen noch nicht übertragen.", { count: pending }) + " " : ""}${state.syncError}`;
   } else if (pending) {
-    note.textContent = `${pending} Änderung${pending === 1 ? "" : "en"} wartet auf Übertragung.`;
+    note.textContent = t(pending === 1 ? "{count} Änderung wartet auf Übertragung." : "{count} Änderungen wartet auf Übertragung.", { count: pending });
   } else {
     note.textContent = "";
   }
@@ -138,7 +141,7 @@ function queueOfflineCopy() {
       if (!state.offline) {
         const note = $("offline-state");
         note.hidden = false;
-        note.textContent = "Offline-Kopie konnte nicht gespeichert werden. Bitte lade die Seite mit Internet erneut.";
+        note.textContent = t("Offline-Kopie konnte nicht gespeichert werden. Bitte lade die Seite mit Internet erneut.");
       }
     });
 }
@@ -207,7 +210,7 @@ async function syncPendingActions() {
       state.pendingActions.shift();
       updateOfflineState();
     }
-    if (unavailable) state.syncError = `${unavailable} Änderung${unavailable === 1 ? "" : "en"} entfiel${unavailable === 1 ? "" : "en"}, weil die Stelle nicht mehr verfügbar ist.`;
+    if (unavailable) state.syncError = t(unavailable === 1 ? "{count} Änderung entfiel, weil die Stelle nicht mehr verfügbar ist." : "{count} Änderungen entfielen, weil die Stelle nicht mehr verfügbar ist.", { count: unavailable });
     const loaded = await loadPortal();
     state.offline = loaded.offline;
     state.csrf = loaded.csrf;
@@ -220,7 +223,7 @@ async function syncPendingActions() {
       state.offline = true;
       state.csrf = "";
     }
-    state.syncError = "Bitte später erneut verbinden; deine Änderungen bleiben auf diesem Gerät gespeichert.";
+    state.syncError = t("Bitte später erneut verbinden; deine Änderungen bleiben auf diesem Gerät gespeichert.");
     return false;
   } finally {
     syncInFlight = false;
@@ -232,9 +235,9 @@ function updateSummary(jobs = filteredJobs()) {
   const total = jobs.length;
   const saved = state.jobs.filter((job) => job.user_status === "saved").length;
   const updated = shortDate(state.meta?.last_success_at);
-  $("header-job-count").textContent = `${total} ${total === 1 ? "Job" : "Jobs"}`;
-  $("header-job-count").setAttribute("aria-label", `${total} ${total === 1 ? "Job" : "Jobs"} in dieser Auswahl`);
-  $("header-updated").textContent = updated ? `Stand: ${updated}` : "";
+  $("header-job-count").textContent = t(total === 1 ? "{count} Job" : "{count} Jobs", { count: total });
+  $("header-job-count").setAttribute("aria-label", t(total === 1 ? "{count} Job in dieser Auswahl" : "{count} Jobs in dieser Auswahl", { count: total }));
+  $("header-updated").textContent = updated ? t("Stand: {date}", { date: updated }) : "";
   $("header-updated").hidden = !updated;
   $("nav-saved-count").textContent = saved;
   $("nav-saved-count").hidden = saved === 0;
@@ -247,8 +250,8 @@ function render() {
   grid.replaceChildren(fragment);
   $("empty-state").hidden = jobs.length > 0;
   $("empty-copy").textContent = state.jobs.length
-    ? "Für diese Auswahl gibt es noch keine Stellen. Passe die Suche oder Filter an."
-    : "Sobald Hermes passende Stellen findet, erscheinen sie hier.";
+    ? t("Für diese Auswahl gibt es noch keine Stellen. Passe die Suche oder Filter an.")
+    : t("Sobald Hermes passende Stellen findet, erscheinen sie hier.");
   $("filter-badge").hidden = !($("remote-filter").value !== "all" || $("hours-filter").value !== "all" || $("score-filter").value !== "0" || $("visibility-filter").value !== "visible");
   updateSummary(jobs);
   updateRunNote();
@@ -287,7 +290,7 @@ async function changeStatus(job, status) {
   } catch (error) {
     job.user_status = previous;
     render();
-    window.alert("Die Änderung konnte nicht gespeichert werden. Bitte versuche es erneut.");
+    window.alert(t("Die Änderung konnte nicht gespeichert werden. Bitte versuche es erneut."));
   } finally {
     mutationPending = false;
     render();
@@ -299,7 +302,7 @@ function deletionNotice() {
   $("deletion-notice").hidden = deletedJobs.length === 0;
   const last = deletedJobs.at(-1);
   $("deletion-message").textContent = last
-    ? `„${last.title}“ gelöscht. ${state.pendingActions.some((action) => action.kind === "delete" && action.jobId === last.id) ? "Wird nach dem Verbinden übertragen." : "Hermes berücksichtigt das bei künftigen Empfehlungen."}`
+    ? t("„{title}“ gelöscht. {detail}", { title: last.title, detail: t(state.pendingActions.some((action) => action.kind === "delete" && action.jobId === last.id) ? "Wird nach dem Verbinden übertragen." : "Hermes berücksichtigt das bei künftigen Empfehlungen.") })
     : "";
   $("undo-delete").disabled = mutationPending || syncInFlight;
 }
@@ -336,7 +339,7 @@ async function changeLike(job) {
     await saveAction({ kind: "like", jobId: job.id, liked: job.liked });
   } catch (error) {
     job.liked = previous;
-    window.alert("Dein Gefällt mir konnte nicht gespeichert werden. Bitte versuche es erneut.");
+    window.alert(t("Dein Gefällt mir konnte nicht gespeichert werden. Bitte versuche es erneut."));
   } finally {
     mutationPending = false;
     render();
@@ -353,7 +356,7 @@ async function removeJob(job, feedback) {
   const index = cards.findIndex((card) => card.dataset.jobId === job.id);
   $("feedback-error").hidden = true;
   $("feedback-form").querySelectorAll("button,input,textarea").forEach((input) => { input.disabled = true; });
-  $("feedback-submit").textContent = "Wird gespeichert …";
+  $("feedback-submit").textContent = t("Wird gespeichert …");
   grid.querySelectorAll(".card-actions button").forEach((button) => { button.disabled = true; });
   deletionNotice();
   let removed = false;
@@ -366,12 +369,12 @@ async function removeJob(job, feedback) {
     feedbackDialog.close();
   } catch (error) {
     state.jobs = previousJobs;
-    $("feedback-error").textContent = "Das Feedback konnte nicht gespeichert werden. Bitte versuche es erneut.";
+    $("feedback-error").textContent = t("Das Feedback konnte nicht gespeichert werden. Bitte versuche es erneut.");
     $("feedback-error").hidden = false;
   } finally {
     mutationPending = false;
     $("feedback-form").querySelectorAll("button,input,textarea").forEach((input) => { input.disabled = false; });
-    $("feedback-submit").textContent = "Löschen & Feedback speichern";
+    $("feedback-submit").textContent = t("Löschen & Feedback speichern");
     render();
     deletionNotice();
     if (!state.offline && state.pendingActions.length) syncPendingActions();
@@ -395,7 +398,7 @@ $("undo-delete").addEventListener("click", async () => {
     deletedJobs.pop();
   } catch (error) {
     if (!wasVisible) state.jobs = state.jobs.filter((item) => item.id !== job.id);
-    window.alert("Die Stelle konnte nicht wiederhergestellt werden. Bitte versuche es erneut.");
+    window.alert(t("Die Stelle konnte nicht wiederhergestellt werden. Bitte versuche es erneut."));
   } finally {
     mutationPending = false;
     render();
@@ -439,13 +442,13 @@ document.addEventListener("click", (event) => {
 document.querySelector(".header-actions form").addEventListener("submit", async (event) => {
   event.preventDefault();
   if (state.offline) {
-    window.alert("Zum Abmelden bitte erst wieder mit dem Internet verbinden.");
+    window.alert(t("Zum Abmelden bitte erst wieder mit dem Internet verbinden."));
     return;
   }
   try {
     state.pendingActions = await readPendingActions();
     if (state.pendingActions.length && !await syncPendingActions()) {
-      window.alert("Offline-Änderungen konnten noch nicht übertragen werden. Bitte später erneut abmelden.");
+      window.alert(t("Offline-Änderungen konnten noch nicht übertragen werden. Bitte später erneut abmelden."));
       return;
     }
     await offlinePreparation;
@@ -456,7 +459,7 @@ document.querySelector(".header-actions form").addEventListener("submit", async 
     if (!response.ok) throw new Error("Logout failed");
     window.location.href = "/login";
   } catch (_) {
-    window.alert("Die Offline-Kopie konnte nicht entfernt werden. Bitte versuche es erneut.");
+    window.alert(t("Die Offline-Kopie konnte nicht entfernt werden. Bitte versuche es erneut."));
   }
 });
 
@@ -476,10 +479,10 @@ try {
     else queueOfflineCopy();
   }
 } catch (error) {
-  $("run-note").textContent = "Die Stellen konnten nicht geladen werden. Bitte lade die Seite erneut.";
+  $("run-note").textContent = t("Die Stellen konnten nicht geladen werden. Bitte lade die Seite erneut.");
   $("run-note").hidden = false;
   $("empty-state").hidden = false;
-  $("empty-copy").textContent = "Bitte versuche es gleich noch einmal.";
+  $("empty-copy").textContent = t("Bitte versuche es gleich noch einmal.");
 }
 
 let refreshInFlight = false;

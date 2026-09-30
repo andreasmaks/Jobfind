@@ -7,6 +7,10 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const source = (name) => fs.readFileSync(path.join(root, name), "utf8");
+const languageCtx = vm.createContext({ navigator: { language: "de-DE" }, window: {},
+  document: { documentElement: {}, addEventListener() {} } });
+vm.runInContext(source("assets/i18n.js"), languageCtx);
+const { t, locale } = languageCtx.window.JobfindI18n;
 const clone = structuredClone;
 const stores = new Map();
 let failCommit = false;
@@ -133,6 +137,7 @@ element("visibility-filter").value = "visible";
 element("sort-filter").value = "newest";
 const cardGrid = { cards: [], replaceChildren(fragment) { this.cards = fragment.cards; }, querySelectorAll() { return []; } };
 const viewCtx = vm.createContext({
+  t, locale,
   state: { tab: "all", meta: {}, offline: true, jobs: [
     { id: "a", title: "Design", company: "Example", user_status: "saved", first_seen_at: "2026-09-30" },
     { id: "b", title: "Archive", company: "Example", user_status: "new", historical: true, first_seen_at: "2026-09-29" },
@@ -243,6 +248,7 @@ assert.equal(filterPanel.open, false, "Keyboard navigation outside closes the pa
 const note = { hidden: false, textContent: "stale", classList: { toggle() {} } };
 const undo = { disabled: false };
 const statusCtx = vm.createContext({
+  t,
   state: { offline: false, offlineReady: false, pendingActions: [], syncError: "" },
   syncInFlight: false, mutationPending: false,
   $: (id) => id === "offline-state" ? note : undo,
@@ -278,7 +284,7 @@ updateStatusNote();
 assert.equal(note.hidden, true);
 assert.equal(undo.disabled, false);
 
-const queueCtx = vm.createContext({ console });
+const queueCtx = vm.createContext({ console, t });
 const calls = [];
 let failOn = "restore";
 Object.assign(queueCtx, {

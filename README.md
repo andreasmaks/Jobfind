@@ -210,6 +210,12 @@ regardless of those context limits.
 
 ## Offline use and synchronization
 
+The interface follows the browser's primary language preference: German (`de`,
+including regional variants) stays German; every other language uses English.
+This includes sign-in, dialogs, feedback, status messages and dates, also offline.
+Original job text, company information and personal notes are not machine-translated.
+Reload after changing the device/browser language; no translation service is used.
+
 Sign in online and keep the page open briefly so app files and the current job
 snapshot can be stored in the browser. Preparation runs in the background without
 a permanent status banner; pending changes and errors are still shown. Before
@@ -296,6 +302,7 @@ package; neutral icons avoid additional image-rights questions and external requ
 .venv/bin/python tests/check_setup.py
 # Optional Node.js check; not required to run the app:
 node --experimental-vm-modules tests/check_offline.mjs
+node --experimental-vm-modules tests/check_i18n.mjs
 .venv/bin/python scripts/tools/audit_release.py
 ```
 
