@@ -191,7 +191,7 @@ const menuCtx = vm.createContext({
   window: { matchMedia: () => mobileMedia },
   document: { addEventListener(name, fn) { documentListeners.set(name, fn); } },
 });
-vm.runInContext(functionText("setupHeaderInfoMenu", "filteredJobs") + "\nsetupHeaderInfoMenu();", menuCtx);
+vm.runInContext(functionText("setupHeaderInfoMenu", "setupFilterPanel") + "\nsetupHeaderInfoMenu();", menuCtx);
 buttonListeners.get("click")();
 assert.equal(infoButton.attributes["aria-expanded"], "true");
 documentListeners.get("click")({ target: infoButton });
@@ -209,6 +209,35 @@ buttonListeners.get("click")();
 mobileMedia.matches = false;
 mediaListeners.get("change")();
 assert.equal(infoButton.attributes["aria-expanded"], "false");
+
+// Native details stays open while adjusting filters, but dismisses outside or with Escape.
+const filterDocumentListeners = new Map();
+const filterListeners = new Map();
+const filterTrigger = { focused: false, focus() { this.focused = true; } };
+const filterSelect = {};
+const filterPanel = { open: true, querySelector: () => filterTrigger,
+  contains: (target) => [filterPanel, filterTrigger, filterSelect].includes(target),
+  addEventListener(name, fn) { filterListeners.set(name, fn); } };
+const filterCtx = vm.createContext({
+  $: () => filterPanel,
+  document: { addEventListener(name, fn) { filterDocumentListeners.set(name, fn); } },
+});
+vm.runInContext(functionText("setupFilterPanel", "filteredJobs") + "\nsetupFilterPanel();", filterCtx);
+filterDocumentListeners.get("click")({ target: filterSelect });
+assert.equal(filterPanel.open, true, "Changing a filter must not dismiss the panel");
+filterDocumentListeners.get("click")({ target: filterTrigger });
+assert.equal(filterPanel.open, true, "Native summary toggle must not be intercepted");
+filterDocumentListeners.get("click")({ target: {} });
+assert.equal(filterPanel.open, false, "Outside tap closes the filter panel");
+filterPanel.open = true;
+filterDocumentListeners.get("keydown")({ key: "Escape", preventDefault() {} });
+assert.equal(filterPanel.open, false);
+assert.equal(filterTrigger.focused, true);
+filterPanel.open = true;
+filterListeners.get("focusout")({ relatedTarget: filterSelect });
+assert.equal(filterPanel.open, true);
+filterListeners.get("focusout")({ relatedTarget: {} });
+assert.equal(filterPanel.open, false, "Keyboard navigation outside closes the panel");
 
 // Offline preparation and a healthy offline snapshot stay quiet; pending work/errors do not.
 const note = { hidden: false, textContent: "stale", classList: { toggle() {} } };
@@ -296,4 +325,4 @@ const appPath = source("index.html").match(/src="([^\"]*\/app\.js\?v=\d+)"/)[1];
 assert(source("sw.js").includes(`"${appPath}"`), "Shell must cache the current app entry point");
 const stylesPath = source("index.html").match(/href="([^\"]*\/styles\.css\?v=\d+)"/)[1];
 assert(source("sw.js").includes(`"${stylesPath}"`), "Shell must cache the current stylesheet");
-console.log("UI/offline checks passed: selected counts, info dropdown, quiet status, atomic storage, ordered retry, undo, auth boundary, logout, shell.");
+console.log("UI/offline checks passed: filter dismissal, selected counts, info dropdown, quiet status, atomic storage, ordered retry, undo, auth boundary, logout, shell.");

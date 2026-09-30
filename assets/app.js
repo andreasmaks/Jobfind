@@ -46,6 +46,24 @@ function setupHeaderInfoMenu() {
   });
 }
 
+function setupFilterPanel() {
+  const panel = $("filter-panel");
+  const trigger = panel.querySelector("summary");
+  document.addEventListener("click", (event) => {
+    if (panel.open && !panel.contains(event.target)) panel.open = false;
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && panel.open) {
+      event.preventDefault();
+      panel.open = false;
+      trigger.focus();
+    }
+  });
+  panel.addEventListener("focusout", (event) => {
+    if (event.relatedTarget && !panel.contains(event.relatedTarget)) panel.open = false;
+  });
+}
+
 function filteredJobs() {
   const search = $("search").value.trim().toLocaleLowerCase("de-DE");
   const remote = $("remote-filter").value;
@@ -390,6 +408,7 @@ $("undo-delete").addEventListener("click", async () => {
 });
 
 setupHeaderInfoMenu();
+setupFilterPanel();
 
 document.querySelectorAll(".top-nav [data-tab]").forEach((button) => {
   button.addEventListener("click", () => {

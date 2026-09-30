@@ -11,9 +11,9 @@
   <meta name="apple-mobile-web-app-title" content="jobfind">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <script src="/assets/theme.js"></script>
-  <link rel="stylesheet" href="/assets/styles.css?v=5">
+  <link rel="stylesheet" href="/assets/styles.css?v=6">
   <link rel="stylesheet" href="/assets/local.css">
-  <script type="module" src="/assets/app.js?v=6"></script>
+  <script type="module" src="/assets/app.js?v=7"></script>
 </head>
 <body>
   <svg width="0" height="0" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
@@ -80,7 +80,7 @@
           <input id="search" type="search" placeholder="Titel, Unternehmen oder Ort suchen" autocomplete="off">
           <svg class="lucide-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
         </label>
-        <details class="filter-panel" id="filter-panel"><summary><svg class="lucide-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H3M12 19H3M14 3v4M16 17v4M21 12h-9M21 19h-5M21 5h-7M8 10v4M8 12H3"/></svg> Filter <span id="filter-badge" hidden></span></summary>
+        <details class="filter-panel" id="filter-panel"><summary aria-label="Filter"><svg class="lucide-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H3M12 19H3M14 3v4M16 17v4M21 12h-9M21 19h-5M21 5h-7M8 10v4M8 12H3"/></svg><span class="filter-label">Filter</span><span id="filter-badge" aria-hidden="true" hidden></span></summary>
           <div class="filter-content">
             <label>Arbeitsmodell<select id="remote-filter"><option value="all">Alle</option><option value="remote">Remote möglich</option><option value="hybrid">Hybrid</option></select></label>
             <label>Arbeitszeit<select id="hours-filter"><option value="all">Alle</option><option value="parttime">Teilzeit ausdrücklich genannt</option><option value="fulltime">Vollzeit möglich</option></select></label>
