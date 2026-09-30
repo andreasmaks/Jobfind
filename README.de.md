@@ -20,11 +20,6 @@ Hermes-Erweiterungspaket mit dateibasierter Integration, nicht um ein offizielle
 
 ## Screenshots
 
-Die vom Betreiber bereitgestellten Bilder zeigen die Live-Installation mit
-deutscher Oberfläche und echten Stellenanzeigen. Sie stammen nicht aus der Demo.
-Das installierbare Paket verwendet Systemschriften und neutrale Unternehmenssymbole;
-seine Darstellung weicht deshalb leicht ab. Die Bilder belegen keine Offline-Funktion.
-
 ![Jobübersicht der Live-Installation mit Suche, Passungsbewertungen und Merkfunktion](Screen-1.png)
 
 *Stellen entdecken und ihre Passung mit dem Suchprofil vergleichen.*

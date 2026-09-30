@@ -19,11 +19,6 @@ currently in German. Repository documentation is available in English, with a Ge
 
 ## Screenshots
 
-Screenshots supplied by the owner from the live installation, showing the German
-interface with real listings. These are not demo screenshots. The installable
-package uses system fonts and neutral company icons, so its appearance differs
-slightly from the live version. Screenshots do not verify offline behavior.
-
 ![Job overview in the live installation, with search, match scores and bookmarks](Screen-1.png)
 
 *Discover jobs and compare their fit with your search profile.*
