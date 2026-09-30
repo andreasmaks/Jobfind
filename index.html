@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="de" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10141d">
+  <meta name="robots" content="noindex,nofollow">
+  <title>jobfind</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="apple-mobile-web-app-title" content="jobfind">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <script src="/assets/theme.js"></script>
+  <link rel="stylesheet" href="/assets/styles.css?v=2">
+  <script type="module" src="/assets/app.js?v=2"></script>
+</head>
+<body>
+  <svg width="0" height="0" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <filter id="logo-neon-alpha" color-interpolation-filters="sRGB">
+        <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 .8784  0 0 0 0 .7294  0 0 0 1 0"/>
+      </filter>
+      <filter id="logo-neon-dark" color-interpolation-filters="sRGB">
+        <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 .8784  0 0 0 0 .7294  -1.9134 -6.4368 -.6498 0 6" result="tint"/>
+        <feComposite in="tint" in2="SourceGraphic" operator="in"/>
+      </filter>
+      <filter id="logo-neon-light" color-interpolation-filters="sRGB">
+        <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 .8784  0 0 0 0 .7294  .8504 2.8608 .2888 0 -2" result="tint"/>
+        <feComposite in="tint" in2="SourceGraphic" operator="in"/>
+      </filter>
+      <filter id="logo-neon-tone" color-interpolation-filters="sRGB">
+        <feColorMatrix type="matrix" values="0 0 0 0 0  .1362 .4582 .0462 0 .2373  .1141 .3841 .0388 0 .1924  0 0 0 1 0"/>
+      </filter>
+      <filter id="logo-mint-light-mark" color-interpolation-filters="sRGB">
+        <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 .8784  0 0 0 0 .7294  1.065 3.575 .36 0 -1" result="tint"/>
+        <feComposite in="tint" in2="SourceGraphic" operator="in"/>
+      </filter>
+      <filter id="logo-mint-on-black" color-interpolation-filters="sRGB">
+        <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 .8784  0 0 0 0 .7294  2 2 2 0 -.3" result="tint"/>
+        <feComposite in="tint" in2="SourceGraphic" operator="in"/>
+      </filter>
+      <filter id="logo-mint-dark-mark" color-interpolation-filters="sRGB">
+        <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 .8784  0 0 0 0 .7294  -1.065 -3.575 -.36 0 1.3" result="tint"/>
+        <feComposite in="tint" in2="SourceGraphic" operator="in"/>
+      </filter>
+      <filter id="logo-mint-on-white" color-interpolation-filters="sRGB">
+        <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 .8784  0 0 0 0 .7294  -1.065 -3.575 -.36 0 4.9" result="tint"/>
+        <feComposite in="tint" in2="SourceGraphic" operator="in"/>
+      </filter>
+    </defs>
+  </svg>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="/" aria-label="jobfind, zur Stellenübersicht"><span class="brand-symbol" aria-hidden="true"></span><span class="brand-name">jobfind</span></a>
+      <nav class="top-nav" aria-label="Hauptnavigation">
+        <button type="button" data-tab="all" class="active" aria-current="page">Entdecken</button>
+        <button type="button" data-tab="saved">Gemerkte <span id="nav-saved-count" class="nav-count" hidden></span></button>
+        <button type="button" data-tab="history">Archiv</button>
+      </nav>
+      <div class="header-actions"><span id="header-updated" class="header-updated" hidden></span><button class="theme-toggle" type="button" data-theme-toggle aria-label="Helles Design einschalten" aria-pressed="true"><svg class="lucide-icon icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg><svg class="lucide-icon icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2m-7.07-17.07 1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m14.14-14.14-1.41 1.41"/></svg><span class="theme-label">Hell</span></button><form action="/logout" method="post"><button class="logout-button" type="submit">Abmelden</button></form></div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <p id="offline-state" class="offline-state" role="status" hidden></p>
+    <section class="search-section" aria-label="Stellensuche">
+      <div class="search-line">
+        <span id="header-job-count" class="header-job-count" aria-live="polite" aria-label="Gesamtzahl der Jobs wird geladen">Jobs</span>
+        <label class="search-field"><span class="visually-hidden">Stellen durchsuchen</span>
+          <input id="search" type="search" placeholder="Titel, Unternehmen oder Ort suchen" autocomplete="off">
+          <svg class="lucide-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <details class="filter-panel" id="filter-panel"><summary><svg class="lucide-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H3M12 19H3M14 3v4M16 17v4M21 12h-9M21 19h-5M21 5h-7M8 10v4M8 12H3"/></svg> Filter <span id="filter-badge" hidden></span></summary>
+          <div class="filter-content">
+            <label>Arbeitsmodell<select id="remote-filter"><option value="all">Alle</option><option value="remote">Remote möglich</option><option value="hybrid">Hybrid</option></select></label>
+            <label>Arbeitszeit<select id="hours-filter"><option value="all">Alle</option><option value="parttime">Teilzeit ausdrücklich genannt</option><option value="fulltime">Vollzeit möglich</option></select></label>
+            <label>Bewertung<select id="score-filter"><option value="0">Alle Bewertungen</option><option value="7">Ab 7 von 10</option><option value="8">Ab 8 von 10</option><option value="9">Ab 9 von 10</option></select></label>
+            <label>Sortierung<select id="sort-filter"><option value="newest">Neueste zuerst</option><option value="score">Beste Passung</option><option value="company">Unternehmen A–Z</option></select></label>
+            <label>Sichtbarkeit<select id="visibility-filter"><option value="visible">Sichtbare Stellen</option><option value="hidden">Ausgeblendete Stellen</option></select></label>
+          </div>
+        </details>
+      </div>
+      <p id="run-note" class="run-note" role="status" hidden></p>
+    </section>
+
+    <section aria-label="Stellenübersicht">
+      <div id="empty-state" class="empty-state" hidden><div class="empty-symbol" aria-hidden="true"><svg class="lucide-icon" viewBox="0 0 24 24"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4M22 4h-4"/><circle cx="4" cy="20" r="2"/></svg></div><h2>Hier ist noch Platz für etwas Gutes.</h2><p id="empty-copy">Sobald Hermes passende Stellen findet, erscheinen sie hier.</p></div>
+      <div id="jobs-grid" class="jobs-grid" aria-live="polite"></div>
+    </section>
+  </main>
+  <aside id="deletion-notice" class="deletion-notice" aria-label="Gelöschte Stelle" hidden>
+    <p id="deletion-message" role="status"></p>
+    <button id="undo-delete" type="button">Rückgängig</button>
+  </aside>
+  <dialog id="feedback-dialog" class="feedback-dialog" aria-labelledby="feedback-title" aria-describedby="feedback-description">
+    <form id="feedback-form">
+      <p class="feedback-eyebrow">Deine Empfehlungen werden persönlicher</p>
+      <h2 id="feedback-title">Was passt hier nicht?</h2>
+      <p id="feedback-job" class="feedback-job"></p>
+      <p id="feedback-description">Wähle aus, was dich stört. Hermes berücksichtigt deine Gründe bei neuen Empfehlungen.</p>
+      <fieldset class="feedback-reasons">
+        <legend>Gründe <span>· optional, mehrere möglich</span></legend>
+        <label><input type="checkbox" name="reason" value="field"><span>Fachbereich</span></label>
+        <label><input type="checkbox" name="reason" value="company"><span>Unternehmen</span></label>
+        <label><input type="checkbox" name="reason" value="distance"><span>Entfernung</span></label>
+        <label><input type="checkbox" name="reason" value="tasks"><span>Aufgaben</span></label>
+        <label><input type="checkbox" name="reason" value="hours"><span>Arbeitszeit</span></label>
+        <label><input type="checkbox" name="reason" value="remote"><span>Präsenz / Remote</span></label>
+        <label><input type="checkbox" name="reason" value="salary"><span>Gehalt</span></label>
+        <label><input type="checkbox" name="reason" value="seniority"><span>Erfahrungslevel</span></label>
+        <label><input type="checkbox" name="reason" value="other"><span>Sonstiges</span></label>
+      </fieldset>
+      <label class="feedback-note-label" for="feedback-note">Was wäre dir lieber? <span>Optional</span></label>
+      <textarea id="feedback-note" name="note" rows="3" maxlength="600" placeholder="Zum Beispiel: Mehr Produktkonzeption, weniger reine Screenproduktion."></textarea>
+      <p id="feedback-error" class="feedback-error" role="alert" hidden></p>
+      <div class="feedback-actions"><button id="feedback-cancel" type="button" class="button-secondary">Behalten</button><button id="feedback-submit" type="submit" class="button-primary">Löschen & Feedback speichern</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="job-dialog" aria-labelledby="dialog-title"><div class="dialog-topbar"><button id="dialog-save" class="save-button dialog-save" type="button" aria-label="Stelle merken" aria-pressed="false" title="Stelle merken"></button><form method="dialog"><button class="dialog-close" aria-label="Schließen" title="Schließen"><svg class="lucide-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></form></div><div id="dialog-content"></div></dialog>
+</body>
+</html>

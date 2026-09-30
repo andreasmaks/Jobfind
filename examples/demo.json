@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "run_id": "fictional-demo-v1",
+  "ran_at": "2026-01-15T12:00:00+00:00",
+  "run_status": "ok",
+  "error": "",
+  "jobs": [
+    {"title": "Projektassistenz (alle Geschlechter)", "company": "Demo Nordlicht Werkstatt", "original_url": "https://example.org/jobfind/demo-1", "source_id": "demo-1", "location": "Beispielstadt", "remote": "Hybrid, zwei Tage vor Ort", "work_model": "hybrid", "hours": "Teilzeit, 28 Stunden/Woche", "score": 9, "summary": "Erfundene Stelle: Abläufe im Team strukturieren und kleine Projekte begleiten.", "fit": "Klare Aufgaben und Zusammenarbeit.", "concerns": "Erfundenes Beispiel; keine echte Bewerbung möglich.", "availability": "unknown"},
+    {"title": "Servicekoordination", "company": "Demo Wolkenfabrik", "original_url": "https://example.org/jobfind/demo-2", "source_id": "demo-2", "location": "Musterhausen", "remote": "Vor Ort", "work_model": "onsite", "hours": "Vollzeit, 40 Stunden/Woche", "score": 7, "summary": "Erfundene Stelle: Serviceanfragen koordinieren und Verbesserungen gemeinsam umsetzen.", "fit": "Strukturierte Zusammenarbeit und sichtbare Ergebnisse.", "concerns": "Präsenz und Vollzeit könnten von eigenen Wünschen abweichen.", "availability": "unknown"},
+    {"title": "Teamassistenz", "company": "Demo Papierboot", "original_url": "https://example.org/jobfind/demo-3", "location": "Beispielstadt", "remote": "Remote mit optionalem Büro", "work_model": "remote", "hours": "Teilzeit, 24 Stunden/Woche", "score": 8, "summary": "Erfundene Stelle: Termine und Informationen organisieren.", "fit": "Flexible Zusammenarbeit.", "concerns": "Erfundenes Beispiel.", "availability": "unknown"},
+    {"title": "Koordination digitale Services", "company": "Demo Wolkenfabrik", "original_url": "https://example.org/jobfind/demo-4", "location": "Musterhausen", "remote": "Hybrid", "work_model": "hybrid", "hours": "Teilzeit möglich, 32–40 Stunden/Woche", "score": 6, "summary": "Erfundene Stelle: Digitale Abläufe prüfen und verständlich dokumentieren.", "fit": "Verbesserung von Abläufen.", "concerns": "Aufgabenanteile noch offen.", "availability": "unknown"}
+  ],
+  "company_profiles": [
+    {"company": "Demo Nordlicht Werkstatt", "description": "Erfundenes Demo-Unternehmen für verständliche Teamprozesse.", "products": "Erfundene Organisationshilfen und Übungsmaterialien.", "source_url": "https://example.org/jobfind/demo-about", "status": "ready"},
+    {"company": "Demo Wolkenfabrik", "description": "Erfundener Anbieter digitaler Services.", "products": "Erfundene Werkzeuge für Serviceanfragen.", "source_url": "https://example.org/jobfind/demo-about-2", "status": "ready"}
+  ]
+}

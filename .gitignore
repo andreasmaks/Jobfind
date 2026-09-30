@@ -1,0 +1,14 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.venv/
+.runtime/
+config/*.json
+!config/example.json
+*.sqlite3*
+*.db*
+*.log
+.env*
+auth.json
+.csrf_secret
+company-logos/

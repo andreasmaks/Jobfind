@@ -1,0 +1,22 @@
+{
+  "config_version": 1,
+  "data_dir": "../.runtime/personal",
+  "server": {"bind": "127.0.0.1", "port": 8123, "public_origin": ""},
+  "timezone": "Europe/Berlin",
+  "max_new_jobs_per_day": 2,
+  "search": {
+    "region": {
+      "allowed_places": ["Beispielstadt", "Musterhausen"],
+      "excluded_places": ["Fernstadt"],
+      "ambiguous_labels": ["Region Beispielstadt", "Landkreis Musterhausen"],
+      "allow_remote_without_local_place": false
+    },
+    "roles": ["Projektassistenz", "Servicekoordination"],
+    "activities": ["Abläufe verbessern", "Zusammenarbeit im Team"],
+    "weekly_hours": "Teilzeit oder Vollzeit nach eigener Präferenz festlegen",
+    "work_models": ["Hybrid bevorzugt"],
+    "hard_exclusions": ["Keine ausschließlich provisionsbasierte Vergütung"],
+    "soft_preferences": ["Transparente Aufgabenbeschreibung"]
+  },
+  "hermes": {"job_id": "", "output_dir": "../.runtime/hermes-output", "schedule": "every 24h"}
+}
