@@ -16,6 +16,36 @@ const feedbackDialog = $("feedback-dialog");
 let feedbackJob = null;
 const controls = ["search", "remote-filter", "hours-filter", "score-filter", "sort-filter", "visibility-filter"];
 
+function setupHeaderInfoMenu() {
+  const actions = $("header-actions");
+  const toggle = $("header-info-toggle");
+  const mobile = window.matchMedia("(max-width: 650px)");
+  const close = (restoreFocus = false) => {
+    actions.classList.remove("is-open");
+    toggle.setAttribute("aria-expanded", "false");
+    if (restoreFocus) toggle.focus();
+  };
+  toggle.addEventListener("click", () => {
+    const open = actions.classList.toggle("is-open");
+    toggle.setAttribute("aria-expanded", String(open));
+  });
+  document.addEventListener("click", (event) => {
+    if (!actions.contains(event.target)) close();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && actions.classList.contains("is-open")) {
+      event.preventDefault();
+      close(true);
+    }
+  });
+  actions.addEventListener("focusout", (event) => {
+    if (event.relatedTarget && !actions.contains(event.relatedTarget)) close();
+  });
+  mobile.addEventListener("change", () => {
+    if (!mobile.matches) close();
+  });
+}
+
 function filteredJobs() {
   const search = $("search").value.trim().toLocaleLowerCase("de-DE");
   const remote = $("remote-filter").value;
@@ -180,12 +210,12 @@ async function syncPendingActions() {
   }
 }
 
-function updateSummary() {
-  const total = state.jobs.length;
+function updateSummary(jobs = filteredJobs()) {
+  const total = jobs.length;
   const saved = state.jobs.filter((job) => job.user_status === "saved").length;
   const updated = shortDate(state.meta?.last_success_at);
   $("header-job-count").textContent = `${total} ${total === 1 ? "Job" : "Jobs"}`;
-  $("header-job-count").setAttribute("aria-label", `${total} ${total === 1 ? "Job" : "Jobs"} insgesamt`);
+  $("header-job-count").setAttribute("aria-label", `${total} ${total === 1 ? "Job" : "Jobs"} in dieser Auswahl`);
   $("header-updated").textContent = updated ? `Stand: ${updated}` : "";
   $("header-updated").hidden = !updated;
   $("nav-saved-count").textContent = saved;
@@ -202,7 +232,7 @@ function render() {
     ? "Für diese Auswahl gibt es noch keine Stellen. Passe die Suche oder Filter an."
     : "Sobald Hermes passende Stellen findet, erscheinen sie hier.";
   $("filter-badge").hidden = !($("remote-filter").value !== "all" || $("hours-filter").value !== "all" || $("score-filter").value !== "0" || $("visibility-filter").value !== "visible");
-  updateSummary();
+  updateSummary(jobs);
   updateRunNote();
   updateOfflineState();
   grid.querySelectorAll(".card-actions button").forEach((button) => { button.disabled = mutationPending || syncInFlight; });
@@ -358,6 +388,8 @@ $("undo-delete").addEventListener("click", async () => {
     }
   }
 });
+
+setupHeaderInfoMenu();
 
 document.querySelectorAll(".top-nav [data-tab]").forEach((button) => {
   button.addEventListener("click", () => {

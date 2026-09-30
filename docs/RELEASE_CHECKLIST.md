@@ -67,6 +67,7 @@ through your own deliberately configured SSH tunnel; no new public endpoint is r
 
 - With your own demo password: sign in, try an incorrect password, sign out and sign in again.
 - On desktop and a narrow mobile screen: check cards, filters, details, source links, dialogs and light/dark appearance.
+- On a phone: logo, Alle/Gemerkte/Archiv and the info button share one row. Open the info dropdown, check the last-update text, switch appearance and close by tapping outside or pressing Escape. Desktop header actions remain inline. Check that the job count matches visible cards after tab, search and filter changes, including empty selections.
 - With the keyboard: check visible focus, cards/buttons, closing dialogs and undo; check the operating system's reduced-motion option.
 - Online: bookmark and like a job; reject another for distance and hours with a fictional note, then undo.
 - Keep the page open briefly online; no permanent offline-status banner should appear. Disconnect, reload, check details/filters, and store further actions including undo. Pending actions and errors should remain visible.

@@ -120,6 +120,96 @@ function functionText(name, nextName) {
 }
 const funcs = functionText("applyPendingActions", "queueAction") + "\n" + functionText("syncPendingActions", "updateSummary");
 
+// The count follows the exact rendered selection, including tab/filter/optimistic changes.
+const elements = new Map();
+const element = (id) => {
+  if (!elements.has(id)) elements.set(id, { value: "all", attributes: {},
+    setAttribute(name, value) { this.attributes[name] = value; } });
+  return elements.get(id);
+};
+element("search").value = "";
+element("score-filter").value = "0";
+element("visibility-filter").value = "visible";
+element("sort-filter").value = "newest";
+const cardGrid = { cards: [], replaceChildren(fragment) { this.cards = fragment.cards; }, querySelectorAll() { return []; } };
+const viewCtx = vm.createContext({
+  state: { tab: "all", meta: {}, offline: true, jobs: [
+    { id: "a", title: "Design", company: "Example", user_status: "saved", first_seen_at: "2026-09-30" },
+    { id: "b", title: "Archive", company: "Example", user_status: "new", historical: true, first_seen_at: "2026-09-29" },
+    { id: "c", title: "Product", company: "Other", user_status: "new", first_seen_at: "2026-09-28" },
+    { id: "d", title: "Hidden", company: "Other", user_status: "hidden", first_seen_at: "2026-09-27" },
+  ] },
+  $: element, grid: cardGrid, mutationPending: false, syncInFlight: false,
+  document: { createDocumentFragment: () => ({ cards: [], append(card) { this.cards.push(card); } }) },
+  createCard: (job) => job, shortDate: () => "", updateRunNote() {}, updateOfflineState() {},
+  openJob() {}, changeStatus() {}, askDelete() {}, changeLike() {},
+});
+vm.runInContext(functionText("filteredJobs", "updateRunNote") + "\n" + functionText("updateSummary", "render") + "\n" + functionText("render", "openJob"), viewCtx);
+const checkCount = (tab, count) => {
+  viewCtx.state.tab = tab;
+  vm.runInContext("render()", viewCtx);
+  assert.equal(cardGrid.cards.length, count);
+  assert.equal(element("header-job-count").textContent, `${count} ${count === 1 ? "Job" : "Jobs"}`);
+  assert.match(element("header-job-count").attributes["aria-label"], /in dieser Auswahl/);
+};
+checkCount("all", 3);
+checkCount("saved", 1);
+checkCount("history", 1);
+element("search").value = "not present";
+checkCount("all", 0);
+element("search").value = "other";
+checkCount("all", 1);
+element("search").value = "";
+element("visibility-filter").value = "hidden";
+checkCount("all", 1);
+element("visibility-filter").value = "visible";
+viewCtx.state.jobs = viewCtx.state.jobs.filter((job) => job.id !== "a");
+checkCount("saved", 0);
+assert.equal(element("nav-saved-count").hidden, true);
+checkCount("all", 2);
+vm.runInContext("updateSummary()", viewCtx);
+assert.equal(element("header-job-count").textContent, "2 Jobs", "Background refresh preserves the selected count");
+
+// Disclosure behavior uses existing DOM events, without a menu library or browser run.
+const menuListeners = new Map();
+const documentListeners = new Map();
+const buttonListeners = new Map();
+const mediaListeners = new Map();
+const menuClasses = new Set();
+const infoButton = { attributes: {}, focused: false,
+  setAttribute(name, value) { this.attributes[name] = value; }, focus() { this.focused = true; },
+  addEventListener(name, fn) { buttonListeners.set(name, fn); } };
+const infoActions = {
+  classList: { contains: (name) => menuClasses.has(name), remove: (name) => menuClasses.delete(name),
+    toggle(name) { if (menuClasses.has(name)) { menuClasses.delete(name); return false; } menuClasses.add(name); return true; } },
+  contains: (target) => target === infoButton || target === infoActions,
+  addEventListener(name, fn) { menuListeners.set(name, fn); },
+};
+const mobileMedia = { matches: true, addEventListener(name, fn) { mediaListeners.set(name, fn); } };
+const menuCtx = vm.createContext({
+  $: (id) => id === "header-actions" ? infoActions : infoButton,
+  window: { matchMedia: () => mobileMedia },
+  document: { addEventListener(name, fn) { documentListeners.set(name, fn); } },
+});
+vm.runInContext(functionText("setupHeaderInfoMenu", "filteredJobs") + "\nsetupHeaderInfoMenu();", menuCtx);
+buttonListeners.get("click")();
+assert.equal(infoButton.attributes["aria-expanded"], "true");
+documentListeners.get("click")({ target: infoButton });
+assert.equal(menuClasses.has("is-open"), true, "Inside clicks must not immediately close the dropdown");
+documentListeners.get("click")({ target: {} });
+assert.equal(infoButton.attributes["aria-expanded"], "false");
+buttonListeners.get("click")();
+documentListeners.get("keydown")({ key: "Escape", preventDefault() {} });
+assert.equal(infoButton.focused, true);
+assert.equal(menuClasses.has("is-open"), false);
+buttonListeners.get("click")();
+menuListeners.get("focusout")({ relatedTarget: {} });
+assert.equal(menuClasses.has("is-open"), false);
+buttonListeners.get("click")();
+mobileMedia.matches = false;
+mediaListeners.get("change")();
+assert.equal(infoButton.attributes["aria-expanded"], "false");
+
 // Offline preparation and a healthy offline snapshot stay quiet; pending work/errors do not.
 const note = { hidden: false, textContent: "stale", classList: { toggle() {} } };
 const undo = { disabled: false };
@@ -204,4 +294,6 @@ for (const request of [
 }
 const appPath = source("index.html").match(/src="([^\"]*\/app\.js\?v=\d+)"/)[1];
 assert(source("sw.js").includes(`"${appPath}"`), "Shell must cache the current app entry point");
-console.log("Offline checks passed: quiet status, atomic storage, ordered retry, undo, auth boundary, logout, shell.");
+const stylesPath = source("index.html").match(/href="([^\"]*\/styles\.css\?v=\d+)"/)[1];
+assert(source("sw.js").includes(`"${stylesPath}"`), "Shell must cache the current stylesheet");
+console.log("UI/offline checks passed: selected counts, info dropdown, quiet status, atomic storage, ordered retry, undo, auth boundary, logout, shell.");

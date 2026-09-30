@@ -11,9 +11,9 @@
   <meta name="apple-mobile-web-app-title" content="jobfind">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <script src="/assets/theme.js"></script>
-  <link rel="stylesheet" href="/assets/styles.css?v=4">
+  <link rel="stylesheet" href="/assets/styles.css?v=5">
   <link rel="stylesheet" href="/assets/local.css">
-  <script type="module" src="/assets/app.js?v=5"></script>
+  <script type="module" src="/assets/app.js?v=6"></script>
 </head>
 <body>
   <svg width="0" height="0" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
@@ -54,11 +54,20 @@
     <div class="header-inner">
       <a class="brand" href="/" aria-label="jobfind, zur Stellenübersicht"><span class="brand-symbol" aria-hidden="true"></span><span class="brand-name">jobfind</span></a>
       <nav class="top-nav" aria-label="Hauptnavigation">
-        <button type="button" data-tab="all" class="active" aria-current="page">Entdecken</button>
+        <button type="button" data-tab="all" class="active" aria-current="page">Alle</button>
         <button type="button" data-tab="saved">Gemerkte <span id="nav-saved-count" class="nav-count" hidden></span></button>
         <button type="button" data-tab="history">Archiv</button>
       </nav>
-      <div class="header-actions"><span id="header-updated" class="header-updated" hidden></span><button class="theme-toggle" type="button" data-theme-toggle aria-label="Helles Design einschalten" aria-pressed="true"><svg class="lucide-icon icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg><svg class="lucide-icon icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2m-7.07-17.07 1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m14.14-14.14-1.41 1.41"/></svg><span class="theme-label">Hell</span></button><form action="/logout" method="post"><button class="logout-button" type="submit">Abmelden</button></form></div>
+      <div id="header-actions" class="header-actions">
+        <button id="header-info-toggle" class="header-info-toggle" type="button" aria-label="Informationen und Einstellungen" aria-expanded="false" aria-controls="header-info-content">
+          <svg class="lucide-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+        </button>
+        <div id="header-info-content" class="header-info-content">
+          <span id="header-updated" class="header-updated" hidden></span>
+          <button class="theme-toggle" type="button" data-theme-toggle aria-label="Helles Design einschalten" aria-pressed="true"><svg class="lucide-icon icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg><svg class="lucide-icon icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2m-7.07-17.07 1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m14.14-14.14-1.41 1.41"/></svg><span class="theme-label">Hell</span></button>
+          <form action="/logout" method="post"><button class="logout-button" type="submit">Abmelden</button></form>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -66,7 +75,7 @@
     <p id="offline-state" class="offline-state" role="status" hidden></p>
     <section class="search-section" aria-label="Stellensuche">
       <div class="search-line">
-        <span id="header-job-count" class="header-job-count" aria-live="polite" aria-label="Gesamtzahl der Jobs wird geladen">Jobs</span>
+        <span id="header-job-count" class="header-job-count" aria-live="polite" aria-label="Anzahl der Jobs wird geladen">Jobs</span>
         <label class="search-field"><span class="visually-hidden">Stellen durchsuchen</span>
           <input id="search" type="search" placeholder="Titel, Unternehmen oder Ort suchen" autocomplete="off">
           <svg class="lucide-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
