@@ -6,10 +6,30 @@ const heart = icon('<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5
 const building = icon('<path d="M10 12h4M10 8h4"/><path d="M14 21v-3a2 2 0 0 0-4 0v3"/><path d="M6 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2"/><path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/>');
 const sparkles = icon('<path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4M22 4h-4"/><circle cx="4" cy="20" r="2"/>');
 const externalLink = icon('<path d="M15 3h6v6M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>');
-function companyMark() {
+function companyMark(company, logoUrl = "", logoMode = "alpha", darkUrl = "") {
   const mark = element("div", "company-mark is-fallback");
   mark.setAttribute("aria-hidden", "true");
   mark.innerHTML = building; // Constant licensed icon, never imported text.
+  mark.dataset.company = company.toLocaleLowerCase("de-DE");
+  const safe = (url) => /^\/assets\/(?:company-logos\/[0-9a-f]{24}\.png(?:\?v=\d+)?|logos\/[A-Za-z0-9_.-]+)$/.test(url);
+  if (!safe(logoUrl)) return mark;
+  mark.dataset.logoMode = ["alpha", "dark", "light", "tone"].includes(logoMode) ? logoMode : "alpha";
+  mark.classList.remove("is-fallback");
+  mark.replaceChildren();
+  const variants = safe(darkUrl) ? [[logoUrl, "logo-light"], [darkUrl, "logo-dark"]] : [[logoUrl, ""]];
+  for (const [url, variant] of variants) {
+    const logo = element("img", variant);
+    logo.src = url;
+    logo.alt = "";
+    logo.loading = "lazy";
+    logo.decoding = "async";
+    logo.addEventListener("load", () => {
+      const ratio = logo.naturalWidth / Math.max(1, logo.naturalHeight);
+      mark.dataset.logoShape = ratio >= 2.2 ? "wide" : ratio <= 0.72 ? "tall" : "square";
+    }, { once: true });
+    logo.addEventListener("error", () => { mark.classList.add("is-fallback"); mark.innerHTML = building; }, { once: true });
+    mark.append(logo);
+  }
   return mark;
 }
 
@@ -85,7 +105,7 @@ export function createCard(job, onOpen, onSave, onDelete, onLike) {
   });
   const top = element("div", "card-top");
   const company = String(job.company || "?").trim();
-  const mark = companyMark(company, job.company_logo_url, job.company_logo_mode);
+  const mark = companyMark(company, job.company_logo_url, job.company_logo_mode, job.company_logo_dark_url);
   const identity = element("div", "company-identity");
   identity.append(element("p", "company-name", job.company), element("p", "company-location", shortLocation(job.location)));
   const save = element("button", `save-button${job.user_status === "saved" ? " is-saved" : ""}`);
@@ -120,7 +140,7 @@ export function createCard(job, onOpen, onSave, onDelete, onLike) {
 
   const chips = element("div", "card-chips");
   const hours = hoursLabel(job.hours);
-  chips.append(chip(hours, /teilzeit/i.test(job.hours || "") ? "priority" : ""));
+  chips.append(chip(hours, job.part_time_hint || /teilzeit/i.test(job.hours || "") ? "priority" : ""));
   const remote = remoteLabel(job);
   chips.append(chip(remote, /remote|hybrid/i.test(remote) ? "flexible" : ""));
   if (job.availability === "closed") chips.append(chip("Nicht mehr verfügbar", "caution"));

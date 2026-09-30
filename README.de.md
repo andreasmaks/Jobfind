@@ -2,6 +2,9 @@
 
 [English documentation](README.md)
 
+Für eine bestehende Live-Installation: [Entwicklungsablauf](docs/DEVELOPMENT.md).
+Ein gemeinsamer Ordner enthält den Programmcode; eigene Einstellungen, Assets und Daten bleiben privat.
+
 Die weiterführenden Dokumente unter `docs/` sind auf Englisch. Oberfläche,
 CLI-Meldungen, Beispieldaten und erzeugter Suchkontext bleiben zunächst deutsch.
 

@@ -19,7 +19,7 @@ def load_config(path: Path = CONFIG_PATH) -> dict:
     if not isinstance(cfg, dict) or cfg.get("config_version") != 1:
         raise ValueError("config_version muss 1 sein")
     required = {"config_version", "data_dir", "server", "search", "max_new_jobs_per_day", "timezone", "hermes"}
-    if set(cfg) != required:
+    if set(cfg) - (required | {"local"}) or not required <= set(cfg):
         raise ValueError("Unbekannte oder fehlende Konfigurationsfelder")
     ZoneInfo(cfg["timezone"])
     if type(cfg["max_new_jobs_per_day"]) is not int or not 1 <= cfg["max_new_jobs_per_day"] <= 100:
@@ -71,6 +71,15 @@ def load_config(path: Path = CONFIG_PATH) -> dict:
         return (path.parent / result).resolve() if not result.is_absolute() else result.resolve()
     cfg["data_path"] = resolve(cfg["data_dir"])
     cfg["output_path"] = resolve(hermes["output_dir"])
+    local = cfg.get("local", {})
+    if not isinstance(local, dict) or set(local) - {"presentation_file", "assets_dir", "profile_file", "import_hook", "session_cookie", "legacy_run_ids"}:
+        raise ValueError("Ungültige lokale Erweiterung")
+    cookie = local.get("session_cookie", "jf_session")
+    if not isinstance(cookie, str) or not re.fullmatch(r"[a-z][a-z0-9_]{1,31}", cookie):
+        raise ValueError("Ungültiger Sitzungsname")
+    if type(local.get("legacy_run_ids", False)) is not bool:
+        raise ValueError("Ungültige Altimport-Einstellung")
+    cfg["local_paths"] = {key: resolve(local[key]) for key in {"presentation_file", "assets_dir", "profile_file", "import_hook"} & local.keys()}
     validate_data_dir(cfg["data_path"])
     return cfg
 

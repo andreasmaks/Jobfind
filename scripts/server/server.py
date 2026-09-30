@@ -22,6 +22,8 @@ sys.path.insert(0, str(MODULES_DIR))
 
 from store import DATA_DIR, company_logo_path, delete_job, list_jobs, metadata, restore_job, set_job_like, set_user_status
 from config import CONFIG, ensure_data_dir
+from local_settings import PRESENTATION, local_asset
+SESSION_COOKIE = CONFIG.get("local", {}).get("session_cookie", "jf_session")
 AUTH_FILE = DATA_DIR / "auth.json"
 AUTH_DB = DATA_DIR / "auth.sqlite3"
 HOST = "127.0.0.1"
@@ -211,7 +213,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_body(status, json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8"), "application/json; charset=utf-8")
 
     def session(self) -> str:
-        token = cookie_value(self.headers.get("Cookie", ""), "jf_session")
+        token = cookie_value(self.headers.get("Cookie", ""), SESSION_COOKIE)
         return token if valid_session(token) else ""
 
     def do_GET(self) -> None:
@@ -220,6 +222,16 @@ class Handler(BaseHTTPRequestHandler):
         path = urlsplit(self.path).path
         if path == "/api/health":
             self.send_json(200, {"ok": True, "service": "jobfind"})
+            return
+        if path == "/assets/local.css" and not local_asset(path):
+            self.send_body(200, b"", "text/css; charset=utf-8", cache_control="no-cache")
+            return
+        if path == "/assets/local-manifest.json":
+            self.send_json(200, {"assets": list(PRESENTATION["assets"])})
+            return
+        asset = local_asset(path)
+        if asset and (asset[2] or self.session()):
+            self.send_body(200, asset[0].read_bytes(), asset[1], cache_control="private, no-cache")
             return
         if path in PUBLIC_ASSETS:
             filename, content_type = ASSETS[path]
@@ -339,7 +351,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(503, {"ok": False, "error": "temporarily_unavailable"})
             return
         self.send_body(303, b"", "text/plain", location="/", headers=(
-            ("Set-Cookie", f"jf_session={token}; Path=/; Max-Age={SESSION_LIFETIME}; HttpOnly{COOKIE_SECURITY}; SameSite=Strict"),
+            ("Set-Cookie", f"{SESSION_COOKIE}={token}; Path=/; Max-Age={SESSION_LIFETIME}; HttpOnly{COOKIE_SECURITY}; SameSite=Strict"),
         ))
 
     def handle_logout(self) -> None:
@@ -356,7 +368,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(503, {"ok": False, "error": "temporarily_unavailable"})
             return
         self.send_body(303, b"", "text/plain", location="/login", headers=(
-            ("Set-Cookie", f"jf_session=; Path=/; Max-Age=0; HttpOnly{COOKIE_SECURITY}; SameSite=Strict"),
+            ("Set-Cookie", f"{SESSION_COOKIE}=; Path=/; Max-Age=0; HttpOnly{COOKIE_SECURITY}; SameSite=Strict"),
         ))
 
 

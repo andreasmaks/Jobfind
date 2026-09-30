@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import runpy
 import sys
 import time
 from datetime import datetime
@@ -21,7 +22,7 @@ TEXT_FIELDS = {"title", "company", "original_url", "source", "source_id", "locat
                "availability", "work_model"}
 
 
-def parse_json_response(response: str) -> dict:
+def decode_response(response: str):
     response = response.strip()
     if response.startswith("```json\n") and response.endswith("```"):
         response = response[8:-3].strip()
@@ -32,8 +33,12 @@ def parse_json_response(response: str) -> dict:
                 raise ValueError("duplicate_json_key")
             obj[key] = value
         return obj
-    payload = json.loads(response, object_pairs_hook=unique_pairs,
+    return json.loads(response, object_pairs_hook=unique_pairs,
                          parse_constant=lambda _: (_ for _ in ()).throw(ValueError("invalid_json_constant")))
+
+
+def parse_json_response(response: str) -> dict:
+    payload = decode_response(response)
     if not isinstance(payload, dict) or type(payload.get("schema_version")) is not int or payload["schema_version"] != 1:
         raise ValueError("invalid_schema_version")
     if set(payload) - {"schema_version", "run_id", "ran_at", "run_status", "jobs", "company_profiles", "error"}:
@@ -97,7 +102,7 @@ def import_file(path: Path) -> dict:
         job_id = CONFIG["hermes"]["job_id"]
         if not job_id:
             raise ValueError("hermes_job_id_required_for_markdown")
-        fallback_id = "hermes:" + job_id + ":" + path.stem
+        fallback_id = path.stem if CONFIG.get("local", {}).get("legacy_run_ids") else "hermes:" + job_id + ":" + path.stem
         if not re.fullmatch(r"\d{4}-\d\d-\d\d_\d\d-\d\d-\d\d", path.stem):
             raise ValueError("invalid_hermes_filename")
         stamp = datetime.strptime(path.stem, "%Y-%m-%d_%H-%M-%S")
@@ -113,6 +118,15 @@ def import_file(path: Path) -> dict:
             if marker not in body:
                 raise ValueError("response_section_missing")
             body = body.rsplit(marker, 1)[1].strip()
+            if CONFIG.get("local", {}).get("legacy_run_ids"):
+                if body == "[SILENT]":
+                    body = '{"schema_version":1,"run_status":"empty","jobs":[],"company_profiles":[]}'
+                else:
+                    # The previous owned importer accepted an otherwise valid ok/empty envelope.
+                    candidate = decode_response(body)
+                    if isinstance(candidate, dict) and candidate.get("run_status") == "ok" and candidate.get("jobs") == []:
+                        candidate["run_status"] = "empty"
+                        body = json.dumps(candidate)
         payload = parse_json_response(body)
         run_id = fallback_id if path.suffix.lower() == ".md" else "json:" + payload.get("run_id", digest)
         if has_run(run_id):
@@ -145,4 +159,12 @@ def scan_output() -> dict:
             summary["errors"] += int(result.get("run_status") == "error")
         except (OSError, ValueError):
             summary["errors"] += 1
+    hook = CONFIG["local_paths"].get("import_hook")
+    if hook:
+        # Explicit owner-supplied local hook; absent from ordinary public installs.
+        try:
+            sync = runpy.run_path(str(hook))["sync_company_logos"]
+            summary["local_hook"] = sync(limit=4, verbose=False)
+        except Exception:
+            summary["local_hook_error"] = True
     return summary

@@ -11,6 +11,7 @@ from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from zoneinfo import ZoneInfo
 from config import CONFIG, ensure_data_dir
+from local_settings import decorate_job
 
 DATA_DIR = CONFIG["data_path"]
 DB_PATH = DATA_DIR / "jobs.sqlite3"
@@ -352,6 +353,7 @@ def list_jobs() -> list[dict]:
             suffix = f"?v={version}" if version else ""
             item["company_logo_url"] = f"/assets/company-logos/{filename}{suffix}" if filename else ""
             item["company_logo_mode"] = mode if mode in {"alpha", "dark", "light", "tone"} else "alpha"
+            decorate_job(item)
             result.append(item)
         return result
     finally:

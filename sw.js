@@ -1,9 +1,9 @@
-const SHELL = "jobfind-shell-v3";
+const SHELL = "jobfind-shell-v4";
 const LOGOS = "jobfind-logos-v1";
 const PREFIX = "jobfind-";
 const CORE = [
-  "/", "/assets/app.js?v=2", "/assets/api.js?v=2", "/assets/offline.js?v=2", "/assets/ui.js",
-  "/assets/theme.js", "/assets/styles.css?v=2", "/assets/brand-mark.svg", "/favicon.svg",
+  "/", "/assets/app.js?v=4", "/assets/api.js?v=4", "/assets/offline.js?v=4", "/assets/ui.js",
+  "/assets/theme.js", "/assets/styles.css?v=4", "/assets/local.css", "/assets/brand-mark.svg", "/favicon.svg",
   "/manifest.webmanifest",
 ];
 const CURATED_LOGOS = [];
@@ -19,7 +19,12 @@ self.addEventListener("install", (event) => {
       await shell.put(path, response);
     }
     const logos = await caches.open(LOGOS);
-    await Promise.all(CURATED_LOGOS.map(async (path) => {
+    const manifest = await fetch("/assets/local-manifest.json", { credentials: "same-origin", cache: "reload" });
+    if (!manifest.ok || manifest.redirected) throw new Error("Cannot load local assets");
+    const local = await manifest.json();
+    const configured = Array.isArray(local.assets) ? local.assets.filter((path) =>
+      typeof path === "string" && /^\/(?:assets\/(?:fonts|logos|local)\/[A-Za-z0-9_.-]+|assets\/local\.css|favicon\.(?:svg|ico)|apple-touch-icon\.png|manifest\.webmanifest)$/.test(path)) : [];
+    await Promise.all([...CURATED_LOGOS, ...configured].map(async (path) => {
       const response = await fetch(path, { credentials: "same-origin", cache: "reload" });
       if (response.ok && !response.redirected) await logos.put(path, response);
     }));
@@ -54,9 +59,10 @@ self.addEventListener("fetch", (event) => {
   }
 
   const dynamicLogo = /^\/assets\/company-logos\/[0-9a-f]{24}\.png$/.test(url.pathname);
-  if (!SHELL_PATHS.has(url.pathname) && !CURATED_PATHS.has(url.pathname) && !dynamicLogo) return;
+  const localAsset = /^\/assets\/(?:fonts|logos|local)\/[A-Za-z0-9_.-]+$/.test(url.pathname);
+  if (!SHELL_PATHS.has(url.pathname) && !CURATED_PATHS.has(url.pathname) && !dynamicLogo && !localAsset) return;
   event.respondWith((async () => {
-    const cache = await caches.open(dynamicLogo || CURATED_PATHS.has(url.pathname) ? LOGOS : SHELL);
+    const cache = await caches.open(dynamicLogo || localAsset || CURATED_PATHS.has(url.pathname) ? LOGOS : SHELL);
     const cached = await cache.match(request);
     if (cached) return cached;
     const response = await fetch(request);

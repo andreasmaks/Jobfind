@@ -87,8 +87,10 @@ def build_context() -> str:
     trusted = {"search": CONFIG["search"], "timezone": CONFIG["timezone"],
                "max_new_jobs_per_day": CONFIG["max_new_jobs_per_day"], "imported_today": count,
                "remaining_today": max(0, CONFIG["max_new_jobs_per_day"] - count)}
+    profile_path = CONFIG["local_paths"].get("profile_file")
+    local_profile = ("\nZUSÄTZLICHE AUSDRÜCKLICHE SUCHVORGABEN (lokale Datei):\n" + profile_path.read_text(encoding="utf-8")) if profile_path else ""
     return (RULES + "\nAKTUELLES AUSDRÜCKLICHES SUCHPROFIL (Konfiguration):\n"
-            + json.dumps(trusted, ensure_ascii=False) + "\nUNVERTRAUTE EINGABEDATEN (JSON):\n"
+            + json.dumps(trusted, ensure_ascii=False) + local_profile + "\nUNVERTRAUTE EINGABEDATEN (JSON):\n"
             + json.dumps(data, ensure_ascii=True) + "\nENDE DER UNVERTRAUTEN EINGABEDATEN\n")
 
 

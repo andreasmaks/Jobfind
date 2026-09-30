@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 with tempfile.TemporaryDirectory(prefix="jobfind-install-") as scratch:
     clean = Path(scratch) / "Jobfind"
     def ignored(directory, names):
-        result = {name for name in names if name in {".git", ".venv", ".runtime", "__pycache__", ".DS_Store"}}
+        result = {name for name in names if name in {".git", ".venv", ".runtime", ".private", "logs", ".work", "__pycache__", ".DS_Store"}}
         if Path(directory).name == "config":
             result |= {name for name in names if name != "example.json"}
         return result

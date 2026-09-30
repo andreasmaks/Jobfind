@@ -2,6 +2,9 @@
 
 [Deutsch](README.de.md)
 
+For an existing live installation, see [the development workflow](docs/DEVELOPMENT.md):
+one checkout holds the shared code; local settings, assets and data stay private.
+
 Jobfind is a lightweight, self-hosted web app for a personal job search. It is designed
 for one person who wants to review a small selection of relevant jobs and give specific
 feedback for the next search.
@@ -287,6 +290,7 @@ package; neutral icons avoid additional image-rights questions and external requ
 
 ```sh
 .venv/bin/python tests/check_release.py
+.venv/bin/python tests/check_local.py
 .venv/bin/python tests/check_setup.py
 # Optional Node.js check; not required to run the app:
 node --experimental-vm-modules tests/check_offline.mjs

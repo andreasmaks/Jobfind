@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 .venv/
 .runtime/
+.private/
+logs/
+.work/
 config/*.json
 !config/example.json
 *.sqlite3*

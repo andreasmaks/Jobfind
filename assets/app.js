@@ -1,5 +1,5 @@
-import { changeDeletion, loadPortal, updateLike, updateStatus } from "/assets/api.js?v=2";
-import { clearOfflineData, prepareOffline, readPendingActions, removePendingAction, savePendingAction } from "/assets/offline.js?v=2";
+import { changeDeletion, loadPortal, updateLike, updateStatus } from "/assets/api.js?v=4";
+import { clearOfflineData, prepareOffline, readPendingActions, removePendingAction, savePendingAction } from "/assets/offline.js?v=4";
 import { createCard, shortDate, showDetails } from "/assets/ui.js";
 
 const state = { jobs: [], meta: null, csrf: "", tab: "all", offline: false, savedAt: "", offlineReady: false, pendingActions: [], syncError: "" };
@@ -32,7 +32,7 @@ function filteredJobs() {
     if (remote === "remote" && !/remote|homeoffice|home office|mobiles arbeiten|ortsunabhängig/.test(work)) return false;
     if (remote === "hybrid" && !/hybrid|bürotag|präsenztag/.test(work)) return false;
     const workHours = String(job.hours || "").toLocaleLowerCase("de-DE");
-    if (hours === "parttime" && !/teilzeit|part.?time/.test(workHours)) return false;
+    if (hours === "parttime" && !job.part_time_hint && !/teilzeit|part.?time/.test(workHours)) return false;
     if (hours === "fulltime" && !/vollzeit|40\s*(stunden|std)/.test(workHours)) return false;
     if (minScore && Number(job.score || 0) < minScore) return false;
     return true;

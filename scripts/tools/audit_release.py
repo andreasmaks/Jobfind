@@ -17,10 +17,10 @@ assets/api.js assets/app.js assets/brand-mark.svg assets/login.js assets/offline
 assets/styles.css assets/theme.js assets/ui.js config/example.json
 examples/demo.json examples/empty.json examples/error.json
 hermes/context.py hermes/import_jobs.py hermes/prompt.txt
-scripts/modules/config.py scripts/modules/store.py scripts/server/server.py
+scripts/modules/config.py scripts/modules/store.py scripts/modules/local_settings.py scripts/server/server.py
 scripts/tools/set_password.py scripts/tools/audit_release.py scripts/start_server.sh
-tests/check_release.py tests/check_setup.py tests/check_offline.mjs
-docs/HERMES.md docs/IMPORT_FORMAT.md docs/RELEASE_CHECKLIST.md
+tests/check_release.py tests/check_setup.py tests/check_offline.mjs tests/check_local.py
+docs/HERMES.md docs/IMPORT_FORMAT.md docs/RELEASE_CHECKLIST.md docs/DEVELOPMENT.md
 """.split())
 REVIEWED_PNGS = {
     "Screen-1.png": "cb256e6fbd888622b750b23d1e38fd1fc1739795bc13b4f85c3d40eb9ba27176",
@@ -64,7 +64,7 @@ def main() -> int:
     observed = set()
     for path in ROOT.rglob("*"):
         rel = path.relative_to(ROOT)
-        if any(part in {".git", ".runtime", ".venv", "__pycache__"} for part in rel.parts):
+        if any(part in {".git", ".runtime", ".venv", ".private", "logs", ".work", "__pycache__"} for part in rel.parts):
             continue
         if path.name == ".DS_Store" or (rel.parent == Path("config") and path.name != "example.json"):
             continue
