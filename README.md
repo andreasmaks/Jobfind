@@ -1,57 +1,76 @@
-# Jobfind mit Hermes-Integration
+# Jobfind with Hermes integration
 
-Jobfind ist eine schlanke, selbst gehostete Web-App für die persönliche Jobsuche.
-Sie ist für eine einzelne Person gedacht, die wenige passende Stellen übersichtlich
-prüfen und konkretes Feedback für den nächsten Suchlauf geben möchte.
+[Deutsch](README.de.md)
 
-Suchprofil und bisheriges Feedback → Hermes recherchiert → strukturierter Import →
-Jobfind zeigt Stellen → Likes, Merken und Ablehnungsgründe → Kontext der nächsten Suche.
-Die Rückkopplung passt den Suchkontext an; sie trainiert keine Modellgewichte.
-Eine messbare Verbesserung der Trefferqualität oder Markt-Alleinstellung ist nicht belegt.
+Jobfind is a lightweight, self-hosted web app for a personal job search. It is designed
+for one person who wants to review a small selection of relevant jobs and give specific
+feedback for the next search.
 
-**Stand:** technisch vorbereitete erste Veröffentlichung unter MIT-Lizenz. Die vollständige
-Browserprüfung und ein echter Hermes-Suchlauf sind noch offen. Es handelt sich um ein
-Hermes-Erweiterungspaket mit dateibasierter Integration, nicht um ein offizielles Hermes-Plugin.
+Search profile and previous feedback → Hermes research → structured import →
+Jobfind listings → likes, bookmarks and rejection reasons → context for the next search.
+Feedback adjusts the search context; it does not train the underlying model.
+Improved match quality and market uniqueness have not been demonstrated.
 
-## Vorhandene Funktionen
+**Status:** an initial MIT-licensed publication with technical checks completed.
+Full browser testing and a live Hermes search are still pending. This is a
+Hermes extension package with file-based integration, not an official Hermes plugin.
+The app interface, CLI messages, example content and generated search context are
+currently in German. Repository documentation is available in English, with a German README.
 
-- Übersicht, Textsuche, Filter für Arbeitsmodell, Arbeitszeit, Passung und ausgeblendete Stellen.
-- Detailansicht, geprüfte HTTP(S)-Links zu Originalanzeigen und optionale Unternehmensporträts mit Quellen.
-- Merken, unabhängige Likes, Ausblenden sowie Ablehnen mit mehreren Gründen und bis zu 600 Zeichen Notiz.
-- Rückgängig für Ablehnungen in der geöffneten Sitzung, einschließlich vorherigem Status und Feedback.
-- Import mit URL-/Quellen-ID-Deduplizierung, Laufidentität und konfigurierbarem Tageslimit.
-- Lokale Offline-Kopie und geordnete spätere Synchronisierung von Nutzeraktionen.
+## Screenshots
 
-Hermes übernimmt die automatische Recherche. Jobfind stellt Profil und Feedback-Kontext
-bereit, validiert Ergebnisse und speichert Stellen und Nutzeraktionen in SQLite.
-App, manueller Import und erfundene Demo funktionieren ohne Hermes.
-Automatische Bewerbungen, Dokumentgeneratoren und Mehrmandantenbetrieb sind nicht enthalten.
+Screenshots supplied by the owner from the live installation, showing the German
+interface with real listings. These are not demo screenshots. The installable
+package uses system fonts and neutral company icons, so its appearance differs
+slightly from the live version. Screenshots do not verify offline behavior.
 
-## Voraussetzungen und geprüfte Umgebung
+![Job overview in the live installation, with search, match scores and bookmarks](Screen-1.png)
 
-- Python **3.11 oder neuer**, inklusive `venv`, SQLite und Zeitzonendaten.
-- Geprüft auf **macOS 27.0.1**, mit **Python 3.11.16 und 3.14.7**; SQLite des
-  Haupt-Testlaufs: **3.53.4**. Keine Zusage für ungeprüfte Linux-, Windows- oder Docker-Umgebungen.
-- Keine zusätzlichen Python-Pakete, kein npm und keine Build-Kette für den Betrieb.
-  `requirements.txt` dokumentiert die leere Liste externer Python-Abhängigkeiten.
-- Moderner Browser mit JavaScript. Offline benötigt IndexedDB, Service Worker und
-  Cache Storage auf `localhost`/Loopback oder unter HTTPS; reale Browser noch manuell prüfen.
-- Optional für automatische Recherche: eigenes eingerichtetes Hermes mit Modellanbieter
-  und Recherchewerkzeugen. Lokaler Integrationsstand geprüft gegen **Hermes Agent v0.21.4
-  (2026.9.21), Commit c80d12b9**. Geprüft wurden CLI-Hilfe und Quell-Schnittstellen,
-  keine echte Suche. Hermes wird nicht mitgeliefert. [Integration](docs/HERMES.md).
+*Discover jobs and compare their fit with your search profile.*
 
-## Installation und eigene Einrichtung
+![Job details in the live installation, with company information, tasks and match explanation](Screen-2.png)
 
-Das Projekt von GitHub klonen oder dort als ZIP herunterladen und auspacken:
+*Review company information, responsibilities and the reason a job matches.*
+
+## Features
+
+- Job overview, text search, and filters for work model, working hours, match score and hidden jobs.
+- Job details, validated HTTP(S) links to original listings, and optional company profiles with sources.
+- Bookmarks, independent likes, hiding, and rejection with multiple reasons and an optional 600-character note.
+- Undo for rejections made in the current session, restoring the previous status and feedback.
+- Import with URL/source-ID deduplication, run identity and a configurable daily limit.
+- A local offline copy and ordered synchronization of user actions when reconnected.
+
+Hermes researches jobs. Jobfind supplies the profile and feedback context, validates
+results, and stores jobs and user actions in SQLite. The app, manual imports and
+fictional demo work without Hermes. Automatic applications, application-document
+generators and multi-user hosting are outside the scope of this release.
+
+## Requirements and tested environment
+
+- **Python 3.11 or newer**, including `venv`, SQLite and timezone data.
+- Tested on **macOS 27.0.1**, with **Python 3.11.16 and 3.14.7**. The main test run
+  used **SQLite 3.53.4**. Linux, Windows and Docker have not been verified.
+- No additional Python packages, npm installation or build pipeline is required to run the app.
+  `requirements.txt` documents the absence of third-party Python dependencies.
+- A modern browser with JavaScript. Offline use requires IndexedDB, Service Workers and
+  Cache Storage on `localhost`/loopback or HTTPS; actual browser behavior still needs manual testing.
+- Optional for automated research: your own configured Hermes installation with a model
+  provider and research tools. Local integration was checked against **Hermes Agent v0.21.4
+  (2026.9.21), commit c80d12b9**. CLI help and source interfaces were inspected;
+  no live search was run. Hermes is not bundled. See [integration instructions](docs/HERMES.md).
+
+## Installation and personal setup
+
+Clone the repository, or download and extract its ZIP from GitHub:
 
 ```sh
 git clone https://github.com/andreasmaks/Jobfind.git
 cd Jobfind
 ```
 
-Die folgenden Befehle im Projektordner ausführen. Python vorher installieren,
-falls `python3 --version` keine geeignete Version zeigt.
+Run the following commands from the project directory. Install Python first if
+`python3 --version` does not report a suitable version.
 
 ```sh
 python3 --version
@@ -60,77 +79,77 @@ python3 -m venv .venv
 .venv/bin/python jobfind.py doctor
 ```
 
-`init` erstellt `config/jobfind.json`, ohne vorhandene Dateien zu überschreiben.
-Bearbeite darin dein Suchprofil und setze anschließend ein **eigenes Passwort**:
+`init` creates `config/jobfind.json` without overwriting existing files. Edit your
+search profile there, then set **your own password** and start the app:
 
 ```sh
 .venv/bin/python jobfind.py password
 .venv/bin/python jobfind.py start
 ```
 
-Die App ist standardmäßig unter **http://127.0.0.1:8123** auf demselben Rechner erreichbar.
-Der Prozess läuft im Vordergrund; **Ctrl+C** stoppt ihn. `scripts/start_server.sh` ist
-ein zusätzlicher Einstieg nach Erstellung der `.venv`. Es wird kein Hintergrunddienst,
-Proxy oder öffentlicher Zugang installiert. Es gibt keine eingebauten Zugangsdaten.
-Das Passwort muss 12–256 Zeichen haben; interaktiv wird es verdeckt zweimal abgefragt.
-Ein Passwortwechsel beendet alle bestehenden Serversitzungen.
+By default, the app is available at **http://127.0.0.1:8123** on the same computer.
+It runs in the foreground; **Ctrl+C** stops it. `scripts/start_server.sh` is an
+alternative entry point after creating `.venv`. Setup does not install a background
+service, proxy or public endpoint. There are no built-in credentials.
+Passwords must contain 12–256 characters; interactive entry is hidden and requested
+twice. Changing the password ends all existing server sessions.
 
-Andere Konfigurationen sind über `--config /pfad/zur/eigenen.json` **vor** dem Unterbefehl
-oder `JOBFIND_CONFIG` möglich. Alte `JOBPORTAL_*`-Variablen werden nicht verwendet.
+Use `--config /path/to/your.json` **before** the subcommand, or set `JOBFIND_CONFIG`,
+to select a different configuration. Legacy `JOBPORTAL_*` variables are not used.
 
-### Suchprofil
+### Search profile
 
-`config/example.json` enthält ausschließlich erfundene Orte und neutrale Wünsche.
-Diese Angaben vor einer echten Recherche ersetzen:
+`config/example.json` contains fictional places and neutral preferences. Replace
+them before performing a real search:
 
-| Feld | Bedeutung |
+| Field | Meaning |
 | --- | --- |
-| `search.region.allowed_places` | Wörtliche zulässige Ortsnamen; mindestens einer erforderlich. |
-| `excluded_places` | Verbindliche Ausschlussorte, auch bei mehreren genannten Standorten. |
-| `ambiguous_labels` | Unklare Regionsangaben, die nicht als konkreter Arbeitsort zählen. |
-| `allow_remote_without_local_place` | Nur bei `true` darf belegtes `work_model: remote` ohne zulässigen Ort importiert werden. Ausschlussangaben haben Vorrang. |
-| `roles`, `activities` | Gewünschte Rollen und Tätigkeiten. |
-| `weekly_hours`, `work_models` | Ausdrückliche Arbeitszeit- und Arbeitsmodellwünsche für Hermes. |
-| `hard_exclusions` | Verbindliche inhaltliche Ausschlüsse im Recherchekontext. |
-| `soft_preferences` | Wünsche, die gewichtet statt als Verbot behandelt werden. |
-| `max_new_jobs_per_day` | 1–100 neue Datensätze je Kalendertag in `timezone`. |
-| `hermes.job_id`, `output_dir`, `schedule` | Eigener Hermes-Auftrag, sein Ausgabeordner und gewünschtes Intervall. `schedule` wird nicht automatisch auf Hermes angewandt. |
-| `data_dir` | Eigenes Laufzeitverzeichnis. Relative Pfade beziehen sich auf die Konfigurationsdatei. |
-| `server.bind`, `port`, `public_origin` | Nur lokales IPv4-Loopback; Port 1024–65535. HTTPS-Ursprung nur für bewusst selbst eingerichteten Proxybetrieb. |
-| `timezone` | IANA-Zeitzone, etwa `Europe/Berlin`; für Tageslimit und Hermes-Dateizeitstempel. |
+| `search.region.allowed_places` | Literal allowed place names; at least one is required. |
+| `excluded_places` | Hard exclusions, including listings mentioning several locations. |
+| `ambiguous_labels` | Vague regional labels that do not count as a specific workplace. |
+| `allow_remote_without_local_place` | Only when `true` may verified `work_model: remote` be imported without an allowed place. Excluded locations still take precedence. |
+| `roles`, `activities` | Desired roles and tasks. |
+| `weekly_hours`, `work_models` | Explicit working-hours and work-model preferences for Hermes. |
+| `hard_exclusions` | Mandatory content exclusions in the research context. |
+| `soft_preferences` | Preferences to weight rather than treat as bans. |
+| `max_new_jobs_per_day` | 1–100 new records per calendar day in `timezone`. |
+| `hermes.job_id`, `output_dir`, `schedule` | Your Hermes job, its output directory and desired interval. `schedule` is not automatically applied to Hermes. |
+| `data_dir` | Your runtime directory. Relative paths are resolved from the configuration file. |
+| `server.bind`, `port`, `public_origin` | Local IPv4 loopback only; port 1024–65535. An HTTPS origin is for a proxy you deliberately configure yourself. |
+| `timezone` | IANA timezone, such as `Europe/Berlin`, for the daily limit and Hermes filename timestamps. |
 
-Ortsprüfung und Tageslimit werden im Import technisch erzwungen. Aufgaben, Arbeitszeit
-und inhaltliche Ausschlüsse sind Kontextregeln für Hermes, kein semantischer Filter im
-Importer; Ergebnisse weiterhin selbst prüfen. Ortsnamen werden als abgegrenzte Wörter
-verglichen, Ortsteile sind möglich. Es gibt keine Geocodierung oder Radiusberechnung.
-Listen für eigene nahe Orte manuell pflegen. Regionen, Unklarheiten und Ausschlüsse
-sind vollständig konfigurierbar. Freitext in den strukturierten Profilfeldern kurz halten.
+Location checks and the daily limit are enforced by the importer. Tasks, working hours
+and content exclusions guide Hermes; they are not semantic filters in the importer.
+Review results yourself. Place names are matched as bounded words and may include
+districts. There is no geocoding or radius calculation. Maintain your own list of
+nearby places. Regions, ambiguous labels and exclusions are configurable. Keep free
+text in structured profile fields brief.
 
-Konfigurationsänderungen übernimmt der nächste CLI-/Serverstart; Hermes liest sie im
-nächsten Pre-Run-Aufruf neu. Bereits laufende Suchen können noch alten Kontext verwenden.
-App nach Änderungen an Port, Datenpfad oder Servereinstellungen neu starten.
+Configuration changes take effect on the next CLI/server start. Hermes reloads the
+profile on its next pre-run call. Searches already in progress may use the previous
+context. Restart the app after changing ports, data paths or server settings.
 
-## Demo ohne Hermes
+## Demo without Hermes
 
 ```sh
 .venv/bin/python jobfind.py demo
 ```
 
-Beim ersten Start ein eigenes Demo-Passwort festlegen. Die Demo lädt vier vollständig
-erfundene Stellen und zwei Unternehmensporträts. Sie verwendet `config/demo.json`,
-`.runtime/demo/` und **http://127.0.0.1:8124**. Daten und Zugang sind von der eigenen
-Einrichtung getrennt. Erneuter Start überschreibt weder Passwort noch Nutzerfeedback.
-Demo-Links zeigen auf `example.org` und sind keine echten Stellenanzeigen. Die Beispieldaten
-enthalten ein fiktives Datum. Es werden keine Arbeitgeber kontaktiert oder Modellaufrufe ausgeführt.
-`demo --prepare-only` bereitet die Demo ohne Serverstart vor.
+Set your own demo password on first use. The demo loads four fictional jobs and two
+fictional company profiles. It uses `config/demo.json`, `.runtime/demo/`, and
+**http://127.0.0.1:8124**. Its data and credentials are separate from your personal
+setup. Starting it again does not overwrite passwords or feedback. Demo links point
+to `example.org`; they are not real vacancies. Example dates are fictional. No
+employers are contacted and no model calls are made. `demo --prepare-only` prepares
+the demo without starting its server.
 
-## Ergebnisimport
+## Importing results
 
 ```sh
-.venv/bin/python jobfind.py import /pfad/zum/ergebnis.json
+.venv/bin/python jobfind.py import /path/to/result.json
 ```
 
-Ein minimaler erfundener Lauf:
+A minimal fictional result, retaining the fictional place name used by the example configuration:
 
 ```json
 {
@@ -139,162 +158,163 @@ Ein minimaler erfundener Lauf:
   "run_status": "ok",
   "error": "",
   "jobs": [{
-    "title": "Projektassistenz",
+    "title": "Project assistant",
     "company": "Demo Nordlicht Werkstatt",
     "original_url": "https://example.org/jobs/1",
     "source_id": "1",
     "location": "Beispielstadt",
     "hours": "Teilzeit, 28 Stunden/Woche",
-    "summary": "Erfundene Stelle zum Ausprobieren.",
+    "summary": "A fictional job for trying the app.",
     "score": 8
   }],
   "company_profiles": []
 }
 ```
 
-Der Ort muss zur eigenen Konfiguration passen. Das vollständige Format, optionale
-Felder und Fehlerregeln stehen in [docs/IMPORT_FORMAT.md](docs/IMPORT_FORMAT.md).
-`examples/demo.json`, `empty.json` und `error.json` sind erfundene Prüfdateien.
-Der Importer führt keine Netzwerkanfragen aus und lädt keine Logos oder Bilder herunter.
+The location must match your configuration. See [the import format](docs/IMPORT_FORMAT.md)
+for all optional fields and error rules. `examples/demo.json`, `empty.json` and
+`error.json` contain fictional test data. The importer makes no network requests
+and does not download company logos or images.
 
-`ok` bezeichnet einen erfolgreichen Lauf mit gefundenen Stellen; regionale Filter,
-Dubletten und Tageslimit können trotzdem null neue Datensätze ergeben. `empty` ist
-erfolgreich ohne Treffer; `error` ist ein fehlgeschlagener Lauf. Bestehende Stellen
-werden bei leeren oder fehlerhaften Ausgaben nicht entfernt. Ein kompletter fehlerhafter
-Datensatz verwirft den Lauf vor jeder Änderung an Stellen oder Firmenprofilen.
-Ungültige Inhalte werden mit einem neutralen Fehlerstatus dokumentiert.
+`ok` means the source search succeeded and found jobs; regional filters, duplicates
+and the daily limit may still result in zero new records. `empty` means a successful
+search with no jobs; `error` means a failed run. Empty or failed results never remove
+existing jobs. A malformed record invalidates the entire run before any job or
+company-profile changes. Invalid content receives a neutral error status.
 
-Das Tageslimit zählt ausschließlich **neue** Datensätze zum Zeitpunkt des Imports in
-der eingestellten Zeitzone. Aktualisierungen, Dubletten und abgelehnte Stellen verbrauchen
-keine Plätze. Parallele Importe werden in SQLite serialisiert. Bei mehreren Kandidaten
-werden höhere Scores bevorzugt. Ein verarbeiteter Lauf wird nicht erneut angewandt;
-wegen des Limits nicht aufgenommene Kandidaten warten nicht automatisch bis morgen.
+The daily limit counts only **new** records at the actual import time in the
+configured timezone. Updates, duplicates and rejected jobs do not consume slots.
+SQLite serializes concurrent imports. Higher-scoring candidates are preferred.
+A processed run is not applied again; candidates excluded by the limit are not
+automatically queued for the following day.
 
-## Likes, Merken und Ablehnungen
+## Likes, bookmarks and rejections
 
-Herz = ausdrückliches positives Signal. Lesezeichen = schwächeres Interesse. Ausblenden
-entfernt eine Stelle nur aus der normalen Ansicht und erzeugt kein Ablehnungsfeedback.
-Ablehnen entfernt die Stelle aus allen Ansichten und behält einen Datensatz für Feedback
-und Deduplizierung; es ist keine physische Datenlöschung.
+A heart is an explicit positive signal. A bookmark is a weaker signal of interest.
+Hiding removes a job from the normal view without generating rejection feedback.
+Rejecting removes it from all views while retaining a record for feedback and
+deduplication; it does not physically erase the record.
 
-Ablehnungsgründe gelten nur für ihre Dimension. Entfernung wertet keine Aufgaben ab,
-falsche Arbeitszeit keine Branche. Einzelablehnungen begründen keine allgemeinen Verbote.
-Wiederholte übereinstimmende Signale dürfen stärker gewichtet werden. Aktuelle ausdrückliche
-Präferenzen haben Vorrang vor indirekten Vermutungen. Die Kontextdatei trennt das aktuelle
-Profil von unvertrauten Anzeigen, Firmenbeschreibungen und Notizen. Prompt-Injection lässt
-sich dadurch begrenzen, nicht für jedes Modell garantieren.
+Rejection reasons apply to their specific dimensions. Distance does not devalue
+the tasks, and unsuitable hours do not devalue the industry. A single rejection
+does not establish a general ban. Repeated consistent signals may receive more
+weight. Current explicit preferences take precedence over indirect inferences.
+Context output separates the profile from untrusted listings, company descriptions
+and notes. This limits prompt-injection exposure but cannot guarantee protection
+for every model.
 
-Rückgängig entfernt aktives negatives Feedback und stellt den vorherigen Status wieder
-her. Die UI bietet diese Aktion für Ablehnungen aus der geöffneten Sitzung; nach vollständigem
-Neuladen gibt es keine dauerhafte Wiederherstellungsübersicht. Aktive Likes bleiben bei
-einer Wiederherstellung erhalten. Der Suchkontext umfasst höchstens 60 aktive Ablehnungen,
-60 aktive Likes, 20 gemerkte und 240 bekannte Stellen; der Import prüft alle gespeicherten
-Dubletten und Ablehnungen unabhängig von diesen Kontextgrenzen.
+Undo removes active negative feedback and restores the previous status. It is
+available for rejections made in the open session; there is no persistent recovery
+overview after a full reload. Active likes survive restoration. Search context
+contains at most 60 active rejections, 60 active likes, 20 bookmarked jobs and 240
+known jobs. Import deduplication checks all stored duplicates and rejections,
+regardless of those context limits.
 
-## Offline und Synchronisierung
+## Offline use and synchronization
 
-Online anmelden und die Meldung **„Auf diesem Gerät offline verfügbar“** abwarten.
-App-Dateien und der aktuelle Stellenstand liegen dann im Browser. Offline sind Suche,
-Filter und Details verfügbar. Merken, Likes, Ablehnen, Ausblenden und Rückgängig werden
-lokal gespeichert und nach der nächsten Verbindung in Reihenfolge übertragen.
-Netzwerkfehler erhalten die Warteschlange; Wiederholungen sind für die Serveraktionen
-idempotent. Bei einer inzwischen nicht verfügbaren Stelle kann eine Aktion entfallen;
-die App zeigt das an. Abmelden ist erst nach Synchronisierung möglich und entfernt die
-eigene Offline-Kopie. Nach abgelaufener Sitzung erneut anmelden.
+Sign in online and wait for **“Auf diesem Gerät offline verfügbar”** (available
+offline on this device). App files and the current job snapshot are then stored
+in the browser. Search, filters and details are available offline. Bookmarks,
+likes, rejections, hiding and undo are stored locally and sent in order after
+reconnection. Network failures preserve the queue; server actions are idempotent
+on retry. An action may be skipped if its job is no longer available; the app
+reports this. Sign-out requires synchronization first and removes the local
+offline copy. Sign in again if your session has expired.
 
-Originalanzeigen und Unternehmensquellen benötigen Internet. Browser können gespeicherte
-Daten unter Speicherdruck löschen. Offline-Daten sind nicht zusätzlich verschlüsselt und
-sind kein Backup; ein gesperrtes persönliches Gerät verwenden. Getrennte persönliche
-Einrichtungen auf **verschiedenen Ports/Ursprüngen** betreiben, da Browserdaten pro Ursprung
-geteilt werden. Safari, Home-Bildschirm-Modus, mobile Ansicht und echter Flugmodus sind
-noch nicht browserbasiert geprüft. [Manuelle Checkliste](docs/RELEASE_CHECKLIST.md).
+Original listings and company sources require Internet access. Browsers may remove
+stored data under storage pressure. Offline data is not additionally encrypted
+and is not a backup; use a locked personal device. Run separate personal setups
+on **different ports/origins**, since browser storage is shared within an origin.
+Safari, Home Screen mode, mobile layout and actual airplane-mode use still need
+browser testing. See [the manual checklist](docs/RELEASE_CHECKLIST.md).
 
-## Daten, Sicherheit und Betrieb
+## Data, security and operation
 
-Die eigene Standardkonfiguration speichert unter `.runtime/personal/`, die Demo unter
-`.runtime/demo/`: `jobs.sqlite3`, Passwortprüfwert `auth.json`, Sitzungen `auth.sqlite3`
-und `.csrf_secret`. Verzeichnisse sind privat (700), sensible Dateien 600. Geheimnisse
-nicht in Profil, Prompt oder Ergebnisdateien eintragen. Kein Passwort im Repository oder
-in der Befehlszeile ablegen; für automatisierte Einrichtung Passwort nur über stdin aus
-einem eigenen sicheren Mechanismus zuführen.
+The default personal setup stores data in `.runtime/personal/`; the demo uses
+`.runtime/demo/`. Files include `jobs.sqlite3`, password verifier `auth.json`,
+sessions in `auth.sqlite3`, and `.csrf_secret`. Runtime directories use permissions
+700 and sensitive files 600. Do not put secrets in profiles, prompts or results.
+Do not place passwords in the repository or command line. For automated setup,
+provide passwords through stdin from your own secure mechanism.
 
-Ein vorhandenes nicht leeres Datenverzeichnis ohne Jobfind-Laufzeitmarkierung wird
-abgewiesen. Das schützt vor versehentlichem Zugriff auf fremde Daten. Die neue Installation
-übernimmt keine bestehenden privaten Datenbanken. Eigene markierte Jobfind-Datenverzeichnisse
-können wieder verwendet werden; die Markierung nicht in andere Verzeichnisse kopieren.
+An existing nonempty data directory without Jobfind's runtime marker is refused
+to prevent accidental access to unrelated data. A new installation does not adopt
+existing private databases. Existing marked Jobfind runtime directories can be
+reused; do not copy the marker into unrelated directories.
 
-Sessions sind serverseitig gehasht und zeitlich begrenzt. Anmeldung prüft Ursprung und
-begrenzt Fehlversuche; schreibende API-Aufrufe und Abmelden prüfen Ursprung plus CSRF-Token.
-Fremde Texte werden als Text ausgegeben, der Server liefert nur explizit freigegebene
-App-Dateien. Standardmäßig lokales HTTP mit HttpOnly-/SameSite-Cookie; im bewusst
-konfigurierten HTTPS-Proxybetrieb zusätzlich Secure. Proxy muss Host und Origin erhalten.
-Fernzugriff, TLS und Proxy-Einrichtung sind nicht automatisiert oder end-to-end geprüft.
+Sessions are hashed server-side and time-limited. Login checks the origin and
+rate-limits failed attempts; modifying API calls and sign-out check the origin
+and CSRF token. Untrusted text is rendered as text. The server serves only
+explicitly allowed app files. Local HTTP uses HttpOnly/SameSite cookies; a
+deliberately configured HTTPS proxy origin additionally enables Secure. A proxy
+must preserve Host and Origin. Remote access, TLS and proxy setup are not
+automated or verified end to end.
 
-**Selbst gehostet bedeutet nicht vollständig lokal:** Bei einer Hermes-Suche können Profil,
-Bewertungen, Notizen und relevante Bestandsstellen an den eingerichteten Modellanbieter
-oder weitere Recherche-Dienste übertragen werden. Datenschutz und Kosten dieser Dienste
-selbst prüfen. Die Web-App hat keine Telemetrie, externen Fonts oder automatischen Logoabruf;
-ein bewusster Klick auf externe Links erzeugt eine Verbindung zu deren Betreiber.
+**Self-hosted does not mean entirely local:** during Hermes research, your profile,
+feedback, notes and relevant existing jobs may be sent to the configured model
+provider or other research services. Review those services' privacy terms and
+costs. The app has no telemetry, external fonts or automatic logo fetching.
+Following an external link deliberately connects to its operator.
 
-Backup: zunächst ausstehende Browseraktionen synchronisieren und die App sowie den
-eigenen Import anhalten. Dann eigenes Datenverzeichnis und private Konfiguration zusammen
-sichern; SQLite-WAL-Dateien gegebenenfalls mit einschließen. Kopien mit Passwortprüfwerten
-und Sitzungen geschützt aufbewahren. Für Wiederherstellung denselben markierten Datenpfad
-konfigurieren, alle Prozesse vor dem Kopieren stoppen und danach neu starten.
+For backups, synchronize pending browser actions and stop the app and your
+import process. Back up your runtime directory and private configuration together,
+including SQLite WAL files where applicable. Protect copies containing password
+verifiers and sessions. For recovery, configure the same marked data path, stop
+all processes before copying, then restart.
 
-App stoppen mit Ctrl+C. Es wurde kein LaunchAgent installiert. Optionale Hermes-Aufträge
-und deren dedizierte Shims gezielt entfernen, siehe [docs/HERMES.md](docs/HERMES.md).
-Projektcode kann anschließend entfernt werden, nachdem eigene Daten gesichert wurden.
-Persönliche Konfiguration und Laufzeitdaten werden nicht automatisch gelöscht.
+Stop the app with Ctrl+C. No LaunchAgent is installed. Remove optional dedicated
+Hermes jobs and shims individually as described in [the Hermes guide](docs/HERMES.md).
+Project code can be removed after backing up your data. Personal configuration
+and runtime data are never automatically deleted.
 
-## Typische Probleme und Grenzen
+## Troubleshooting and limitations
 
-| Problem | Abhilfe |
+| Problem | Action |
 | --- | --- |
-| Konfiguration fehlt | `jobfind.py init`; `--config` vor dem Unterbefehl setzen. |
-| Port belegt | Eigene Instanz stoppen oder freien eigenen Port konfigurieren; `doctor` prüfen. |
-| Passwort fehlt/vergessen | `jobfind.py password`; nur eigene Konfiguration verwenden. |
-| Fremdes Datenverzeichnis | Neues leeres Verzeichnis wählen, keine Schutzmarkierung in fremde Daten kopieren. |
-| Keine importierten Treffer | Region, Ausschlussangaben, Tagesbudget und Lauf-ID prüfen. Beispiele enthalten fiktive Orte. |
-| Ungültige Ausgabe | Schema prüfen; korrigierte Datei als neuen Lauf liefern. Kein Markdown-Freitext oder `[SILENT]`. |
-| Hermes-Ordner fehlt | Eigene Auftragskennung und tatsächlichen Ausgabeordner konfigurieren; keine fremden Aufträge verwenden. |
-| Offline nicht verfügbar | Lokal oder HTTPS öffnen, online erneut laden und Speichermeldung abwarten. Browser unterstützt/speichert ggf. keine Offline-Daten. |
-| 401/403 bei Synchronisierung | Neu anmelden; korrekten Ursprung/Port verwenden. Kein CORS für fremde Ursprünge. |
-| Bild-/Home-Bildschirm-Symbol fehlt | Neutrale SVG-Icons statt ungeprüfter Rasterassets; Plattformdarstellung manuell prüfen. |
+| Missing configuration | Run `jobfind.py init`; place `--config` before the subcommand. |
+| Port already in use | Stop your own instance or configure another free port; check `doctor`. |
+| Missing/forgotten password | Run `jobfind.py password` with your own configuration. |
+| Unrelated data directory | Choose a new empty directory; never add a runtime marker to unrelated data. |
+| No imported jobs | Check locations, exclusions, daily budget and run identity. Examples use fictional places. |
+| Invalid output | Check the schema and provide corrected content as a new run. No unstructured Markdown or `[SILENT]`. |
+| Missing Hermes output folder | Configure your own job ID and its actual output directory; do not reuse other jobs. |
+| Offline unavailable | Use loopback or HTTPS, reload online and wait for the storage confirmation. Browser support or storage may be limited. |
+| 401/403 during synchronization | Sign in again and use the correct origin/port. Other origins are not allowed by CORS. |
+| Missing Home Screen icon | Neutral SVG icons are supplied; check platform rendering manually. |
 
-Der Teilzeitfilter sucht die ausdrückliche Textangabe „Teilzeit“; Wochenstunden allein
-beweisen kein Teilzeitmodell. Scores stammen vom Ergebnislieferanten und sind keine
-objektive Qualitätsmessung. Firmenporträts bleiben unvollständig, solange keine belegten
-Quellen vorliegen. Die ursprüngliche automatische Logosuche ist in diesem Paket deaktiviert;
-neutrale Symbole vermeiden ungeklärte Bildrechte und externe Abrufe.
+The part-time filter looks for the explicit German word “Teilzeit”; weekly hours
+alone do not prove a part-time arrangement. Scores come from the result supplier
+and are not objective quality measurements. Company profiles remain incomplete
+without verified sources. The original automatic logo search is disabled in this
+package; neutral icons avoid additional image-rights questions and external requests.
 
-## Prüfungen und Veröffentlichung
+## Checks and publication
 
 ```sh
 .venv/bin/python tests/check_release.py
 .venv/bin/python tests/check_setup.py
-# Optionaler Node.js-Prüflauf, für den App-Betrieb nicht benötigt:
+# Optional Node.js check; not required to run the app:
 node --experimental-vm-modules tests/check_offline.mjs
 .venv/bin/python scripts/tools/audit_release.py
 ```
 
-Alle Prüfungen verwenden erfundene Daten und getrennte temporäre Verzeichnisse.
-Die Offline-Prüfung simuliert Browser-Speicher und Übertragung; sie ersetzt keine reale
-Browserprüfung. Einzelheiten und verbleibende Freigaben stehen in
-[docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md).
+Checks use fictional data in separate temporary directories. The setup check starts
+a temporary demo on port 8124; stop your own demo before running that check.
+The offline check simulates browser storage and transfer, so it does not replace
+actual browser testing. See [test status and pending checks](docs/RELEASE_CHECKLIST.md).
 
-Eigene Konfiguration, Laufzeitdaten und `.venv` sind ausgeschlossen. Vor einem Upload
-zusätzlich alle vorgesehenen Dateien und die Git-Historie prüfen; `.gitignore` allein
-reicht nicht. Der Audit prüft eine feste Dateiliste und gängige Geheimnismuster, ersetzt
-jedoch keine abschließende Sichtung. Die Prüfskripte laden nichts hoch und veröffentlichen nichts.
+Personal configuration, runtime data and `.venv` are excluded. Review all intended
+files and Git history before uploading; `.gitignore` alone is insufficient. The
+audit checks an explicit file list and common secret patterns, but does not
+replace final human review. The check scripts do not upload or publish anything.
 
-## Lizenzstatus
+## License
 
-Der eigene Projektcode und die zugehörige Dokumentation stehen auf ausdrückliche Wahl
-des Projekteigentümers unter der **MIT-Lizenz**. Der vollständige Lizenztext samt
-Copyright-Hinweis steht in [LICENSE](LICENSE), der offizielle Text bei der
-[Open Source Initiative](https://opensource.org/license/mit).
+The project code and documentation are licensed under **MIT**, as explicitly
+chosen by the project owner. See [LICENSE](LICENSE) for the complete license and
+copyright notice, and the [Open Source Initiative](https://opensource.org/license/mit)
+for its official text.
 
-Die vorhandenen Lucide-/Feather-SVG-Icons behalten ihre ISC-/MIT-Hinweise in
-`LICENSE-lucide.txt`; [Herkunft und Assets](THIRD_PARTY.md). Hermes ist eine externe
-Voraussetzung mit eigener Lizenz und wird nicht kopiert.
+Lucide/Feather SVG icons retain their ISC/MIT notices in `LICENSE-lucide.txt`.
+See [third-party notices and asset provenance](THIRD_PARTY.md). Hermes is an
+external prerequisite with its own license and is not bundled.

@@ -1,42 +1,54 @@
-# Fremde Bestandteile und Herkunft
+# Third-party notices and provenance
 
-## SVG-Oberflächenicons
+## SVG interface icons
 
-Die übernommenen Inline-SVG-Pfade in `index.html`, `login.html` und `assets/ui.js`
-stammen laut bestehendem Quellhinweis aus Lucide; einige Formen sind von Feather abgeleitet.
-Der ursprüngliche Kommentar nennt v1.47.0; diese konkrete Versionszuordnung wurde nicht
-unabhängig belegt. Es wird kein Lucide-Paket nachgeladen. Lizenztexte und Urheberhinweise
-aus dem Ausgangsprojekt bleiben vollständig in `LICENSE-lucide.txt` erhalten.
+The retained inline SVG paths in `index.html`, `login.html` and `assets/ui.js`
+are attributed to Lucide by existing source comments; some shapes derive
+from Feather. The original comment names v1.47.0, but that exact version
+attribution was not independently established. No Lucide package is loaded
+at runtime. Existing license texts and copyright notices are preserved
+in full in `LICENSE-lucide.txt`.
 
-Die [offizielle Lucide-Lizenzseite](https://lucide.dev/license) wurde am 30.09.2026 geprüft:
-ISC für Lucide, MIT für die dort aufgeführten Feather-Ableitungen. Dazu gehören unter
-anderem Such-, Link-, Papierkorb-, Schließen- und Mond-Icons. Die Hinweise gelten für
-diese Fremdbestandteile zusätzlich zur MIT-Lizenz für Jobfind selbst.
+The [official Lucide license page](https://lucide.dev/license) was checked on
+September 30, 2026: ISC for Lucide, MIT for the listed Feather-derived icons.
+These include search, link, trash, close and moon icons. Those notices apply
+to the third-party components in addition to Jobfind's own MIT license.
 
-## Schrift und Unternehmensbilder
+## Fonts and company images
 
-Das Paket verwendet Systemschriften. Die ursprünglichen privaten DIN-Pro-Dateien
-wurden mangels nachgewiesener Weitergaberechte nicht übernommen. Kuratierte Firmenlogos,
-Brand-Rasterbilder und mögliche private Bildquellen wurden ebenfalls nicht übernommen.
-Der automatische Logoabruf samt optionalen Bildbibliotheken ist nicht Bestandteil
-dieses Pakets. Unternehmen erhalten ein neutrales Oberflächensymbol.
+The package uses system fonts. The original private DIN Pro font files were
+excluded because redistribution rights were not established. Curated company
+logos, raster branding and potentially private image sources were also excluded
+as app assets. Automatic logo fetching and its optional image libraries are
+not included. Companies use a neutral interface icon.
 
-`assets/brand-mark.svg` und `favicon.svg` wurden für dieses Paket aus einfachen geometrischen
-Formen erstellt; keine externen Bilddateien oder Herstellerlogos dienen als Demo-Assets.
-Die Beispieldaten und Unternehmensporträts sind erfunden, alle externen Beispiellinks
-verwenden `example.org`. Das SVG-App-Icon muss auf mobilen Plattformen manuell geprüft werden.
+`assets/brand-mark.svg` and `favicon.svg` were created for this package using
+simple geometric shapes. No external images or manufacturer logos are used
+as demo assets. Example jobs and company profiles are fictional; all external
+example links use `example.org`. Mobile rendering of the SVG app icon still
+needs manual verification.
 
-## Laufzeit
+## Live screenshots
 
-Python verwendet ausschließlich die Standardbibliothek. Keine vendorten Bibliotheken,
-Webfonts, CDN-Skripte, Frameworks oder heruntergeladenen Abhängigkeiten liegen im Paket.
-Python, SQLite und der optionale Node.js-Testinterpreter bleiben extern installiert.
-Hermes wird nicht kopiert und ist nur für automatische Recherche erforderlich;
-seine Lizenz gilt unabhängig für die jeweilige Hermes-Installation.
+`Screen-1.png` and `Screen-2.png` were supplied by the project owner and included
+unchanged at the owner's request. They document the live installation with real
+job listings, company names, logos and its existing typography. These elements
+are shown only within the screenshots; their source assets are not bundled with
+the app. Third-party trademarks and content remain subject to their respective
+owners' rights and are not granted a new license by Jobfind's MIT license.
+The screenshots illustrate appearance, not the completion of functional tests.
 
-## Eigener Code
+## Runtime
 
-Der eigene Code und die zugehörige Dokumentation stehen gemäß ausdrücklicher Wahl
-des Projekteigentümers unter der MIT-Lizenz in `LICENSE`. Der Copyright-Hinweis lautet
-`Copyright (c) 2026 Jobfind contributors`. Die gesonderten Hinweise für Lucide/Feather
-bleiben vollständig erhalten; die Lizenz der externen Hermes-Installation bleibt unabhängig.
+Python uses only its standard library. No vendored libraries, webfonts, CDN
+scripts, frameworks or downloaded dependencies are included. Python, SQLite
+and the optional Node.js test interpreter are installed separately.
+Hermes is not copied into the project and is required only for automated
+research. Its own license applies independently to the installed version.
+
+## Project code
+
+The code and documentation are MIT-licensed, as explicitly chosen by the
+project owner. See `LICENSE`. The copyright notice is
+`Copyright (c) 2026 Jobfind contributors`. Separate Lucide/Feather notices
+are preserved; the external Hermes installation has its own license.

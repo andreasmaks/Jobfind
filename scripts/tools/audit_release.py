@@ -2,13 +2,16 @@
 """Fail closed on unintended publication files; print locations, never secret values."""
 from __future__ import annotations
 
+import hashlib
 import re
+import struct
 import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 PUBLIC_FILES = set("""
-.gitignore LICENSE LICENSE-lucide.txt README.md THIRD_PARTY.md jobfind.py
+.gitignore LICENSE LICENSE-lucide.txt README.md README.de.md THIRD_PARTY.md jobfind.py
+Screen-1.png Screen-2.png
 index.html login.html favicon.svg manifest.webmanifest sw.js requirements.txt
 assets/api.js assets/app.js assets/brand-mark.svg assets/login.js assets/offline.js
 assets/styles.css assets/theme.js assets/ui.js config/example.json
@@ -19,6 +22,10 @@ scripts/tools/set_password.py scripts/tools/audit_release.py scripts/start_serve
 tests/check_release.py tests/check_setup.py tests/check_offline.mjs
 docs/HERMES.md docs/IMPORT_FORMAT.md docs/RELEASE_CHECKLIST.md
 """.split())
+REVIEWED_PNGS = {
+    "Screen-1.png": "cb256e6fbd888622b750b23d1e38fd1fc1739795bc13b4f85c3d40eb9ba27176",
+    "Screen-2.png": "66ebfc7f97b195367375076a02962ec8d30320eaa2c672917cc27ed3cb1b6d85",
+}
 PATTERNS = {
     "private absolute user path": re.compile(rb"/Users/[A-Za-z0-9_.-]+/"),
     "private key": re.compile(rb"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
@@ -35,6 +42,21 @@ def scan(data: bytes, location: str, findings: list[str]) -> None:
     for label, pattern in PATTERNS.items():
         if pattern.search(data):
             findings.append(f"{location}: {label}")
+
+
+def review_content(data: bytes, name: str, location: str, findings: list[str]) -> None:
+    if name in REVIEWED_PNGS:
+        valid_header = (len(data) >= 24 and data[:8] == b"\x89PNG\r\n\x1a\n"
+                        and data[8:16] == b"\x00\x00\x00\rIHDR"
+                        and struct.unpack(">II", data[16:24]) == (3708, 2560))
+        if not valid_header or hashlib.sha256(data).hexdigest() != REVIEWED_PNGS[name]:
+            findings.append(f"{location}: image differs from visually reviewed original")
+        return
+    try:
+        data.decode("utf-8")
+    except UnicodeError:
+        findings.append(f"{location}: unreviewed binary content")
+    scan(data, location, findings)
 
 
 def main() -> int:
@@ -57,11 +79,7 @@ def main() -> int:
             findings.append(f"{name}: unexpected publication file")
             continue
         data = path.read_bytes()
-        try:
-            data.decode("utf-8")
-        except UnicodeError:
-            findings.append(f"{name}: unreviewed binary content")
-        scan(data, name, findings)
+        review_content(data, name, name, findings)
     for name in sorted(PUBLIC_FILES - observed):
         findings.append(f"{name}: missing publication file")
     commits = 0
@@ -80,7 +98,9 @@ def main() -> int:
             kind = run_git("cat-file", "-t", oid).stdout.strip()
             if kind == b"blob" and label not in PUBLIC_FILES:
                 findings.append(f"history/{label}: unintended historical file")
-            if kind in {b"blob", b"commit", b"tag"}:
+            if kind == b"blob":
+                review_content(run_git("cat-file", "-p", oid).stdout, label, "history/" + label, findings)
+            elif kind in {b"commit", b"tag"}:
                 scan(run_git("cat-file", "-p", oid).stdout, "history/" + label, findings)
     for finding in sorted(set(findings)):
         print("REVIEW:", finding)

@@ -1,103 +1,106 @@
-# Ergebnisformat 1
+# Result format 1
 
-Das bestehende JSON-Grundformat bleibt erhalten. `schema_version` ist die ganze Zahl `1`.
-Die obere Ebene ist ein Objekt mit folgenden Feldern; unbekannte Felder und doppelte
-JSON-Schlüssel werden abgewiesen:
+The existing JSON structure is retained. `schema_version` is the integer `1`.
+The top level is an object with these fields; unknown fields and duplicate
+JSON keys are rejected:
 
-| Feld | Regel |
+| Field | Rule |
 | --- | --- |
-| `schema_version` | Pflicht: Integer 1. |
-| `run_status` | Pflicht: `ok`, `empty` oder `error`. |
-| `jobs` | Pflicht: Array, höchstens 100 Objekte. `ok` verlangt mindestens ein Objekt; andere Status verlangen `[]`. |
-| `company_profiles` | Optional: höchstens acht Profile. Bei `error` muss das Array leer sein. |
-| `error` | Optional: kurzer String bis 1000 Zeichen. Bei `error` nicht leer; keine Geheimnisse. |
-| `run_id` | Optional für JSON: stabile eigene Laufkennung, 1–120 Zeichen aus Buchstaben, Ziffern, `_ . : -`. |
-| `ran_at` | Optional: ISO-8601-Zeitstempel mit ausdrücklicher Zeitzone. |
+| `schema_version` | Required: integer 1. |
+| `run_status` | Required: `ok`, `empty` or `error`. |
+| `jobs` | Required: array of at most 100 objects. `ok` requires at least one object; other statuses require `[]`. |
+| `company_profiles` | Optional: at most eight profiles. Must be empty for `error`. |
+| `error` | Optional: string up to 1000 characters. Required to be nonempty for `error`; do not include secrets. |
+| `run_id` | Optional for JSON: your stable run identifier, 1–120 characters consisting of letters, digits, `_ . : -`. |
+| `ran_at` | Optional: ISO-8601 timestamp with an explicit timezone. |
 
-Ein JSON-Lauf mit `run_id` wird genau einmal verarbeitet. Ohne ID verwendet Jobfind den
-SHA-256-Hash der vollständigen Datei; eine andere Formatierung ändert diese Laufidentität,
-aber nicht die Stellendublettenprüfung. Bei Hermes-Markdown verwendet Jobfind immer
-konfigurierte Hermes-ID plus Dateizeitstempel, unabhängig von vom Modell gelieferten IDs.
-Die Zeit aus dem Dateinamen wird in der konfigurierten, zu Hermes passenden Zeitzone gelesen.
+A JSON run with `run_id` is processed once. Without an ID, Jobfind uses the SHA-256
+hash of the entire file. Different formatting changes the run identity but not
+job deduplication. For Hermes Markdown, Jobfind always uses the configured Hermes
+ID plus the filename timestamp, independently of model-supplied IDs. The filename
+time is interpreted in the configured timezone, which must match Hermes.
 
-Fehlerhafte Dateien bis 1 MiB erhalten einen neutralen Fehlerdatensatz `invalid_result`,
-wenn sie zur Ergebnisart/Identität passen. Übergröße, fehlender Zugang zur Datei oder
-ungültige Hermes-Dateinamen werden bereits davor abgewiesen. Protokolle enthalten keine
-ungeprüften Inhalte der Datei. Bereits verarbeitete Läufe, einschließlich ungültiger
-Hermes-Läufe, werden nicht bei jedem Scan wieder angewandt. Korrekturen als **neuen Lauf**
-liefern; vor dem Erzeugen einer neuen ID Fehler beheben.
+Malformed files up to 1 MiB receive a neutral `invalid_result` error record when
+their result type and identity can be established. Oversized files, inaccessible
+files and invalid Hermes filenames are rejected earlier. Logs do not include
+untrusted file contents. Processed runs, including invalid Hermes runs, are not
+reapplied on every scan. Supply corrections as a **new run**, fixing the error
+before generating a new ID.
 
-## Stellenfelder
+## Job fields
 
-`title`, `company`, `original_url` sind erforderlich und dürfen nicht leer sein.
-`original_url` muss HTTP(S) mit Host und ohne Zugangsdaten sein. Weitere erlaubte Felder:
+`title`, `company` and `original_url` are required and must be nonempty.
+`original_url` must use HTTP(S), have a host and contain no credentials.
+Other allowed fields are:
 
 - `source`, `source_id`, `location`, `remote`, `hours`, `employment_type`.
-- `posted_at`, `checked_at`, `found_at` als Textangaben (Datum nicht automatisch verifiziert).
-- `summary`, `fit`, `concerns` als reine Texte.
-- `score`: optional, null oder ganze Zahl 1–10; Bool und Zahlstrings sind ungültig.
-- `availability`: `active`, `unknown` oder `closed`; Standard `unknown`.
-- `work_model`: `remote`, `hybrid`, `onsite` oder `unknown`; Standard `unknown`.
+- `posted_at`, `checked_at`, `found_at` as text; dates are not automatically verified.
+- `summary`, `fit`, `concerns` as plain text.
+- `score`: optional, null or an integer from 1–10; booleans and numeric strings are invalid.
+- `availability`: `active`, `unknown` or `closed`; default `unknown`.
+- `work_model`: `remote`, `hybrid`, `onsite` or `unknown`; default `unknown`.
 
-Alle Textfelder sind Strings mit maximal 4000 Zeichen. Speicherung begrenzt einzelne
-Felder zusätzlich passend zur Anzeige, z. B. Titel 250, Firma 180, Ort 240 und Zusammenfassung
-2000 Zeichen. `work_model` ist ein Importmerkmal für die ausdrücklich erlaubte Remote-Ausnahme;
-die App zeigt das beschreibende `remote`-Feld. Es gibt keine automatisch abgeleitete
-Remote-Ausnahme aus einem frei formulierten Text.
+All text fields must be strings of at most 4000 characters. Storage applies
+additional display-related limits, such as 250 characters for titles, 180 for
+companies, 240 for locations and 2000 for summaries. `work_model` is used by the
+importer for the explicitly enabled remote-location exception; the app displays
+the descriptive `remote` field. Free text does not automatically establish a
+remote exception.
 
-URLs werden normalisiert: Fragmente, bekannte Tracking-Parameter und `utm_*` fallen weg.
-Eine verlässliche `source_id` wird zusammen mit der Quell-Domain zur Identität; ohne ID
-ist die kanonische URL maßgeblich. Zusätzlich wird die URL gegen alle gespeicherten
-Stellen geprüft. Ein doppelter Datensatz wird aktualisiert, während Erstfund, Status,
-Like und Ablehnungsfeedback erhalten bleiben. Abgelehnte konkrete Stellen werden weder
-über dieselbe URL noch dieselbe Quell-ID wieder sichtbar. Unterschiedliche Domains/URLs
-ohne verlässliche ID können semantisch gleiche Stellen bleiben; keine inhaltliche
-Dubletten-Heuristik oder automatische Zusammenführung wird behauptet.
+URL normalization removes fragments, known tracking parameters and `utm_*`.
+A reliable `source_id` is scoped to the source domain; without it, the canonical
+URL identifies the job. URLs are also compared with all stored jobs. Duplicate
+records are updated while retaining their first-seen time, status, likes and
+rejection feedback. Rejected specific jobs do not reappear through the same URL
+or source ID. Different domains/URLs without reliable IDs can still refer to
+the same job; semantic deduplication and automatic merging are not provided.
 
-## Unternehmensprofile
+## Company profiles
 
 ```json
 {
   "company": "Demo Nordlicht Werkstatt",
-  "description": "Erfundenes Demo-Unternehmen für Teamprozesse.",
-  "products": "Erfundene Organisationshilfen.",
+  "description": "A fictional company supporting team processes.",
+  "products": "Fictional organization tools.",
   "source_url": "https://example.org/demo-about",
   "status": "ready"
 }
 ```
 
-Nur `company`, `description`, `products`, `source_url`, `status` sind erlaubt. Texte maximal
-2000 Zeichen. `status` ist `ready` oder `unknown`. Bei `ready` sind Beschreibung,
-Produkte/Dienstleistungen und HTTP(S)-Quellenlink erforderlich. `unknown` liefert keine
-gespeicherten Vermutungen; Textfelder werden leer gehalten. Nur Profile bereits bekannter
-oder im selben Lauf neu importierter Unternehmen werden gespeichert. Nicht offengelegte
-Arbeitgeber werden nicht geraten. Ein `unknown`-Update verdrängt kein vorhandenes `ready`-Profil.
-Profile sind geteilt zwischen Stellen desselben wörtlich normalisierten Firmennamens.
+Only `company`, `description`, `products`, `source_url` and `status` are allowed.
+Text fields allow at most 2000 characters. `status` is `ready` or `unknown`.
+`ready` requires a description, products/services and an HTTP(S) source link.
+For `unknown`, descriptive fields are kept empty rather than storing guesses.
+Only profiles for already known companies or companies newly imported in the
+same run are stored. Undisclosed employers are not guessed. An `unknown` update
+does not replace an existing `ready` profile. Profiles are shared by jobs whose
+literal company names normalize to the same value.
 
-## Status und Fehler
+## Status and errors
 
 ```json
 {"schema_version":1,"run_status":"empty","jobs":[],"company_profiles":[],"error":""}
 ```
 
 ```json
-{"schema_version":1,"run_status":"error","jobs":[],"company_profiles":[],"error":"Erfundener Testfehler: Recherchewerkzeug nicht erreichbar."}
+{"schema_version":1,"run_status":"error","jobs":[],"company_profiles":[],"error":"Fictional test error: research tool unavailable."}
 ```
 
-`ok` bleibt als erfolgreicher Quelllauf erkennbar, auch wenn Regionsfilter oder Tageslimit
-alle neuen Stellen ausschließen. `region_filtered` in der CLI-Ausgabe zählt regionale
-Ausschlüsse; `count` zählt neue gespeicherte Stellen. `already_imported` unterscheidet
-einen bereits verarbeiteten Lauf. `empty` ist kein Fehler. `error` lässt vorhandene Daten
-unverändert und führt bei einem erstmaligen Einzelimport zu Exit-Code 1. Auch ein ungültiger
-Eintrag macht den ganzen Lauf ungültig, bevor Jobs oder Firmenprofile verändert werden.
+`ok` remains a successful source run even when regional filters or the daily
+limit exclude every new job. CLI output `region_filtered` counts location
+exclusions; `count` counts newly stored jobs. `already_imported` identifies an
+already processed run. `empty` is not an error. `error` preserves existing data
+and gives exit code 1 for an initial single-file import. Any invalid record
+invalidates the entire run before jobs or company profiles are changed.
 
-Die verbleibenden Tagesplätze werden **in derselben SQLite-Schreibtransaktion** wie der
-Import ermittelt, in der konfigurierten Zeitzone anhand der tatsächlichen Importzeit.
-Wiederholungen und aktualisierte Bestandsstellen zählen nicht erneut. Neue Kandidaten
-werden nach Score sortiert. Wegen des Tageslimits übersprungene neue Stellen werden nicht
-automatisch auf spätere Tage verschoben. Firmenprofile dürfen bei `empty` aktualisiert
-werden; bei `error` nicht. Es werden niemals bestehende Stellen gelöscht, weil ein Lauf
-keine Stellen zurückliefert. Fehlerstatus und letzte erfolgreiche Suche sind getrennt.
+Remaining daily slots are determined **inside the same SQLite write transaction**
+as the import, using the actual import time in the configured timezone. Repeated
+runs and existing-job updates do not count again. New candidates are sorted by
+score. Jobs skipped because of the daily limit are not automatically deferred
+to later days. Company profiles may be updated in an `empty` run, but not in an
+`error` run. Existing jobs are never deleted because a run returns no jobs.
+Error status and the last successful search are recorded separately.
 
-Maximale Dateigröße: 1 MiB. Nur UTF-8-JSON und die geprüfte Hermes-Markdown-Hülle werden
-gelesen; kein Pickle, kein Python aus Ergebnissen, kein historisches Freitext-Raten.
+Maximum file size: 1 MiB. Only UTF-8 JSON and the inspected Hermes Markdown
+wrapper are accepted. Results cannot contain executable Python or Pickle;
+historical free text is not interpreted heuristically.
