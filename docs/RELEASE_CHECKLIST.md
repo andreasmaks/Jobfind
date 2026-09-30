@@ -69,7 +69,7 @@ through your own deliberately configured SSH tunnel; no new public endpoint is r
 - On desktop and a narrow mobile screen: check cards, filters, details, source links, dialogs and light/dark appearance.
 - With the keyboard: check visible focus, cards/buttons, closing dialogs and undo; check the operating system's reduced-motion option.
 - Online: bookmark and like a job; reject another for distance and hours with a fictional note, then undo.
-- Wait for offline confirmation. Disconnect, reload, check details/filters, and store further actions including undo.
+- Keep the page open briefly online; no permanent offline-status banner should appear. Disconnect, reload, check details/filters, and store further actions including undo. Pending actions and errors should remain visible.
 - Reconnect: the pending count should reach zero, and server state/context should reflect the final actions. Interrupted transfers must retain the queue.
 - Sign out after synchronization and verify the offline copy is removed. For Safari/Home Screen mode, prepare that app context online and test it offline separately.
 

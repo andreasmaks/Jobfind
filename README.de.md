@@ -211,8 +211,10 @@ Dubletten und Ablehnungen unabhängig von diesen Kontextgrenzen.
 
 ## Offline und Synchronisierung
 
-Online anmelden und die Meldung **„Auf diesem Gerät offline verfügbar“** abwarten.
-App-Dateien und der aktuelle Stellenstand liegen dann im Browser. Offline sind Suche,
+Online anmelden und die Seite kurz geöffnet lassen, damit App-Dateien und der aktuelle
+Stellenstand im Browser gespeichert werden können. Die Vorbereitung läuft im Hintergrund
+ohne dauerhafte Statusmeldung; offene Änderungen und Fehler bleiben sichtbar. Vor der
+Offline-Nutzung die Verbindung trennen und durch Neuladen auf dem Gerät prüfen. Offline sind Suche,
 Filter und Details verfügbar. Merken, Likes, Ablehnen, Ausblenden und Rückgängig werden
 lokal gespeichert und nach der nächsten Verbindung in Reihenfolge übertragen.
 Netzwerkfehler erhalten die Warteschlange; Wiederholungen sind für die Serveraktionen

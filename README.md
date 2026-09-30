@@ -210,9 +210,11 @@ regardless of those context limits.
 
 ## Offline use and synchronization
 
-Sign in online and wait for **“Auf diesem Gerät offline verfügbar”** (available
-offline on this device). App files and the current job snapshot are then stored
-in the browser. Search, filters and details are available offline. Bookmarks,
+Sign in online and keep the page open briefly so app files and the current job
+snapshot can be stored in the browser. Preparation runs in the background without
+a permanent status banner; pending changes and errors are still shown. Before
+relying on offline access, disconnect and reload to check your device. Search,
+filters and details are available offline. Bookmarks,
 likes, rejections, hiding and undo are stored locally and sent in order after
 reconnection. Network failures preserve the queue; server actions are idempotent
 on retry. An action may be skipped if its job is no longer available; the app

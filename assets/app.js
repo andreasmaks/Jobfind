@@ -55,30 +55,21 @@ function updateRunNote() {
     : "";
 }
 
-function offlineDate(value) {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "unbekannt" : new Intl.DateTimeFormat("de-DE", {
-    dateStyle: "medium", timeStyle: "short",
-  }).format(date);
-}
-
 function updateOfflineState() {
   const note = $("offline-state");
-  note.hidden = false;
-  note.classList.toggle("is-offline", state.offline);
   const pending = state.pendingActions.length;
-  if (state.offline) {
-    note.textContent = `Offline · Stand: ${offlineDate(state.savedAt)}. ${pending ? `${pending} Änderung${pending === 1 ? "" : "en"} wird beim Verbinden übertragen.` : "Favoriten, Likes und Löschungen werden auf diesem Gerät gespeichert."} Originalanzeigen brauchen Internet.`;
+  note.hidden = !pending && !syncInFlight && !state.syncError;
+  note.classList.toggle("is-offline", state.offline);
+  if (state.offline && pending) {
+    note.textContent = `${pending} Änderung${pending === 1 ? "" : "en"} lokal gespeichert. Wird beim Verbinden übertragen.`;
   } else if (syncInFlight) {
     note.textContent = `${pending} Offline-Änderung${pending === 1 ? "" : "en"} wird übertragen …`;
   } else if (state.syncError) {
     note.textContent = `${pending ? `${pending} Änderung${pending === 1 ? "" : "en"} noch nicht übertragen. ` : ""}${state.syncError}`;
   } else if (pending) {
     note.textContent = `${pending} Änderung${pending === 1 ? "" : "en"} wartet auf Übertragung.`;
-  } else if (state.offlineReady) {
-    note.textContent = `Auf diesem Gerät offline verfügbar · Stand: ${offlineDate(state.savedAt)}.`;
   } else {
-    note.textContent = "Offline-Kopie wird vorbereitet …";
+    note.textContent = "";
   }
   document.body.classList.toggle("is-offline", state.offline);
   $("undo-delete").disabled = mutationPending || syncInFlight;

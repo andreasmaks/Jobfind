@@ -2,7 +2,7 @@ const SHELL = "jobfind-shell-v4";
 const LOGOS = "jobfind-logos-v1";
 const PREFIX = "jobfind-";
 const CORE = [
-  "/", "/assets/app.js?v=4", "/assets/api.js?v=4", "/assets/offline.js?v=4", "/assets/ui.js",
+  "/", "/assets/app.js?v=5", "/assets/api.js?v=4", "/assets/offline.js?v=4", "/assets/ui.js",
   "/assets/theme.js", "/assets/styles.css?v=4", "/assets/local.css", "/assets/brand-mark.svg", "/favicon.svg",
   "/manifest.webmanifest",
 ];

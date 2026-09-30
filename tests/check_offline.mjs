@@ -119,6 +119,46 @@ function functionText(name, nextName) {
   return app.slice(start, end).replace(/async\s*$/, "").trim();
 }
 const funcs = functionText("applyPendingActions", "queueAction") + "\n" + functionText("syncPendingActions", "updateSummary");
+
+// Offline preparation and a healthy offline snapshot stay quiet; pending work/errors do not.
+const note = { hidden: false, textContent: "stale", classList: { toggle() {} } };
+const undo = { disabled: false };
+const statusCtx = vm.createContext({
+  state: { offline: false, offlineReady: false, pendingActions: [], syncError: "" },
+  syncInFlight: false, mutationPending: false,
+  $: (id) => id === "offline-state" ? note : undo,
+  document: { body: { classList: { toggle() {} } } },
+});
+vm.runInContext(functionText("updateOfflineState", "queueOfflineCopy"), statusCtx);
+const updateStatusNote = () => vm.runInContext("updateOfflineState()", statusCtx);
+for (const [offline, ready] of [[false, false], [false, true], [true, true]]) {
+  Object.assign(statusCtx.state, { offline, offlineReady: ready });
+  updateStatusNote();
+  assert.equal(note.hidden, true, "Routine offline status must stay hidden");
+  assert.equal(note.textContent, "");
+}
+statusCtx.state.pendingActions = [{ id: 1 }];
+updateStatusNote();
+assert.equal(note.hidden, false);
+assert.match(note.textContent, /1 Änderung lokal gespeichert/);
+statusCtx.state.offline = false;
+updateStatusNote();
+assert.match(note.textContent, /wartet auf Übertragung/);
+statusCtx.syncInFlight = true;
+updateStatusNote();
+assert.match(note.textContent, /wird übertragen/);
+assert.equal(undo.disabled, true);
+statusCtx.syncInFlight = false;
+statusCtx.state.pendingActions = [];
+statusCtx.state.syncError = "Übertragung fehlgeschlagen";
+updateStatusNote();
+assert.equal(note.hidden, false);
+assert.equal(note.textContent, statusCtx.state.syncError);
+statusCtx.state.syncError = "";
+updateStatusNote();
+assert.equal(note.hidden, true);
+assert.equal(undo.disabled, false);
+
 const queueCtx = vm.createContext({ console });
 const calls = [];
 let failOn = "restore";
@@ -162,4 +202,6 @@ for (const request of [
 ]) {
   listeners.get("fetch")({ request, respondWith() { throw new Error("Unexpected caching"); } });
 }
-console.log("Offline checks passed: atomic storage, ordered retry, undo, auth boundary, logout, shell.");
+const appPath = source("index.html").match(/src="([^\"]*\/app\.js\?v=\d+)"/)[1];
+assert(source("sw.js").includes(`"${appPath}"`), "Shell must cache the current app entry point");
+console.log("Offline checks passed: quiet status, atomic storage, ordered retry, undo, auth boundary, logout, shell.");
