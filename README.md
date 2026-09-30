@@ -286,7 +286,7 @@ Browserprüfung. Einzelheiten und verbleibende Freigaben stehen in
 Eigene Konfiguration, Laufzeitdaten und `.venv` sind ausgeschlossen. Vor einem Upload
 zusätzlich alle vorgesehenen Dateien und die Git-Historie prüfen; `.gitignore` allein
 reicht nicht. Der Audit prüft eine feste Dateiliste und gängige Geheimnismuster, ersetzt
-jedoch keine abschließende Sichtung. Es wird nichts hochgeladen oder veröffentlicht.
+jedoch keine abschließende Sichtung. Die Prüfskripte laden nichts hoch und veröffentlichen nichts.
 
 ## Lizenzstatus
 

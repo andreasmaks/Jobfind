@@ -100,3 +100,17 @@ Die technische Vorbereitung kann unabhängig von diesen Entscheidungen abgeschlo
 werden. Eine pauschale vollständige Veröffentlichungsreife wird nicht behauptet.
 Der erste Upload erfolgt mit den oben dokumentierten offenen Browser- und
 Rechercheprüfungen. Ein gesonderter Release oder Pull Request ist nicht Teil dieses Uploads.
+
+## Veröffentlichungsprüfung am 30.09.2026
+
+Das öffentliche Repository ist unter https://github.com/andreasmaks/Jobfind erreichbar.
+Der erste vollständige Upload enthält genau die 39 geprüften Veröffentlichungsdateien;
+sein Git-Baum stimmt exakt mit der vorbereiteten Version überein. Der Projektordner
+ist mit `origin/main` verbunden. Der anschließende Audit von Dateien und Git-Historie
+meldete keine Funde.
+
+Ein frischer Download durch anonymes Klonen auf dem geprüften macOS-System wurde in
+einem temporären Verzeichnis geprüft: neue virtuelle Umgebung, Konfiguration,
+Passwort, gültiger Beispieldatenimport, duplikatfreier Wiederholungsimport und getrennte
+Demo-Vorbereitung bestanden. Dieser Download-Test öffnete keinen Browser und führte
+keine Hermes-Suche aus. Die oben genannten manuellen Einschränkungen bleiben bestehen.
