@@ -186,6 +186,37 @@ SQLite serializes concurrent imports. Higher-scoring candidates are preferred.
 A processed run is not applied again; candidates excluded by the limit are not
 automatically queued for the following day.
 
+## Existing-listing availability
+
+```sh
+.venv/bin/python jobfind.py check-availability --dry-run
+.venv/bin/python jobfind.py check-availability --daily
+```
+
+This separate, model-free checker fetches all non-deleted original listing URLs,
+including bookmarks, likes and hidden jobs. It removes only twice-confirmed HTTP
+410 responses, recognizable missing-listing pages with HTTP 404, or explicit
+closure notices. Login/CAPTCHA barriers, temporary errors, generic redirects,
+client-rendered pages and expired metadata alone do not trigger removal. A reachable
+page is not a guarantee that the employer still accepts applications.
+
+Removal retains a closed tombstone against reimport and does not create negative
+recommendation feedback. Likes and existing feedback are left unchanged. Each
+cleanup has a SQLite backup and a per-job recovery manifest under the private
+runtime directory's `availability-checks/`; protect these like your other data.
+Reports are kept there as well. `--dry-run` never changes job records. `--daily`
+skips after a completed check on the configured timezone's current calendar day.
+Concurrent checker runs are locked; listings changed by an import are retained.
+
+For automatic checks, schedule the second command once a day with your host's
+scheduler (for example a macOS LaunchAgent at 09:00). Use absolute interpreter,
+project and configuration paths, with `--config` before `check-availability`.
+Schedule installation is explicit and host-local; `init` does not install it.
+The check sends anonymous requests to listing sites, but never your profile,
+likes, notes or credentials. It rejects non-public network destinations and unsafe
+redirects. No Hermes/model calls, browser automation or dependencies are required.
+Offline devices see removals after reconnecting and refreshing their snapshot.
+
 ## Likes, bookmarks and rejections
 
 A heart is an explicit positive signal. A bookmark is a weaker signal of interest.
@@ -298,6 +329,7 @@ package; neutral icons avoid additional image-rights questions and external requ
 
 ```sh
 .venv/bin/python tests/check_release.py
+.venv/bin/python tests/check_availability.py
 .venv/bin/python tests/check_local.py
 .venv/bin/python tests/check_setup.py
 # Optional Node.js check; not required to run the app:

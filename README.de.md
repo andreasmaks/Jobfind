@@ -45,6 +45,37 @@ bereit, validiert Ergebnisse und speichert Stellen und Nutzeraktionen in SQLite.
 App, manueller Import und erfundene Demo funktionieren ohne Hermes.
 Automatische Bewerbungen, Dokumentgeneratoren und Mehrmandantenbetrieb sind nicht enthalten.
 
+## Automatische Verfügbarkeitsprüfung
+
+```sh
+.venv/bin/python jobfind.py check-availability --dry-run
+.venv/bin/python jobfind.py check-availability --daily
+```
+
+Der separate Prüfer ruft alle noch gelisteten Originalanzeigen ab, auch gemerkte,
+gelikte und ausgeblendete Stellen. Nur zweimal bestätigte HTTP-410-Antworten,
+eindeutige 404-Fehlerseiten oder ausdrückliche Hinweise auf abgelaufene/besetzte
+Stellen führen zur Entfernung. Login-Sperren, CAPTCHAs, technische Fehler,
+allgemeine Weiterleitungen und abgelaufene Metadaten allein reichen nicht aus.
+Eine erreichbare Seite garantiert nicht, dass Bewerbungen noch möglich sind.
+
+Automatisch entfernte Stellen bleiben gegen erneuten Import gespeichert, ohne
+negatives Empfehlungsfeedback zu erzeugen. Likes und vorhandenes Feedback bleiben
+unverändert. Vor jeder Bereinigung werden eine SQLite-Sicherung und ein
+Wiederherstellungsprotokoll im privaten Datenordner unter `availability-checks/`
+angelegt. Dort liegen auch die Prüfberichte; diese Dateien nicht veröffentlichen.
+`--dry-run` verändert keine Stellen. `--daily` prüft höchstens einmal pro
+Kalendertag in der konfigurierten Zeitzone; parallele Läufe werden gesperrt.
+
+Für den täglichen Betrieb diesen Befehl ausdrücklich im lokalen Scheduler
+einrichten, beispielsweise als macOS-LaunchAgent um 09:00 Uhr. Absolute Pfade für
+Python, Projekt und Konfiguration verwenden; `--config` steht vor dem Unterbefehl.
+Die normale Einrichtung installiert keinen Zeitplan. Es werden nur anonyme
+Seitenaufrufe gesendet, kein Profil, Feedback oder Zugangsdaten. Interne
+Netzwerkziele und unsichere Weiterleitungen werden gesperrt. Keine KI-Aufrufe,
+Hermes-Kosten oder neuen Abhängigkeiten. Offline-Geräte übernehmen die Bereinigung
+nach der nächsten Verbindung und Aktualisierung.
+
 ## Voraussetzungen und geprüfte Umgebung
 
 - Python **3.11 oder neuer**, inklusive `venv`, SQLite und Zeitzonendaten.

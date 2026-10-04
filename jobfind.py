@@ -46,6 +46,9 @@ def main() -> int:
     demo.add_argument("--prepare-only", action="store_true", help="Vorbereiten ohne Serverstart")
     importer = commands.add_parser("import", help="Eine Ergebnisdatei importieren oder konfigurierten Ordner lesen")
     importer.add_argument("file", type=Path, nargs="?")
+    availability = commands.add_parser("check-availability", help="Bestand prüfen; nur bestätigte abgelaufene Anzeigen entfernen")
+    availability.add_argument("--dry-run", action="store_true", help="Prüfbericht ohne Änderungen an Stellen erzeugen")
+    availability.add_argument("--daily", action="store_true", help="Höchstens ein erfolgreicher Lauf pro lokalem Kalendertag")
     commands.add_parser("context", help="Aktuelles Profil und Feedback ausgeben (enthält private Daten)")
     commands.add_parser("hermes-prepare", help="Pre-Run-Shim und Prompt lokal erzeugen; nichts installieren")
     args = parser.parse_args()
@@ -79,6 +82,10 @@ def main() -> int:
         return 0
     if args.command == "password":
         runpy.run_path(str(ROOT / "scripts/tools/set_password.py"), run_name="__main__")
+        return 0
+    if args.command == "check-availability":
+        from availability import run_check
+        print(json.dumps(run_check(dry_run=args.dry_run, daily=args.daily), ensure_ascii=False))
         return 0
     if args.command == "context":
         from context import build_context

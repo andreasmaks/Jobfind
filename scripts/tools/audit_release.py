@@ -17,9 +17,9 @@ assets/api.js assets/app.js assets/brand-mark.svg assets/login.js assets/offline
 assets/styles.css assets/theme.js assets/ui.js config/example.json
 examples/demo.json examples/empty.json examples/error.json
 hermes/context.py hermes/import_jobs.py hermes/prompt.txt
-scripts/modules/config.py scripts/modules/store.py scripts/modules/local_settings.py scripts/server/server.py
+scripts/modules/config.py scripts/modules/store.py scripts/modules/local_settings.py scripts/modules/availability.py scripts/server/server.py
 scripts/tools/set_password.py scripts/tools/audit_release.py scripts/start_server.sh
-tests/check_release.py tests/check_setup.py tests/check_offline.mjs tests/check_local.py tests/check_i18n.mjs
+tests/check_release.py tests/check_setup.py tests/check_offline.mjs tests/check_local.py tests/check_i18n.mjs tests/check_availability.py
 docs/HERMES.md docs/IMPORT_FORMAT.md docs/RELEASE_CHECKLIST.md docs/DEVELOPMENT.md
 """.split())
 REVIEWED_PNGS = {
