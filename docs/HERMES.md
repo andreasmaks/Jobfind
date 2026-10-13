@@ -34,6 +34,54 @@ started Hermes run. Save the final schema-1 answer as `.json` and import it with
 `jobfind.py import /your/path/result.json`.
 Context output contains private data: keep it out of repositories and public logs.
 
+## Targeted research and hourly rotation
+
+The current context includes `research_plan`: a read-only hourly topic rotation,
+short local queries and separate budgets for searches (default 8, maximum 20)
+and concrete listing checks (default 12, maximum 30). These are research budgets,
+not a cap on daily imports. All profile, location and feedback rules still apply.
+
+An optional top-level `research` object in your private configuration customizes it:
+
+```json
+"research": {
+  "max_search_queries": 8,
+  "max_listing_checks": 12,
+  "directions_per_run": 4,
+  "directions": [
+    {"id": "coordination", "label": "Your chosen topic",
+     "query_terms": ["Servicekoordination", "Projektassistenz Abläufe"]}
+  ]
+}
+```
+
+Each direction needs a unique short ID, a label and 1–6 short `query_terms`.
+Keep personal preferences in your ignored configuration, not in the shared prompt.
+The planner selects up to `directions_per_run` topics (default 4, maximum 10)
+and gives each one query before allocating second queries. The first round uses
+the first allowed place; later rounds rotate through allowed places, omitting
+explicitly excluded and ambiguous labels. Spelling aliases (accents, spaces and
+hyphens) share one query location so they do not consume separate searches.
+This affects query suggestions only, never the literal import location rules.
+Rotation uses elapsed UTC hours, so
+daylight-saving transitions do not freeze it; the displayed hour uses your timezone.
+No extra runtime state or database writes are needed. Without configured directions,
+the agent derives varied queries from your explicit profile instead.
+
+The prompt makes portal lists discovery aids, not verified recommendations. It
+prioritizes individual listings over company portraits, checks actual work location,
+tasks, qualifications, contract duration, hours and availability, and asks for a browser
+fallback when text extraction fails. A technically blocked check with no verified
+matches must report `error`, not a successful `empty`. These are agent instructions,
+not a guarantee that every page can be read or that a model follows every instruction;
+inspect actual tool calls after activation. More searches may increase provider costs.
+
+For an existing installation, review both its installed cron prompt and any local
+profile for older two-query limits. After testing, explicitly replace only the intended
+job's prompt with the reviewed shared prompt and ensure its pre-run shim reads the
+canonical project and private configuration. Changing a file alone does not update
+an already-stored Hermes cron prompt. Do not modify unrelated jobs or credentials.
+
 ## Prepare your own cron integration
 
 1. Set up Hermes using its [official instructions](https://hermes-agent.nousresearch.com/docs/getting-started/quickstart/).

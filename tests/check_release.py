@@ -113,6 +113,73 @@ class ReleaseChecks(unittest.TestCase):
         finally:
             CONFIG_FILE.write_text(json.dumps(cfg))
 
+    def test_research_config_validation_and_backward_compatibility(self):
+        strategy = {"max_search_queries": 8, "max_listing_checks": 12, "directions_per_run": 4,
+                    "directions": [{"id": "fictional", "label": "Erfundener Fokus", "query_terms": ["Projektassistenz", "Servicekoordination"]}]}
+        try:
+            candidate = copy.deepcopy(cfg)
+            candidate.pop("research", None)
+            CONFIG_FILE.write_text(json.dumps(candidate))
+            self.assertEqual(config.load_config(CONFIG_FILE)["research"]["max_search_queries"], 8)
+            self.assertEqual(config.load_config(CONFIG_FILE)["research"]["directions"], [])
+            candidate["research"] = strategy
+            CONFIG_FILE.write_text(json.dumps(candidate))
+            self.assertEqual(config.load_config(CONFIG_FILE)["research"], strategy)
+            invalid = [None, [], {"unexpected": True}]
+            for key in ("max_search_queries", "max_listing_checks", "directions_per_run"):
+                invalid.extend({**strategy, key: value} for value in (0, -1, True, "8", 2.5, 100))
+            invalid += [{**strategy, "directions": [strategy["directions"][0]] * 2},
+                        {**strategy, "directions": [dict(id="bad id", label="Test", query_terms=["test"])]},
+                        {**strategy, "directions": [dict(id="test", label="", query_terms=["test"])]},
+                        {**strategy, "directions": [dict(id="test", label="Test", query_terms=[])]},
+                        {**strategy, "directions": [dict(id="test", label="Test", query_terms=[True])]}]
+            for value in invalid:
+                candidate["research"] = value
+                CONFIG_FILE.write_text(json.dumps(candidate))
+                with self.assertRaises(ValueError, msg=repr(value)):
+                    config.load_config(CONFIG_FILE)
+        finally:
+            CONFIG_FILE.write_text(json.dumps(cfg))
+
+    def test_hourly_research_rotation_budget_and_region(self):
+        previous = copy.deepcopy(config.CONFIG)
+        try:
+            config.CONFIG["research"] = {"max_search_queries": 8, "max_listing_checks": 12, "directions_per_run": 4,
+                "directions": [{"id": f"theme-{n}", "label": f"Erfundener Fokus {n}",
+                                "query_terms": [f"Rolle-{n}", f"Aufgabe-{n}"]} for n in range(6)]}
+            region = config.CONFIG["search"]["region"]
+            region["allowed_places"] = ["Beispielstadt", "Musterhausen", "Müster-hausen", "Fernstadt"]
+            region["excluded_places"] = ["Fernstadt"]
+            region["ambiguous_labels"] = ["Region Beispielstadt"]
+            at = datetime(2026, 1, 1, 12, tzinfo=timezone.utc)
+            plan = context.build_research_plan(at)
+            self.assertEqual(plan, context.build_research_plan(at + timedelta(minutes=15)))
+            self.assertEqual(len(plan["queries"]), 8)
+            self.assertEqual(len({item["query"] for item in plan["queries"]}), 8)
+            self.assertEqual(len({item["direction_id"] for item in plan["queries"][:4]}), 4)
+            self.assertTrue(all(item["place"] in {"Beispielstadt", "Musterhausen"} for item in plan["queries"]))
+            self.assertTrue(all('"Beispielstadt"' in item["query"] for item in plan["queries"][:4]))
+            covered = set()
+            for hour in range(3):
+                covered.update(item["id"] for item in context.build_research_plan(at + timedelta(hours=hour))["directions"])
+            self.assertEqual(covered, {f"theme-{n}" for n in range(6)})
+            self.assertNotEqual(plan["directions"], context.build_research_plan(at + timedelta(hours=1))["directions"])
+            self.assertEqual(context.build_research_plan(at.astimezone(ZoneInfo("Pacific/Auckland"))), plan)
+            with self.assertRaises(ValueError):
+                context.build_research_plan(datetime(2026, 1, 1))
+            config.CONFIG["research"]["max_search_queries"] = 3
+            self.assertEqual(len(context.build_research_plan(at)["queries"]), 3)
+            config.CONFIG["research"]["directions"] = []
+            self.assertEqual(context.build_research_plan(at)["queries"], [])
+            trusted = json.loads(context.build_context().split("AKTUELLES AUSDRÜCKLICHES SUCHPROFIL (Konfiguration):\n")[1].split("\n", 1)[0])
+            self.assertIn("research_plan", trusted)
+            prompt = (ROOT / "hermes/prompt.txt").read_text()
+            self.assertNotIn("höchstens zwei unterschiedliche Suchanfragen", prompt)
+            self.assertIn("run_status \"error\" statt \"empty\"", prompt)
+        finally:
+            config.CONFIG.clear()
+            config.CONFIG.update(previous)
+
     def test_error_empty_invalid_do_not_delete_existing_data(self):
         ingest(envelope("baseline", [job()]))
         ingest(envelope("empty", []))

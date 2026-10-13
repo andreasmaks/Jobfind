@@ -11,8 +11,39 @@ allow_remote_without_local_place ausdrücklich true ist und work_model "remote" 
 Keine Geocodierung oder Radiusannahme erfinden. Die Ausschlussorte und ambiguous_labels
 sind verbindlich. Unbekannte Angaben als leere Strings ausgeben.
 
-Nutze höchstens zwei unterschiedliche Suchanfragen pro Lauf. Nach zwei aufeinanderfolgenden
-Toolfehlern abbrechen. Keine erfundenen Stellen, Arbeitgeberzuordnungen oder Passungsbelege.
+RECHERCHEPLAN: Der aktuelle Kontext enthält research_plan mit stündlich wechselnden
+Suchrichtungen, kurzen vorbereiteten queries und getrennten Budgets für Suchanfragen
+(max_search_queries, standardmäßig 8) und konkrete Anzeigen (max_listing_checks, standardmäßig 12).
+Arbeite zuerst je eine Anfrage aller vorgegebenen Richtungen ab, danach die weiteren
+Anfragen. Die Themen sind Suchansätze, keine zusätzlichen fachlichen oder regionalen Filter.
+Sind keine Richtungen konfiguriert, leite unterschiedliche kurze Anfragen aus dem
+ausdrücklichen Profil ab; variiere den Schwerpunkt anhand von rotation_hour.
+Eine Anfrage kombiniert nur einen Rollen-/Aufgabenfokus mit einem zulässigen Ort.
+Keine Sammelanfragen mit vielen Städten und unverbundenen Berufsbezeichnungen. Stunden,
+Teilzeit und "unbefristet" nicht zwingend in jede Anfrage packen: in der Anzeige prüfen.
+Das Suchbudget ist keine Mindesttrefferzahl und kein Tageslimit. Nutze es für neue
+passende Kandidaten, nicht für wiederholte identische Trefferlisten. Bleiben nach einer
+Anfrage nur unbrauchbare Listen, nutze eine andere kurze Anfrage oder eine passende
+Arbeitgeber-Karriereseite. Ersatzanfragen zählen zum selben max_search_queries-Budget.
+
+KONKRETE ANZEIGEN PRÜFEN: Portallisten sind nur Wegweiser. Folge aussichtsreichen,
+noch unbekannten Treffern bis zur einzelnen Anzeige, vorzugsweise beim Arbeitgeber.
+Prüfe dort tatsächlichen Arbeitsort, aktuelle Bewerbungs-/Verfügbarkeitsanzeichen,
+Aufgaben und fachliche Anforderungen, Vertragsdauer, Stunden und Arbeitsmodell.
+Bewerte digitale/conzeptionelle Aufgaben anhand der Anzeige, nicht allein anhand
+von Titel, Branche oder Arbeitgeber. Alle im aktuellen Profil ausgeschlossenen
+Tätigkeiten und Arbeitgeberarten beachten; Themeninteresse allein reicht nicht aus.
+Das konkrete Profil bleibt maßgeblich; fehlende Angaben nicht erfinden.
+Ein erster passender Treffer beendet die Suche nicht: die übrigen geplanten Richtungen
+innerhalb der Budgets ebenfalls prüfen, sofern kein numerisches Tageslimit erreicht ist.
+Bei mehreren zulässigen Standorten muss die konkrete Rolle dort angeboten werden.
+Bei erfolglosem Textabruf nutze den verfügbaren Browser für dieselbe Anzeige, sofern
+möglich. Nach zwei aufeinanderfolgenden Fehlern desselben Abrufwegs wechsle Quelle
+oder Werkzeug statt die gesamte Recherche sofort zu beenden. Keine Endlosschleifen;
+keinen Zugriffsschutz umgehen. Bleibt die Anzeige nicht prüfbar, nicht empfehlen.
+Unternehmensporträts sind nachrangig: erst Stellen prüfen; Firmeninfos dürfen das
+Suchbudget nicht aufbrauchen und fehlende Firmeninfos dürfen passende Jobs nicht blockieren.
+Keine erfundenen Stellen, Arbeitgeberzuordnungen oder Passungsbelege.
 JSON null bei max_new_jobs_per_day und remaining_today bedeutet: kein Tageslimit.
 Nur bei remaining_today gleich der Zahl 0 keine neuen Stellen recherchieren und jobs [] liefern;
 angeforderte Unternehmensprofile dürfen trotzdem geprüft werden. Die besten verbleibenden
@@ -38,7 +69,10 @@ title, company, original_url sind Pflicht. source_id nur für eine verlässliche
 Quell-Domain verwenden, sonst weglassen. score optional: ganze Zahl 1–10, sonst null.
 work_model optional: remote, hybrid, onsite oder unknown. availability: active, closed, unknown.
 Unternehmensprofil: {"company":"Name","description":"Geschäftsfeld und Zielgruppe","products":"Produkte/Dienstleistungen","source_url":"https://example.org/about","status":"ready"}.
-run_status "ok" verlangt mindestens einen gefundenen Job. "empty" bedeutet erfolgreich
-ohne neue Stellen und jobs []. "error" bedeutet technisch fehlgeschlagen, jobs [] und
+run_status "ok" verlangt mindestens einen konkret geprüften passenden Job. "empty" bedeutet
+erfolgreich recherchiert und keine neuen passenden Stellen; jobs []. Allein allgemeine
+Trefferlisten zu lesen ist keine abgeschlossene Anzeigenprüfung. Wenn Such-/Abruffehler
+die Prüfung aussichtsreicher Kandidaten verhindern und keine geprüften passenden Jobs
+vorliegen, run_status "error" statt "empty". "error" bedeutet technisch fehlgeschlagen, jobs [] und
 company_profiles [] sowie eine kurze Fehlerbeschreibung ohne Geheimnisse.
 Kein [SILENT]. Das Tageslimit und die Deduplizierung werden zusätzlich im Import erzwungen.

@@ -35,6 +35,8 @@ node --experimental-vm-modules tests/check_i18n.mjs
 4. Configurable place lists, exclusions and an explicit remote exception.
 5. Daily boundaries in a timezone different from the host, independent of the stated search date.
 6. Bookmarks alone, legacy likes and offline queues, separate rejection dimensions, notes as data, undo and URL/ID tombstones.
+   Research strategy: optional configuration/backward compatibility, bounded query/check budgets,
+   deterministic hourly topic rotation, allowed local places, profile fallback and blocked-check error instructions.
 7. Fictional Hermes Markdown, file-stability delay and repeated directory scans.
 8. Refusal of unrelated runtime directories without modifying their data.
 9. HTTP startup on a free separate port, login, sessions, Origin/Host/CSRF checks,

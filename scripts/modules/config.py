@@ -19,7 +19,7 @@ def load_config(path: Path = CONFIG_PATH) -> dict:
     if not isinstance(cfg, dict) or cfg.get("config_version") != 1:
         raise ValueError("config_version muss 1 sein")
     required = {"config_version", "data_dir", "server", "search", "max_new_jobs_per_day", "timezone", "hermes"}
-    if set(cfg) - (required | {"local"}) or not required <= set(cfg):
+    if set(cfg) - (required | {"local", "research"}) or not required <= set(cfg):
         raise ValueError("Unbekannte oder fehlende Konfigurationsfelder")
     ZoneInfo(cfg["timezone"])
     limit = cfg["max_new_jobs_per_day"]
@@ -58,6 +58,30 @@ def load_config(path: Path = CONFIG_PATH) -> dict:
         raise ValueError("Mindestens ein Ort und eine Rolle sind erforderlich")
     if not isinstance(search["weekly_hours"], str) or len(search["weekly_hours"]) > 600:
         raise ValueError("Ungültige Arbeitszeit")
+    research = {"max_search_queries": 8, "max_listing_checks": 12,
+                "directions_per_run": 4, "directions": []}
+    supplied = cfg.get("research", {})
+    if not isinstance(supplied, dict) or set(supplied) - set(research):
+        raise ValueError("Ungültige Recherchestrategie")
+    research.update(supplied)
+    for key, maximum in (("max_search_queries", 20), ("max_listing_checks", 30), ("directions_per_run", 10)):
+        if type(research[key]) is not int or not 1 <= research[key] <= maximum:
+            raise ValueError("Ungültiges Recherchebudget")
+    directions = research["directions"]
+    if not isinstance(directions, list) or len(directions) > 20:
+        raise ValueError("Ungültige Suchrichtungen")
+    ids = set()
+    for direction in directions:
+        if not isinstance(direction, dict) or set(direction) != {"id", "label", "query_terms"}:
+            raise ValueError("Ungültige Suchrichtung")
+        identifier, label, terms = direction["id"], direction["label"], direction["query_terms"]
+        if (not isinstance(identifier, str) or not re.fullmatch(r"[a-z][a-z0-9_-]{0,39}", identifier)
+                or identifier in ids or not isinstance(label, str) or not label.strip() or len(label) > 120
+                or not isinstance(terms, list) or not 1 <= len(terms) <= 6
+                or any(not isinstance(term, str) or not term.strip() or len(term) > 160 for term in terms)):
+            raise ValueError("Ungültige Suchrichtung")
+        ids.add(identifier)
+    cfg["research"] = research
     hermes = cfg["hermes"]
     if set(hermes) != {"job_id", "output_dir", "schedule"}:
         raise ValueError("Ungültige Hermes-Konfiguration")
