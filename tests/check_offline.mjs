@@ -244,6 +244,41 @@ assert.equal(filterPanel.open, true);
 filterListeners.get("focusout")({ relatedTarget: {} });
 assert.equal(filterPanel.open, false, "Keyboard navigation outside closes the panel");
 
+// Each successful deletion shows its undo notice for five seconds, online and offline.
+const noticeElements = new Map(["deletion-notice", "deletion-message", "undo-delete", "search"].map((id) =>
+  [id, { hidden: true, disabled: false, textContent: "", focus() { this.focused = true; } }]));
+const timers = new Map();
+let timerId = 0;
+const noticeCtx = vm.createContext({ t, deletedJobs: [{ id: "a", title: "A" }],
+  state: { pendingActions: [{ kind: "delete", jobId: "a" }] }, mutationPending: false, syncInFlight: false,
+  deletionNoticeTimer: undefined, $: (id) => noticeElements.get(id), document: { activeElement: null },
+  setTimeout(callback, delay) { const id = ++timerId; timers.set(id, { callback, delay }); return id; },
+  clearTimeout(id) { timers.delete(id); },
+});
+vm.runInContext(functionText("deletionNotice", "askDelete"), noticeCtx);
+const notify = () => vm.runInContext("deletionNotice()", noticeCtx);
+notify();
+assert.equal(noticeElements.get("deletion-notice").hidden, false);
+assert.equal([...timers.values()][0].delay, 5000);
+noticeCtx.deletedJobs.push({ id: "b", title: "B" });
+notify();
+assert.equal(timers.size, 1, "A new deletion replaces the old timeout");
+assert.match(noticeElements.get("deletion-message").textContent, /B/);
+noticeCtx.document.activeElement = noticeElements.get("undo-delete");
+[...timers.values()][0].callback();
+assert.equal(noticeElements.get("deletion-notice").hidden, true);
+assert.equal(noticeElements.get("search").focused, true);
+assert.equal(noticeCtx.deletedJobs.length, 2, "Dismissal does not modify deletion history");
+assert.equal(noticeCtx.state.pendingActions.length, 1, "Dismissal preserves queued offline actions");
+noticeCtx.mutationPending = true;
+notify();
+assert.equal(timers.size, 0, "An in-flight undo must cancel dismissal");
+noticeCtx.mutationPending = false;
+noticeCtx.deletedJobs.length = 0;
+notify();
+assert.equal(noticeElements.get("deletion-notice").hidden, true);
+assert.equal(timers.size, 0);
+
 // Offline preparation and a healthy offline snapshot stay quiet; pending work/errors do not.
 const note = { hidden: false, textContent: "stale", classList: { toggle() {} } };
 const undo = { disabled: false };

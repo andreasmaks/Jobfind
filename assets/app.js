@@ -12,6 +12,7 @@ let mutationVersion = 0;
 let offlinePreparation = Promise.resolve();
 let syncInFlight = false;
 const deletedJobs = [];
+let deletionNoticeTimer;
 const $ = (id) => document.getElementById(id);
 const grid = $("jobs-grid");
 const dialog = $("job-dialog");
@@ -299,12 +300,19 @@ async function changeStatus(job, status) {
 }
 
 function deletionNotice() {
+  clearTimeout(deletionNoticeTimer);
   $("deletion-notice").hidden = deletedJobs.length === 0;
   const last = deletedJobs.at(-1);
   $("deletion-message").textContent = last
     ? t("„{title}“ gelöscht. {detail}", { title: last.title, detail: t(state.pendingActions.some((action) => action.kind === "delete" && action.jobId === last.id) ? "Wird nach dem Verbinden übertragen." : "Hermes berücksichtigt das bei künftigen Empfehlungen.") })
     : "";
   $("undo-delete").disabled = mutationPending || syncInFlight;
+  if (last && !mutationPending) {
+    deletionNoticeTimer = setTimeout(() => {
+      $("deletion-notice").hidden = true;
+      if (document.activeElement === $("undo-delete")) $("search").focus();
+    }, 5000);
+  }
 }
 
 function askDelete(job) {

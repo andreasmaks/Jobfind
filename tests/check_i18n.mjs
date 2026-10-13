@@ -123,7 +123,8 @@ for (const preferred of ["de-DE", "fr-FR"]) {
   const state = { jobs: [job], meta: {}, pendingActions: [], syncError: "", offline: true };
   const appCtx = vm.createContext({ t: env.ctx.window.JobfindI18n.t, state, $: get,
     filteredJobs: () => state.jobs, shortDate: () => "", mutationPending: false, syncInFlight: false,
-    document: { body: new Node() }, deletedJobs: [job] });
+    document: { body: new Node() }, deletedJobs: [job], deletionNoticeTimer: undefined,
+    setTimeout: () => 1, clearTimeout() {} });
   vm.runInContext(functionText("updateSummary", "render") + functionText("updateOfflineState", "queueOfflineCopy") + functionText("deletionNotice", "askDelete"), appCtx);
   vm.runInContext("updateSummary(); updateOfflineState();", appCtx);
   assert.equal(get("header-job-count").textContent, german ? "1 Job" : "1 job");
@@ -137,6 +138,6 @@ for (const page of ["index.html", "login.html"]) {
   assert(source(page).indexOf("/assets/i18n.js?v=1") < source(page).indexOf("/assets/theme.js?v=2"));
 }
 assert(source("sw.js").includes('"/assets/i18n.js?v=1"'));
-assert(source("sw.js").includes('"jobfind-shell-v5"'));
-assert(source("assets/offline.js").includes('"jobfind-shell-v5"'));
+assert(source("sw.js").includes('"jobfind-shell-v6"'));
+assert(source("assets/offline.js").includes('"jobfind-shell-v6"'));
 console.log("Language checks passed: primary preference, DE variants, English fallback, HTML/accessibility, theme, login errors, dates, cards/details, untouched job data, offline shell.");
