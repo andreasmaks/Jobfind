@@ -108,7 +108,17 @@ for (const preferred of ["de-DE", "fr-FR"]) {
   assert.equal(module.namespace.shortDate("2026-09-30"), new Intl.DateTimeFormat(german ? "de-DE" : "en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(new Date("2026-09-30")));
   const target = new Node("div"), save = new Node("button");
   const dialog = { querySelector: (selector) => selector === "#dialog-content" ? target : save, showModal() { this.open = true; } };
-  module.namespace.showDetails(dialog, job, () => {});
+  let deleteRequested = null;
+  const statusChanges = [];
+  module.namespace.showDetails(dialog, job, (...args) => statusChanges.push(args), (selected) => { deleteRequested = selected; });
+  const deleteButton = descendants(target).find((node) => node.tag === "button" && node.textContent === (german ? "Löschen" : "Delete"));
+  assert(deleteButton, "Details must offer deletion in the selected language");
+  assert(!descendants(target).some((node) => node.tag === "button" && /Ausblenden|Wieder anzeigen|Hide job/.test(node.textContent)));
+  assert.equal(deleteRequested, null, "Opening details must not delete anything");
+  deleteButton.events.get("click")();
+  assert.equal(deleteRequested, job, "Detail deletion must request feedback for the displayed job");
+  assert.equal(statusChanges.length, 0, "Delete must not hide the job");
+  assert.equal(dialog.open, true, "Keep details until deletion is actually confirmed");
   assert(target.textContent.includes(german ? "Über das Unternehmen" : "About the company"));
   assert(target.textContent.includes(german ? "Produkte & Dienstleistungen" : "Products & services"));
   assert(target.textContent.includes(job.company_description)); assert(target.textContent.includes(job.company_products));
@@ -138,6 +148,7 @@ for (const page of ["index.html", "login.html"]) {
   assert(source(page).indexOf("/assets/i18n.js?v=1") < source(page).indexOf("/assets/theme.js?v=2"));
 }
 assert(source("sw.js").includes('"/assets/i18n.js?v=1"'));
-assert(source("sw.js").includes('"jobfind-shell-v6"'));
-assert(source("assets/offline.js").includes('"jobfind-shell-v6"'));
+assert(source("sw.js").includes('"jobfind-shell-v7"'));
+assert(source("assets/offline.js").includes('"jobfind-shell-v7"'));
+assert(source("assets/app.js").includes('showDetails(dialog, job, changeStatus, askDelete)'));
 console.log("Language checks passed: primary preference, DE variants, English fallback, HTML/accessibility, theme, login errors, dates, cards/details, untouched job data, offline shell.");

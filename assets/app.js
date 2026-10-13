@@ -1,6 +1,6 @@
 import { changeDeletion, loadPortal, updateLike, updateStatus } from "/assets/api.js?v=5";
 import { clearOfflineData, prepareOffline, readPendingActions, removePendingAction, savePendingAction } from "/assets/offline.js?v=5";
-import { createCard, shortDate, showDetails } from "/assets/ui.js?v=2";
+import { createCard, shortDate, showDetails } from "/assets/ui.js?v=3";
 
 const { t, locale, translatePage } = window.JobfindI18n;
 translatePage();
@@ -265,7 +265,7 @@ function render() {
 }
 
 function openJob(job) {
-  showDetails(dialog, job, changeStatus);
+  showDetails(dialog, job, changeStatus, askDelete);
   dialog.querySelectorAll("#dialog-save, .dialog-actions button").forEach((button) => {
     button.disabled = syncInFlight;
   });
@@ -375,6 +375,7 @@ async function removeJob(job, feedback) {
     deletedJobs.push(job);
     removed = true;
     feedbackDialog.close();
+    if (dialog.open) dialog.close();
   } catch (error) {
     state.jobs = previousJobs;
     $("feedback-error").textContent = t("Das Feedback konnte nicht gespeichert werden. Bitte versuche es erneut.");

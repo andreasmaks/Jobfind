@@ -165,7 +165,7 @@ export function createCard(job, onOpen, onSave, onDelete, onLike) {
   return card;
 }
 
-export function showDetails(dialog, job, onStatus) {
+export function showDetails(dialog, job, onStatus, onDelete) {
   const target = dialog.querySelector("#dialog-content");
   target.replaceChildren();
   const save = dialog.querySelector("#dialog-save");
@@ -229,10 +229,10 @@ export function showDetails(dialog, job, onStatus) {
   link.target = "_blank";
   link.rel = "noopener noreferrer";
   actions.append(link);
-  const hide = element("button", "button-secondary", t(job.user_status === "hidden" ? "Wieder anzeigen" : "Ausblenden"));
-  hide.type = "button";
-  hide.addEventListener("click", () => onStatus(job, job.user_status === "hidden" ? "new" : "hidden"));
-  actions.append(hide);
+  const remove = element("button", "button-secondary", t("Löschen"));
+  remove.type = "button";
+  remove.addEventListener("click", () => onDelete(job));
+  actions.append(remove);
   content.append(actions);
   target.append(content);
   if (!dialog.open) dialog.showModal();

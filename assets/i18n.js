@@ -41,7 +41,7 @@
     "Gehalt": "Salary", "Erfahrungslevel": "Experience level", "Sonstiges": "Other",
     "Was wäre dir lieber?": "What would you prefer?", "Optional": "Optional",
     "Zum Beispiel: Mehr Produktkonzeption, weniger reine Screenproduktion.": "For example: More product strategy, less screen production.",
-    "Behalten": "Keep", "Löschen & Feedback speichern": "Delete & save feedback",
+    "Behalten": "Keep", "Löschen": "Delete", "Löschen & Feedback speichern": "Delete & save feedback",
     "Wird gespeichert …": "Saving …", "Schließen": "Close",
     "Stelle merken": "Save job", "Aus Merkliste entfernen": "Remove from saved jobs",
     "Stelle löschen: {title}": "Delete job: {title}",
