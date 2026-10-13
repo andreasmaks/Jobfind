@@ -83,6 +83,36 @@ class ReleaseChecks(unittest.TestCase):
         self.assertEqual(sum(r["count"] for r in results), 2)
         self.assertEqual(len(store.list_jobs()), 2)
 
+    def test_unlimited_daily_import_and_context(self):
+        previous = config.CONFIG["max_new_jobs_per_day"]
+        config.CONFIG["max_new_jobs_per_day"] = None
+        try:
+            with ThreadPoolExecutor(max_workers=4) as executor:
+                results = list(executor.map(lambda n: ingest(envelope(f"unlimited-{n}", [job(n)])), range(10, 16)))
+            self.assertEqual(sum(r["count"] for r in results), 6)
+            self.assertEqual(len(store.list_jobs()), 6)
+            self.assertEqual(ingest(envelope("unlimited-update", [job(10)]))["count"], 0)
+            trusted = json.loads(context.build_context().split("AKTUELLES AUSDRÜCKLICHES SUCHPROFIL (Konfiguration):\n")[1].split("\n", 1)[0])
+            self.assertIsNone(trusted["max_new_jobs_per_day"])
+            self.assertIsNone(trusted["remaining_today"])
+            self.assertEqual(trusted["imported_today"], 6)
+        finally:
+            config.CONFIG["max_new_jobs_per_day"] = previous
+
+    def test_daily_limit_config_accepts_null_not_invalid_numbers(self):
+        try:
+            candidate = copy.deepcopy(cfg)
+            candidate["max_new_jobs_per_day"] = None
+            CONFIG_FILE.write_text(json.dumps(candidate))
+            self.assertIsNone(config.load_config(CONFIG_FILE)["max_new_jobs_per_day"])
+            for invalid in (0, -1, 101, True, 2.5, "unlimited"):
+                candidate["max_new_jobs_per_day"] = invalid
+                CONFIG_FILE.write_text(json.dumps(candidate))
+                with self.assertRaises(ValueError):
+                    config.load_config(CONFIG_FILE)
+        finally:
+            CONFIG_FILE.write_text(json.dumps(cfg))
+
     def test_error_empty_invalid_do_not_delete_existing_data(self):
         ingest(envelope("baseline", [job()]))
         ingest(envelope("empty", []))

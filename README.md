@@ -110,7 +110,7 @@ them before performing a real search:
 | `weekly_hours`, `work_models` | Explicit working-hours and work-model preferences for Hermes. |
 | `hard_exclusions` | Mandatory content exclusions in the research context. |
 | `soft_preferences` | Preferences to weight rather than treat as bans. |
-| `max_new_jobs_per_day` | 1–100 new records per calendar day in `timezone`. |
+| `max_new_jobs_per_day` | 1–100 new records per calendar day in `timezone`, or JSON `null` for no daily limit. |
 | `hermes.job_id`, `output_dir`, `schedule` | Your Hermes job, its output directory and desired interval. `schedule` is not automatically applied to Hermes. |
 | `data_dir` | Your runtime directory. Relative paths are resolved from the configuration file. |
 | `server.bind`, `port`, `public_origin` | Local IPv4 loopback only; port 1024–65535. An HTTPS origin is for a proxy you deliberately configure yourself. |

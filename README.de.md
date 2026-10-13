@@ -142,7 +142,7 @@ Diese Angaben vor einer echten Recherche ersetzen:
 | `weekly_hours`, `work_models` | Ausdrückliche Arbeitszeit- und Arbeitsmodellwünsche für Hermes. |
 | `hard_exclusions` | Verbindliche inhaltliche Ausschlüsse im Recherchekontext. |
 | `soft_preferences` | Wünsche, die gewichtet statt als Verbot behandelt werden. |
-| `max_new_jobs_per_day` | 1–100 neue Datensätze je Kalendertag in `timezone`. |
+| `max_new_jobs_per_day` | 1–100 neue Datensätze je Kalendertag in `timezone` oder JSON `null` für kein Tageslimit. |
 | `hermes.job_id`, `output_dir`, `schedule` | Eigener Hermes-Auftrag, sein Ausgabeordner und gewünschtes Intervall. `schedule` wird nicht automatisch auf Hermes angewandt. |
 | `data_dir` | Eigenes Laufzeitverzeichnis. Relative Pfade beziehen sich auf die Konfigurationsdatei. |
 | `server.bind`, `port`, `public_origin` | Nur lokales IPv4-Loopback; Port 1024–65535. HTTPS-Ursprung nur für bewusst selbst eingerichteten Proxybetrieb. |

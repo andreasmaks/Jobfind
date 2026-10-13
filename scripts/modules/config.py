@@ -22,8 +22,9 @@ def load_config(path: Path = CONFIG_PATH) -> dict:
     if set(cfg) - (required | {"local"}) or not required <= set(cfg):
         raise ValueError("Unbekannte oder fehlende Konfigurationsfelder")
     ZoneInfo(cfg["timezone"])
-    if type(cfg["max_new_jobs_per_day"]) is not int or not 1 <= cfg["max_new_jobs_per_day"] <= 100:
-        raise ValueError("Tageslimit muss zwischen 1 und 100 liegen")
+    limit = cfg["max_new_jobs_per_day"]
+    if limit is not None and (type(limit) is not int or not 1 <= limit <= 100):
+        raise ValueError("Tageslimit muss null (unbegrenzt) oder eine ganze Zahl zwischen 1 und 100 sein")
     server = cfg["server"]
     if set(server) != {"bind", "port", "public_origin"}:
         raise ValueError("Ungültige Serverkonfiguration")

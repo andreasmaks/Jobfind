@@ -13,7 +13,8 @@ sind verbindlich. Unbekannte Angaben als leere Strings ausgeben.
 
 Nutze höchstens zwei unterschiedliche Suchanfragen pro Lauf. Nach zwei aufeinanderfolgenden
 Toolfehlern abbrechen. Keine erfundenen Stellen, Arbeitgeberzuordnungen oder Passungsbelege.
-Falls das Tagesbudget null ist, keine neuen Stellen recherchieren und jobs [] liefern;
+JSON null bei max_new_jobs_per_day und remaining_today bedeutet: kein Tageslimit.
+Nur bei remaining_today gleich der Zahl 0 keine neuen Stellen recherchieren und jobs [] liefern;
 angeforderte Unternehmensprofile dürfen trotzdem geprüft werden. Die besten verbleibenden
 Treffer bevorzugen. Bereits bekannte oder gelöschte konkrete Stellen nicht erneut melden.
 Keine Bewerbungen, keine Kontaktaufnahme, keine Nachrichten und keine Dateiänderungen.

@@ -260,7 +260,8 @@ def import_run(run_id: str, ran_at: str, status: str, jobs: list[dict], error: s
             return {"already_imported": True, "count": 0}
         known_urls = {}
         known_keys = {row[0] for row in db.execute("SELECT canonical_key FROM jobs")}
-        remaining = max(0, CONFIG["max_new_jobs_per_day"] - imported_today(db))
+        limit = CONFIG["max_new_jobs_per_day"]
+        remaining = None if limit is None else max(0, limit - imported_today(db))
         rejected_keys = {row[0] for row in db.execute("SELECT canonical_key FROM jobs WHERE user_status='deleted'")}
         for row in db.execute("SELECT id,canonical_key,original_url,user_status FROM jobs"):
             known_urls[canonical_url(row["original_url"])] = dict(row)
@@ -273,7 +274,7 @@ def import_run(run_id: str, ran_at: str, status: str, jobs: list[dict], error: s
                 item["id"] = prior["id"]
                 item["canonical_key"] = prior["canonical_key"]
             is_new = item["canonical_key"] not in known_keys
-            if is_new and imported_count >= remaining:
+            if is_new and remaining is not None and imported_count >= remaining:
                 continue
             columns = list(item)
             db.execute(
