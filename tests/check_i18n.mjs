@@ -98,8 +98,22 @@ for (const preferred of ["de-DE", "fr-FR"]) {
     hours: "30–32 Stunden", remote: "Remote möglich", user_status: "new", score: 8,
     first_seen_at: new Date().toISOString(), original_url: "https://example.org/fictional", location: "Stuttgart",
     company_description: "Unternehmensangaben im Original", company_products: "Produkte im Original" };
-  const cards = module.namespace.createCard(job, () => {}, () => {}, () => {}, () => {});
+  job.liked = true; // Legacy data must not bring back the removed heart button.
+  const bookmarkActions = [];
+  const cards = module.namespace.createCard(job, () => {}, (selected, status) => bookmarkActions.push([selected, status]), () => {});
   const descendants = (node) => [node, ...node.children.flatMap(descendants)];
+  assert(!descendants(cards).some((node) => /like-button/.test(node.className)), "No like control, even for previously liked jobs");
+  const bookmarkButton = descendants(cards).find((node) => node.tag === "button" && node.getAttribute("aria-label") === (german ? "Stelle merken" : "Save job"));
+  assert(bookmarkButton, "Bookmarks must remain available");
+  bookmarkButton.events.get("click")();
+  assert.equal(bookmarkActions[0][0], job);
+  assert.equal(bookmarkActions[0][1], "saved");
+  assert.equal(descendants(cards).find((node) => node.className === "card-actions").childElementCount, 2);
+  const savedCard = module.namespace.createCard({ ...job, user_status: "saved" }, () => {}, (selected, status) => bookmarkActions.push([selected, status]), () => {});
+  const unsaveButton = descendants(savedCard).find((node) => node.tag === "button" && node.getAttribute("aria-label") === (german ? "Aus Merkliste entfernen" : "Remove from saved jobs"));
+  assert(unsaveButton, "Saved jobs must still offer removing the bookmark");
+  unsaveButton.events.get("click")();
+  assert.equal(bookmarkActions[1][1], "new");
   assert(descendants(cards).some((node) => node.className === "card-title" && node.textContent === "Aufgaben"));
   assert(descendants(cards).some((node) => node.className === "company-name" && node.textContent === "Unternehmen"));
   assert(cards.textContent.includes(german ? "30–32 Std." : "30–32 hrs"));
@@ -153,7 +167,10 @@ for (const page of ["index.html", "login.html"]) {
   assert(source(page).indexOf("/assets/i18n.js?v=1") < source(page).indexOf("/assets/theme.js?v=2"));
 }
 assert(source("sw.js").includes('"/assets/i18n.js?v=1"'));
-assert(source("sw.js").includes('"jobfind-shell-v8"'));
-assert(source("assets/offline.js").includes('"jobfind-shell-v8"'));
+assert(source("sw.js").includes('"jobfind-shell-v9"'));
+assert(source("assets/offline.js").includes('"jobfind-shell-v9"'));
+assert(!source("assets/app.js").includes("function changeLike("));
+assert(source("index.html").includes('data-tab="saved"'));
+assert(source("index.html").includes('id="dialog-save"'));
 assert(source("assets/app.js").includes('showDetails(dialog, job, changeStatus, askDelete)'));
 console.log("Language checks passed: primary preference, DE variants, English fallback, HTML/accessibility, theme, login errors, dates, cards/details, untouched job data, offline shell.");

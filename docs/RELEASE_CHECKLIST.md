@@ -34,7 +34,7 @@ node --experimental-vm-modules tests/check_i18n.mjs
 3. Empty, failed and invalid runs; preserving existing jobs; size/type/URL validation.
 4. Configurable place lists, exclusions and an explicit remote exception.
 5. Daily boundaries in a timezone different from the host, independent of the stated search date.
-6. Bookmarks alone, likes, separate rejection dimensions, notes as data, undo and URL/ID tombstones.
+6. Bookmarks alone, legacy likes and offline queues, separate rejection dimensions, notes as data, undo and URL/ID tombstones.
 7. Fictional Hermes Markdown, file-stability delay and repeated directory scans.
 8. Refusal of unrelated runtime directories without modifying their data.
 9. HTTP startup on a free separate port, login, sessions, Origin/Host/CSRF checks,
@@ -72,7 +72,7 @@ through your own deliberately configured SSH tunnel; no new public endpoint is r
 - On a phone: the filter icon stays centered with and without its active-filter dot; the selected navigation underline touches the header's bottom edge. Filters stay open while adjusting selections and close on outside taps, Escape or moving keyboard focus outside; Escape returns focus to the filter button.
 - Reload with German, English and a third primary browser language: German stays German, every other language uses English. Check sign-in/errors, light/dark controls, navigation, filter options, cards, details, rejection reasons, undo, job counts and offline queue messages. Listing/company text and notes retain their original language. Prepare the updated shell online before checking English offline.
 - With the keyboard: check visible focus, cards/buttons, closing dialogs and undo; check the operating system's reduced-motion option.
-- Online: bookmark and like a job; reject another for distance and hours with a fictional note, then undo.
+- Online: bookmark a job; verify there is no heart/like control and that bookmarks and the saved view still work. Reject another for distance and hours with a fictional note, then undo.
 - Keep the page open briefly online; no permanent offline-status banner should appear. Disconnect, reload, check details/filters, and store further actions including undo. Pending actions and errors should remain visible.
 - Reconnect: the pending count should reach zero, and server state/context should reflect the final actions. Interrupted transfers must retain the queue.
 - Sign out after synchronization and verify the offline copy is removed. For Safari/Home Screen mode, prepare that app context online and test it offline separately.

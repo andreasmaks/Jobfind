@@ -13,7 +13,7 @@ Sie ist für eine einzelne Person gedacht, die wenige passende Stellen übersich
 prüfen und konkretes Feedback für den nächsten Suchlauf geben möchte.
 
 Suchprofil und bisheriges Feedback → Hermes recherchiert → strukturierter Import →
-Jobfind zeigt Stellen → Likes, Merken und Ablehnungsgründe → Kontext der nächsten Suche.
+Jobfind zeigt Stellen → Merken und Ablehnungsgründe → Kontext der nächsten Suche.
 Die Rückkopplung passt den Suchkontext an; sie trainiert keine Modellgewichte.
 Eine messbare Verbesserung der Trefferqualität oder Markt-Alleinstellung ist nicht belegt.
 
@@ -35,7 +35,7 @@ Hermes-Erweiterungspaket mit dateibasierter Integration, nicht um ein offizielle
 
 - Übersicht, Textsuche, Filter für Arbeitsmodell, Arbeitszeit, Passung und ausgeblendete Stellen.
 - Detailansicht, geprüfte HTTP(S)-Links zu Originalanzeigen und optionale Unternehmensporträts mit Quellen.
-- Merken, unabhängige Likes, Ausblenden sowie Ablehnen mit mehreren Gründen und bis zu 600 Zeichen Notiz.
+- Merken, Ausblenden sowie Ablehnen mit mehreren Gründen und bis zu 600 Zeichen Notiz.
 - Rückgängig für Ablehnungen in der geöffneten Sitzung, einschließlich vorherigem Status und Feedback.
 - Import mit URL-/Quellen-ID-Deduplizierung, Laufidentität und konfigurierbarem Tageslimit.
 - Lokale Offline-Kopie und geordnete spätere Synchronisierung von Nutzeraktionen.
@@ -219,9 +219,10 @@ keine Plätze. Parallele Importe werden in SQLite serialisiert. Bei mehreren Kan
 werden höhere Scores bevorzugt. Ein verarbeiteter Lauf wird nicht erneut angewandt;
 wegen des Limits nicht aufgenommene Kandidaten warten nicht automatisch bis morgen.
 
-## Likes, Merken und Ablehnungen
+## Merken und Ablehnungen
 
-Herz = ausdrückliches positives Signal. Lesezeichen = schwächeres Interesse. Ausblenden
+Lesezeichen = positives Interessenssignal. Die Herz-/Like-Bedienung wurde entfernt.
+Bisher gespeicherte Likes bleiben erhalten; ältere Offline-Warteschlangen können sie weiterhin synchronisieren. Ausblenden
 entfernt eine Stelle nur aus der normalen Ansicht und erzeugt kein Ablehnungsfeedback.
 Ablehnen entfernt die Stelle aus allen Ansichten und behält einen Datensatz für Feedback
 und Deduplizierung; es ist keine physische Datenlöschung.
@@ -253,7 +254,7 @@ Online anmelden und die Seite kurz geöffnet lassen, damit App-Dateien und der a
 Stellenstand im Browser gespeichert werden können. Die Vorbereitung läuft im Hintergrund
 ohne dauerhafte Statusmeldung; offene Änderungen und Fehler bleiben sichtbar. Vor der
 Offline-Nutzung die Verbindung trennen und durch Neuladen auf dem Gerät prüfen. Offline sind Suche,
-Filter und Details verfügbar. Merken, Likes, Ablehnen, Ausblenden und Rückgängig werden
+Filter und Details verfügbar. Merken, Ablehnen, Ausblenden und Rückgängig werden
 lokal gespeichert und nach der nächsten Verbindung in Reihenfolge übertragen.
 Netzwerkfehler erhalten die Warteschlange; Wiederholungen sind für die Serveraktionen
 idempotent. Bei einer inzwischen nicht verfügbaren Stelle kann eine Aktion entfallen;

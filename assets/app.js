@@ -1,6 +1,6 @@
 import { changeDeletion, loadPortal, updateLike, updateStatus } from "/assets/api.js?v=5";
-import { clearOfflineData, prepareOffline, readPendingActions, removePendingAction, savePendingAction } from "/assets/offline.js?v=5";
-import { createCard, shortDate, showDetails } from "/assets/ui.js?v=4";
+import { clearOfflineData, prepareOffline, readPendingActions, removePendingAction, savePendingAction } from "/assets/offline.js?v=6";
+import { createCard, shortDate, showDetails } from "/assets/ui.js?v=5";
 
 const { t, locale, translatePage } = window.JobfindI18n;
 translatePage();
@@ -247,7 +247,7 @@ function updateSummary(jobs = filteredJobs()) {
 function render() {
   const jobs = filteredJobs();
   const fragment = document.createDocumentFragment();
-  jobs.forEach((job) => fragment.append(createCard(job, openJob, changeStatus, askDelete, changeLike)));
+  jobs.forEach((job) => fragment.append(createCard(job, openJob, changeStatus, askDelete)));
   grid.replaceChildren(fragment);
   $("empty-state").hidden = jobs.length > 0;
   $("empty-copy").textContent = state.jobs.length
@@ -334,27 +334,6 @@ $("feedback-form").addEventListener("submit", (event) => {
   const values = new FormData(event.currentTarget);
   removeJob(feedbackJob, { reasons: values.getAll("reason"), note: values.get("note") });
 });
-
-async function changeLike(job) {
-  if (mutationPending || syncInFlight) return;
-  mutationPending = true;
-  mutationVersion += 1;
-  const previous = Boolean(job.liked);
-  const hadFocus = grid.querySelector(`[data-job-id="${job.id}"] .like-button`) === document.activeElement;
-  job.liked = !previous;
-  render();
-  try {
-    await saveAction({ kind: "like", jobId: job.id, liked: job.liked });
-  } catch (error) {
-    job.liked = previous;
-    window.alert(t("Dein Gefällt mir konnte nicht gespeichert werden. Bitte versuche es erneut."));
-  } finally {
-    mutationPending = false;
-    render();
-    if (!state.offline && state.pendingActions.length) syncPendingActions();
-    if (hadFocus) grid.querySelector(`[data-job-id="${job.id}"] .like-button`)?.focus();
-  }
-}
 
 async function removeJob(job, feedback) {
   if (mutationPending || syncInFlight) return;

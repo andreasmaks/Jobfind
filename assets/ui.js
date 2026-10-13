@@ -3,7 +3,6 @@ const { t, locale } = window.JobfindI18n;
 const icon = (paths) => `<svg class="lucide-icon" viewBox="0 0 24 24" aria-hidden="true">${paths}</svg>`;
 const bookmark = icon('<path d="M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z"/>');
 const trash = icon('<path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6"/>');
-const heart = icon('<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/>');
 const building = icon('<path d="M10 12h4M10 8h4"/><path d="M14 21v-3a2 2 0 0 0-4 0v3"/><path d="M6 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2"/><path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/>');
 const sparkles = icon('<path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4M22 4h-4"/><circle cx="4" cy="20" r="2"/>');
 const externalLink = icon('<path d="M15 3h6v6M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>');
@@ -98,7 +97,7 @@ function chip(value, className = "") {
   return element("span", `chip ${className}`.trim(), value);
 }
 
-export function createCard(job, onOpen, onSave, onDelete, onLike) {
+export function createCard(job, onOpen, onSave, onDelete) {
   const card = element("article", "job-card");
   card.dataset.jobId = job.id;
   card.addEventListener("click", (event) => {
@@ -122,14 +121,7 @@ export function createCard(job, onOpen, onSave, onDelete, onLike) {
   remove.title = t("Löschen · weniger ähnliche Jobs empfehlen");
   remove.addEventListener("click", () => onDelete(job));
   const actions = element("div", "card-actions");
-  const like = element("button", `save-button like-button${job.liked ? " is-liked" : ""}`);
-  like.type = "button";
-  like.innerHTML = heart;
-  like.setAttribute("aria-label", t(job.liked ? "Gefällt mir zurücknehmen" : "Gefällt mir · mehr ähnliche Jobs"));
-  like.setAttribute("aria-pressed", String(Boolean(job.liked)));
-  like.title = like.getAttribute("aria-label");
-  like.addEventListener("click", () => onLike(job));
-  actions.append(like, save, remove);
+  actions.append(save, remove);
   top.append(mark, identity, actions);
   card.append(top, element("h2", "card-title", displayJobTitle(job.title)));
 

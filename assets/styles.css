@@ -99,9 +99,6 @@ a{color:inherit}
 .card-top{column-gap:10px}
 .card-top .company-mark{width:48px}
 .card-top .company-mark[data-logo-shape="wide"] img{max-width:48px}
-.save-button.like-button.is-liked{color:var(--tag-pink)}
-.save-button.like-button.is-liked svg{fill:currentColor}
-.save-button.like-button:hover{color:var(--tag-pink);background:var(--accent-soft)}
 .card-actions .save-button{width:36px;height:40px}
 .save-button.delete-button:hover{color:#b42335;background:#fdecef}
 .card-actions button:disabled{opacity:.5;cursor:not-allowed}

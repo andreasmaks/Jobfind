@@ -10,7 +10,7 @@ for one person who wants to review a small selection of relevant jobs and give s
 feedback for the next search.
 
 Search profile and previous feedback → Hermes research → structured import →
-Jobfind listings → likes, bookmarks and rejection reasons → context for the next search.
+Jobfind listings → bookmarks and rejection reasons → context for the next search.
 Feedback adjusts the search context; it does not train the underlying model.
 Improved match quality and market uniqueness have not been demonstrated.
 
@@ -34,7 +34,7 @@ currently in German. Repository documentation is available in English, with a Ge
 
 - Job overview, text search, and filters for work model, working hours, match score and hidden jobs.
 - Job details, validated HTTP(S) links to original listings, and optional company profiles with sources.
-- Bookmarks, independent likes, hiding, and rejection with multiple reasons and an optional 600-character note.
+- Bookmarks, hiding, and rejection with multiple reasons and an optional 600-character note.
 - Undo for rejections made in the current session, restoring the previous status and feedback.
 - Import with URL/source-ID deduplication, run identity and a configurable daily limit.
 - A local offline copy and ordered synchronization of user actions when reconnected.
@@ -217,9 +217,10 @@ likes, notes or credentials. It rejects non-public network destinations and unsa
 redirects. No Hermes/model calls, browser automation or dependencies are required.
 Offline devices see removals after reconnecting and refreshing their snapshot.
 
-## Likes, bookmarks and rejections
+## Bookmarks and rejections
 
-A heart is an explicit positive signal. A bookmark is a weaker signal of interest.
+A bookmark is a positive signal of interest. The heart/like control has been removed.
+Previously stored likes remain intact and older offline queues can still synchronize them.
 Hiding removes a job from the normal view without generating rejection feedback.
 Rejecting removes it from all views while retaining a record for feedback and
 deduplication; it does not physically erase the record.
@@ -252,7 +253,7 @@ snapshot can be stored in the browser. Preparation runs in the background withou
 a permanent status banner; pending changes and errors are still shown. Before
 relying on offline access, disconnect and reload to check your device. Search,
 filters and details are available offline. Bookmarks,
-likes, rejections, hiding and undo are stored locally and sent in order after
+rejections, hiding and undo are stored locally and sent in order after
 reconnection. Network failures preserve the queue; server actions are idempotent
 on retry. An action may be skipped if its job is no longer available; the app
 reports this. Sign-out requires synchronization first and removes the local

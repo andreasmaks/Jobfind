@@ -147,7 +147,7 @@ const viewCtx = vm.createContext({
   $: element, grid: cardGrid, mutationPending: false, syncInFlight: false,
   document: { createDocumentFragment: () => ({ cards: [], append(card) { this.cards.push(card); } }) },
   createCard: (job) => job, shortDate: () => "", updateRunNote() {}, updateOfflineState() {},
-  openJob() {}, changeStatus() {}, askDelete() {}, changeLike() {},
+  openJob() {}, changeStatus() {}, askDelete() {},
 });
 vm.runInContext(functionText("filteredJobs", "updateRunNote") + "\n" + functionText("updateSummary", "render") + "\n" + functionText("render", "openJob"), viewCtx);
 const checkCount = (tab, count) => {
