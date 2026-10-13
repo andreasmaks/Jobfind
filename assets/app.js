@@ -1,6 +1,6 @@
 import { changeDeletion, loadPortal, updateLike, updateStatus } from "/assets/api.js?v=5";
 import { clearOfflineData, prepareOffline, readPendingActions, removePendingAction, savePendingAction } from "/assets/offline.js?v=5";
-import { createCard, shortDate, showDetails } from "/assets/ui.js?v=3";
+import { createCard, shortDate, showDetails } from "/assets/ui.js?v=4";
 
 const { t, locale, translatePage } = window.JobfindI18n;
 translatePage();

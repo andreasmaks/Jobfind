@@ -236,4 +236,5 @@ export function showDetails(dialog, job, onStatus, onDelete) {
   content.append(actions);
   target.append(content);
   if (!dialog.open) dialog.showModal();
+  dialog.scrollTop = 0;
 }
