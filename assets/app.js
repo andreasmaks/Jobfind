@@ -1,5 +1,5 @@
 import { changeDeletion, loadPortal, updateLike, updateStatus } from "/assets/api.js?v=5";
-import { clearOfflineData, prepareOffline, readPendingActions, removePendingAction, savePendingAction } from "/assets/offline.js?v=6";
+import { clearOfflineData, prepareOffline, readPendingActions, removePendingAction, savePendingAction } from "/assets/offline.js?v=7";
 import { createCard, shortDate, showDetails } from "/assets/ui.js?v=5";
 
 const { t, locale, translatePage } = window.JobfindI18n;
@@ -77,7 +77,6 @@ function filteredJobs() {
   const items = state.jobs.filter((job) => {
     if ((job.user_status === "hidden") !== hidden) return false;
     if (state.tab === "saved" && job.user_status !== "saved") return false;
-    if (state.tab === "history" && !job.historical) return false;
     const haystack = [job.title, job.company, job.location, job.remote].join(" ").toLocaleLowerCase("de-DE");
     if (search && !haystack.includes(search)) return false;
     const work = [job.remote, job.location].join(" ").toLocaleLowerCase("de-DE");

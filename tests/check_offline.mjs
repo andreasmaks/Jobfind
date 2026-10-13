@@ -140,7 +140,7 @@ const viewCtx = vm.createContext({
   t, locale,
   state: { tab: "all", meta: {}, offline: true, jobs: [
     { id: "a", title: "Design", company: "Example", user_status: "saved", first_seen_at: "2026-09-30" },
-    { id: "b", title: "Archive", company: "Example", user_status: "new", historical: true, first_seen_at: "2026-09-29" },
+    { id: "b", title: "Older import", company: "Example", user_status: "new", historical: true, first_seen_at: "2026-09-29" },
     { id: "c", title: "Product", company: "Other", user_status: "new", first_seen_at: "2026-09-28" },
     { id: "d", title: "Hidden", company: "Other", user_status: "hidden", first_seen_at: "2026-09-27" },
   ] },
@@ -157,9 +157,14 @@ const checkCount = (tab, count) => {
   assert.equal(element("header-job-count").textContent, `${count} ${count === 1 ? "Job" : "Jobs"}`);
   assert.match(element("header-job-count").attributes["aria-label"], /in dieser Auswahl/);
 };
+assert.deepEqual([...source("index.html").matchAll(/data-tab="([^"]+)"/g)].map((match) => match[1]), ["all", "saved"], "Navigation offers only All and Saved, with no archive view");
+assert(!app.includes('state.tab === "history"'), "Remove the archive-only filter, not historical listings");
 checkCount("all", 3);
+assert(cardGrid.cards.some((job) => job.id === "b"), "Older imports remain visible under All, including offline");
 checkCount("saved", 1);
-checkCount("history", 1);
+viewCtx.state.jobs.find((job) => job.id === "b").user_status = "saved";
+checkCount("saved", 2);
+viewCtx.state.jobs.find((job) => job.id === "b").user_status = "new";
 element("search").value = "not present";
 checkCount("all", 0);
 element("search").value = "other";
