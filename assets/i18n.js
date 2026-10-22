@@ -4,6 +4,12 @@
   const language = /^de(?:-|$)/i.test(preferred) ? "de" : "en";
   const locale = language === "de" ? "de-DE" : "en-GB";
   const english = {
+    "Gemerkte als PDF herunterladen": "Download saved jobs as PDF",
+    "PDF wird erstellt …": "Creating PDF …",
+    "Exportiert alle Lesezeichen, unabhängig vom Suchfilter. Benötigt Internet und synchronisierte Änderungen.": "Exports all saved jobs, regardless of search filters. Requires Internet and synced changes.",
+    "Originaltexte werden abgerufen. Das kann bis zu einer Minute dauern.": "Retrieving original listings. This may take up to a minute.",
+    "Die PDF ist fertig. Nicht abrufbare Originaltexte sind darin gekennzeichnet.": "Your PDF is ready. Unavailable original texts are marked in the document.",
+    "PDF konnte nicht erstellt werden. Bitte prüfe deine Verbindung und Anmeldung und versuche es erneut.": "Could not create the PDF. Check your connection and sign-in, then try again.",
     "jobfind · Anmelden": "jobfind · Sign in",
     "jobfind, zur Stellenübersicht": "jobfind, job overview",
     "Hauptnavigation": "Main navigation",

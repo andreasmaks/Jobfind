@@ -10,11 +10,11 @@
   <link rel="manifest" href="/manifest.webmanifest">
   <meta name="apple-mobile-web-app-title" content="jobfind">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <script src="/assets/i18n.js?v=1"></script>
+  <script src="/assets/i18n.js?v=2"></script>
   <script src="/assets/theme.js?v=2"></script>
-  <link rel="stylesheet" href="/assets/styles.css?v=7">
+  <link rel="stylesheet" href="/assets/styles.css?v=8">
   <link rel="stylesheet" href="/assets/local.css">
-  <script type="module" src="/assets/app.js?v=13"></script>
+  <script type="module" src="/assets/app.js?v=14"></script>
 </head>
 <body>
   <svg width="0" height="0" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
@@ -89,6 +89,10 @@
             <label>Sichtbarkeit<select id="visibility-filter"><option value="visible">Sichtbare Stellen</option><option value="hidden">Ausgeblendete Stellen</option></select></label>
           </div>
         </details>
+      </div>
+      <div id="saved-export" class="saved-export" hidden>
+        <button id="export-saved" class="theme-toggle" type="button">Gemerkte als PDF herunterladen</button>
+        <p id="export-status" role="status" aria-live="polite"></p>
       </div>
       <p id="run-note" class="run-note" role="status" hidden></p>
     </section>

@@ -276,6 +276,9 @@ class Handler(BaseHTTPRequestHandler):
         if not self.valid_host():
             return
         path = urlsplit(self.path).path
+        if path == "/api/export/saved.pdf":
+            self.handle_pdf_export()
+            return
         if path == "/login":
             self.handle_login()
             return
@@ -318,6 +321,42 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(400, {"ok": False, "error": "invalid_request"})
         except (OSError, sqlite3.Error):
             self.send_json(503, {"ok": False, "error": "temporarily_unavailable"})
+
+    def handle_pdf_export(self) -> None:
+        session = self.session()
+        if not session:
+            self.send_json(401, {"ok": False, "error": "auth_required"})
+            return
+        if not self.same_origin() or not hmac.compare_digest(self.headers.get("X-CSRF-Token", ""), csrf_token(session)):
+            self.send_json(403, {"ok": False, "error": "invalid_csrf"})
+            return
+        from pdf_export import EXPORT_LOCK, build_pdf
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            if not 0 < length <= 128:
+                raise ValueError("invalid_size")
+            payload = json.loads(self.rfile.read(length))
+            if not isinstance(payload, dict) or set(payload) != {"language"} or payload["language"] not in ("de", "en"):
+                raise ValueError("invalid_payload")
+        except (ValueError, TypeError, UnicodeError):
+            self.send_json(400, {"ok": False, "error": "invalid_request"})
+            return
+        if not EXPORT_LOCK.acquire(blocking=False):
+            self.send_json(409, {"ok": False, "error": "export_busy"})
+            return
+        try:
+            jobs = [job for job in list_jobs() if job["user_status"] == "saved"]
+            if not jobs:
+                self.send_json(400, {"ok": False, "error": "no_saved_jobs"})
+                return
+            body = build_pdf(jobs, payload["language"])
+            self.send_body(200, body, "application/pdf", headers=(
+                ("Content-Disposition", 'attachment; filename="jobfind-gemerkte.pdf"'),
+            ))
+        except (OSError, sqlite3.Error, ImportError, ValueError):
+            self.send_json(503, {"ok": False, "error": "export_failed"})
+        finally:
+            EXPORT_LOCK.release()
 
     def same_origin(self) -> bool:
         origin = self.headers.get("Origin", "").rstrip("/")

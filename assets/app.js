@@ -1,5 +1,5 @@
 import { changeDeletion, loadPortal, updateLike, updateStatus } from "/assets/api.js?v=5";
-import { clearOfflineData, prepareOffline, readPendingActions, removePendingAction, savePendingAction } from "/assets/offline.js?v=7";
+import { clearOfflineData, prepareOffline, readPendingActions, removePendingAction, savePendingAction } from "/assets/offline.js?v=8";
 import { createCard, shortDate, showDetails } from "/assets/ui.js?v=5";
 
 const { t, locale, translatePage } = window.JobfindI18n;
@@ -13,6 +13,7 @@ let offlinePreparation = Promise.resolve();
 let syncInFlight = false;
 const deletedJobs = [];
 let deletionNoticeTimer;
+let exportInFlight = false;
 const $ = (id) => document.getElementById(id);
 const grid = $("jobs-grid");
 const dialog = $("job-dialog");
@@ -254,6 +255,7 @@ function render() {
     : t("Sobald Hermes passende Stellen findet, erscheinen sie hier.");
   $("filter-badge").hidden = !($("remote-filter").value !== "all" || $("hours-filter").value !== "all" || $("score-filter").value !== "0" || $("visibility-filter").value !== "visible");
   updateSummary(jobs);
+  updateExportState();
   updateRunNote();
   updateOfflineState();
   grid.querySelectorAll(".card-actions button").forEach((button) => { button.disabled = mutationPending || syncInFlight; });
@@ -262,6 +264,46 @@ function render() {
     link.tabIndex = state.offline ? -1 : 0;
   });
 }
+
+function updateExportState() {
+  $("saved-export").hidden = state.tab !== "saved";
+  const button = $("export-saved");
+  button.disabled = exportInFlight || state.offline || !navigator.onLine || mutationPending || syncInFlight || state.pendingActions.length > 0 || !state.jobs.some((job) => job.user_status === "saved");
+  button.textContent = t(exportInFlight ? "PDF wird erstellt …" : "Gemerkte als PDF herunterladen");
+  button.title = t("Exportiert alle Lesezeichen, unabhängig vom Suchfilter. Benötigt Internet und synchronisierte Änderungen.");
+}
+
+async function exportSavedJobs() {
+  if ($("export-saved").disabled || exportInFlight) return;
+  exportInFlight = true;
+  updateExportState();
+  $("export-status").textContent = t("Originaltexte werden abgerufen. Das kann bis zu einer Minute dauern.");
+  try {
+    const response = await fetch("/api/export/saved.pdf", {
+      method: "POST", credentials: "same-origin", cache: "no-store",
+      headers: { "Content-Type": "application/json", "X-CSRF-Token": state.csrf },
+      body: JSON.stringify({ language: window.JobfindI18n.language }),
+    });
+    if (!response.ok || !response.headers.get("Content-Type")?.includes("application/pdf")) throw new Error("export_failed");
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "jobfind-gemerkte.pdf";
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    $("export-status").textContent = t("Die PDF ist fertig. Nicht abrufbare Originaltexte sind darin gekennzeichnet.");
+  } catch (_) {
+    $("export-status").textContent = t("PDF konnte nicht erstellt werden. Bitte prüfe deine Verbindung und Anmeldung und versuche es erneut.");
+  } finally {
+    exportInFlight = false;
+    updateExportState();
+  }
+}
+
+$("export-saved").addEventListener("click", exportSavedJobs);
 
 function openJob(job) {
   showDetails(dialog, job, changeStatus, askDelete);

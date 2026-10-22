@@ -147,9 +147,9 @@ const viewCtx = vm.createContext({
   $: element, grid: cardGrid, mutationPending: false, syncInFlight: false,
   document: { createDocumentFragment: () => ({ cards: [], append(card) { this.cards.push(card); } }) },
   createCard: (job) => job, shortDate: () => "", updateRunNote() {}, updateOfflineState() {},
-  openJob() {}, changeStatus() {}, askDelete() {},
+  openJob() {}, changeStatus() {}, askDelete() {}, updateExportState() {},
 });
-vm.runInContext(functionText("filteredJobs", "updateRunNote") + "\n" + functionText("updateSummary", "render") + "\n" + functionText("render", "openJob"), viewCtx);
+vm.runInContext(functionText("filteredJobs", "updateRunNote") + "\n" + functionText("updateSummary", "render") + "\n" + functionText("render", "updateExportState"), viewCtx);
 const checkCount = (tab, count) => {
   viewCtx.state.tab = tab;
   vm.runInContext("render()", viewCtx);
@@ -179,6 +179,27 @@ assert.equal(element("nav-saved-count").hidden, true);
 checkCount("all", 2);
 vm.runInContext("updateSummary()", viewCtx);
 assert.equal(element("header-job-count").textContent, "2 Jobs", "Background refresh preserves the selected count");
+
+// Export is for all bookmarks, with an explicit online/synchronized boundary.
+viewCtx.exportInFlight = false;
+viewCtx.navigator = { onLine: true };
+viewCtx.state.pendingActions = [];
+viewCtx.state.offline = false;
+viewCtx.state.jobs[0].user_status = "saved";
+vm.runInContext(functionText("updateExportState", "exportSavedJobs"), viewCtx);
+checkCount("saved", 1);
+assert.equal(element("saved-export").hidden, false);
+assert.equal(element("export-saved").disabled, false);
+element("search").value = "no matches";
+checkCount("saved", 0);
+assert.equal(element("export-saved").disabled, false, "Filters must not exclude bookmarks from export");
+viewCtx.state.pendingActions = [{ kind: "status" }];
+vm.runInContext("updateExportState()", viewCtx);
+assert.equal(element("export-saved").disabled, true, "Pending offline changes must sync first");
+viewCtx.state.pendingActions = [];
+viewCtx.state.offline = true;
+vm.runInContext("updateExportState()", viewCtx);
+assert.equal(element("export-saved").disabled, true);
 
 // Disclosure behavior uses existing DOM events, without a menu library or browser run.
 const menuListeners = new Map();

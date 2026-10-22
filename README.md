@@ -50,7 +50,7 @@ generators and multi-user hosting are outside the scope of this release.
 - Tested on **macOS 27.0.1**, with **Python 3.11.16 and 3.14.7**. The main test run
   used **SQLite 3.53.4**. Linux, Windows and Docker have not been verified.
 - No additional Python packages, npm installation or build pipeline is required to run the app.
-  `requirements.txt` documents the absence of third-party Python dependencies.
+  Install the PDF dependency with `.venv/bin/python -m pip install -r requirements.txt`.
 - A modern browser with JavaScript. Offline use requires IndexedDB, Service Workers and
   Cache Storage on `localhost`/loopback or HTTPS; actual browser behavior still needs manual testing.
 - Optional for automated research: your own configured Hermes installation with a model
@@ -216,6 +216,24 @@ The check sends anonymous requests to listing sites, but never your profile,
 likes, notes or credentials. It rejects non-public network destinations and unsafe
 redirects. No Hermes/model calls, browser automation or dependencies are required.
 Offline devices see removals after reconnecting and refreshing their snapshot.
+
+## Export saved jobs as one PDF
+
+Under Saved, choose **Download saved jobs as PDF**. This downloads a finished PDF,
+not a print dialog. All server-side bookmarks are included, regardless of visible
+search/filter results. Internet access and synchronized offline changes are required.
+Each listing has a unified Jobfind layout: facts, saved summary, existing fit and
+concerns, then the original listing text and source URL. No new AI evaluation is made.
+Listings keep their original language; headings follow the app's DE/EN selection.
+
+Original pages are fetched anonymously through the same public-address/redirect
+safety checks as availability checks. Structured JobPosting descriptions are preferred;
+matching article/page text is a fallback. Source styling, images and scripts are never
+embedded. Completeness cannot be guaranteed, especially on JavaScript/login-protected
+pages. Failed or unverified fetches are explicitly marked and retain the saved summary.
+The fetch phase has a 45-second budget and checks up to 100 sources; all bookmarks
+are still included. PDFs are generated in memory and not stored on the server.
+Install `requirements.txt` (ReportLab and its dependencies) before restarting the server.
 
 ## Bookmarks and rejections
 

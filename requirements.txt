@@ -1,1 +1,2 @@
-# No third-party Python packages. Python >= 3.11 and its standard library suffice.
+# PDF generation only; no browser, build tools or external rendering service.
+reportlab>=4.4,<5

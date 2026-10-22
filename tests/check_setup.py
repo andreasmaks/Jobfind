@@ -25,6 +25,7 @@ with tempfile.TemporaryDirectory(prefix="jobfind-install-") as scratch:
     env.pop("JOBFIND_CONFIG", None)
     subprocess.run([sys.executable, "-m", "venv", str(clean / ".venv")], check=True, capture_output=True)
     python = clean / ".venv/bin/python"
+    subprocess.run([str(python), "-m", "pip", "install", "-r", str(clean / "requirements.txt")], check=True, capture_output=True)
     def run(*args, input=None, ok=True):
         result = subprocess.run([str(python), "jobfind.py", *args], cwd=clean, env=env,
                                 input=input, text=True, capture_output=True)

@@ -291,6 +291,26 @@ class ReleaseChecks(unittest.TestCase):
         self.assertEqual(sentinel.stat().st_mtime_ns, before.st_mtime_ns)
         self.assertEqual(list(foreign.iterdir()), [sentinel])
 
+    def test_pdf_export_and_original_text_safety(self):
+        from pdf_export import build_pdf, extract_original
+        sample = job(title="Product Designer", summary="Übersicht mit Umlauten & <script>Text</script>", company="Erfundene Firma", concerns="Arbeitszeit offen")
+        description = "<h2>Deine Aufgaben</h2><p>Digitale Produkte gemeinsam mit Menschen entwickeln und verständliche Abläufe gestalten.</p>" * 12
+        response = {"http": 200, "body": '<script type="application/ld+json">' + json.dumps({"@type": "JobPosting", "title": "Product Designer", "description": description}) + '</script>', "error": ""}
+        text, method = extract_original(sample, response)
+        self.assertEqual(method, "structured")
+        self.assertIn("Deine Aufgaben", text)
+        self.assertEqual(extract_original(sample, {"http": 403, "body": "Access denied"})[0], "")
+        wrong = dict(response, body=response["body"].replace("Product Designer", "Legal Counsel"))
+        self.assertEqual(extract_original(sample, wrong)[0], "")
+        for language in ("de", "en"):
+            pdf = build_pdf([sample, job(2, title="Offline listing")], language,
+                            fetcher=lambda url: response if url.endswith("/1") else {"http": 403})
+            self.assertTrue(pdf.startswith(b"%PDF-"))
+            self.assertTrue(pdf.rstrip().endswith(b"%%EOF"))
+            self.assertGreater(len(pdf), 10000)
+        with self.assertRaises(ValueError):
+            build_pdf([])
+
     def test_http_auth_csrf_origin_logout_assets(self):
         ingest(envelope("http", [job(summary="<script>alert(1)</script>")]))
         identifier = store.list_jobs()[0]["id"]
@@ -318,6 +338,7 @@ class ReleaseChecks(unittest.TestCase):
                 except OSError:
                     time.sleep(0.05)
             self.assertEqual(request("GET", "/api/jobs")[0], 401)
+            self.assertEqual(request("POST", "/api/export/saved.pdf", '{"language":"de"}')[0], 401)
             status, _, language_script = request("GET", "/assets/i18n.js?v=1")
             self.assertEqual(status, 200, "Login language script must be public")
             self.assertIn(b"JobfindI18n", language_script)
@@ -332,9 +353,13 @@ class ReleaseChecks(unittest.TestCase):
             cookie = headers["Set-Cookie"].split(";", 1)[0]
             headers = {"Cookie": cookie, "Origin": origin, "Content-Type": "application/json"}
             token = json.loads(request("GET", "/api/csrf", headers=headers)[2])["token"]
+            self.assertEqual(request("POST", "/api/export/saved.pdf", '{"language":"de"}', headers)[0], 403)
             target = f"/api/jobs/{identifier}/status"
             self.assertEqual(request("POST", target, '{"status":"saved"}', headers)[0], 403)
             headers["X-CSRF-Token"] = token
+            self.assertEqual(request("POST", "/api/export/saved.pdf", '{"language":"de"}', dict(headers, Origin="https://evil.example"))[0], 403)
+            self.assertEqual(request("POST", "/api/export/saved.pdf", '{"language":[]}', headers)[0], 400)
+            self.assertEqual(request("POST", "/api/export/saved.pdf", '{"language":"de"}', headers)[0], 400)
             self.assertEqual(request("POST", target, '{"status":"saved"}', dict(headers, Origin="https://evil.example"))[0], 403)
             self.assertEqual(request("POST", target, '{"status":"saved"}', headers)[0], 200)
             self.assertEqual(request("POST", f"/api/jobs/{identifier}/like", "{}", headers)[0], 200)
