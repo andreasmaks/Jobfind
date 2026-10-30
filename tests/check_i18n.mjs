@@ -67,7 +67,7 @@ for (const preferred of ["de", "de-DE", "de-AT", "de-CH", "DE-de", "en-US", "fr-
     if (german) assert.deepEqual(env.texts.map((node) => node.textContent), original, "German HTML must stay unchanged");
     else {
       assert(env.texts.some((node) => node.textContent.trim() === (page === "index.html" ? "All" : "Password")));
-      const unchanged = new Set(["jobfind", "Jobs", "Hybrid", "Details", "Optional"]);
+      const unchanged = new Set(["jobfind", "Jobs", "Hybrid", "Details", "Optional", "Passkeys"]);
       for (const text of original.map((text) => text.trim()).filter((text) => !unchanged.has(text))) assert.notEqual(t(text), text, `Untranslated HTML: ${text}`);
       for (const node of env.attributes) for (const value of Object.values(node.attributes)) assert(!/[äöüÄÖÜß]/.test(value), `Untranslated attribute: ${value}`);
     }
@@ -164,11 +164,11 @@ for (const preferred of ["de-DE", "fr-FR"]) {
   assert.equal(get("deletion-message").textContent, german ? "„Aufgaben“ gelöscht. Wird nach dem Verbinden übertragen." : "“Aufgaben” deleted. It will sync when reconnected.");
 }
 for (const page of ["index.html", "login.html"]) {
-  assert(source(page).indexOf("/assets/i18n.js?v=2") < source(page).indexOf("/assets/theme.js?v=2"));
+  assert(source(page).indexOf("/assets/i18n.js?v=3") < source(page).indexOf("/assets/theme.js?v=2"));
 }
-assert(source("sw.js").includes('"/assets/i18n.js?v=2"'));
-assert(source("sw.js").includes('"jobfind-shell-v11"'));
-assert(source("assets/offline.js").includes('"jobfind-shell-v11"'));
+assert(source("sw.js").includes('"/assets/i18n.js?v=3"'));
+assert(source("sw.js").includes('"jobfind-shell-v12"'));
+assert(source("assets/offline.js").includes('"jobfind-shell-v12"'));
 assert(!source("assets/app.js").includes("function changeLike("));
 assert(source("index.html").includes('data-tab="saved"'));
 assert(source("index.html").includes('id="dialog-save"'));

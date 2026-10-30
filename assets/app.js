@@ -1,5 +1,5 @@
 import { changeDeletion, loadPortal, updateLike, updateStatus } from "/assets/api.js?v=5";
-import { clearOfflineData, prepareOffline, readPendingActions, removePendingAction, savePendingAction } from "/assets/offline.js?v=8";
+import { clearOfflineData, prepareOffline, readPendingActions, removePendingAction, savePendingAction } from "/assets/offline.js?v=9";
 import { createCard, shortDate, showDetails } from "/assets/ui.js?v=5";
 
 const { t, locale, translatePage } = window.JobfindI18n;
@@ -558,3 +558,8 @@ window.addEventListener("offline", () => {
   render();
 });
 window.addEventListener("online", refreshPortal);
+window.addEventListener("jobfind:session-changed", (event) => {
+  if (typeof event.detail?.csrf !== "string") return;
+  mutationVersion += 1; // Discard any background refresh from the previous session.
+  state.csrf = event.detail.csrf;
+});

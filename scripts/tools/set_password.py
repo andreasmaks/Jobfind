@@ -45,10 +45,14 @@ def main() -> None:
         db = sqlite3.connect(AUTH_DB)
         try:
             db.execute("DELETE FROM sessions")
+            tables = {row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+            for table in ("passkeys", "passkey_challenges"):
+                if table in tables:
+                    db.execute(f"DELETE FROM {table}")
             db.commit()
         finally:
             db.close()
-    print("Jobfind-Passwort gesetzt; bisherige Sitzungen wurden beendet.")
+    print("Jobfind-Passwort gesetzt; bisherige Sitzungen und Passkeys wurden widerrufen.")
 
 
 if __name__ == "__main__":

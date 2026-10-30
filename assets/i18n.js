@@ -4,6 +4,22 @@
   const language = /^de(?:-|$)/i.test(preferred) ? "de" : "en";
   const locale = language === "de" ? "de-DE" : "en-GB";
   const english = {
+    "Passkeys verwalten": "Manage passkeys",
+    "Mit einem Passkey kannst du dich ohne Passworteingabe anmelden. Dein Passwort bleibt als Rückfallmöglichkeit erhalten.": "Use a passkey to sign in without entering a password. Your password remains available as a fallback.",
+    "Bezeichnung": "Label", "Mein Passkey": "My passkey",
+    "Aktuelles Jobfind-Passwort": "Current Jobfind password",
+    "Passkey hinzufügen": "Add passkey", "Mit Passkey anmelden": "Sign in with passkey",
+    "Passkey wird geprüft …": "Checking passkey …",
+    "Noch kein Passkey eingerichtet.": "No passkey set up yet.",
+    "Passkey entfernen": "Remove passkey", "Passkey entfernt.": "Passkey removed.",
+    "Diesen Passkey entfernen? Die Anmeldung mit Passwort bleibt möglich.": "Remove this passkey? You can still sign in with your password.",
+    "Bitte bestätige dein aktuelles Jobfind-Passwort.": "Please confirm your current Jobfind password.",
+    "Bestätige die Passkey-Erstellung auf deinem Gerät.": "Confirm passkey creation on your device.",
+    "Passkey eingerichtet. Du kannst dich damit künftig anmelden.": "Passkey set up. You can now use it to sign in.",
+    "Passkey-Vorgang fehlgeschlagen. Bitte versuche es erneut oder nutze dein Passwort.": "Passkey operation failed. Please try again or use your password.",
+    "Vorgang abgebrochen oder Zeit abgelaufen. Du kannst es erneut versuchen.": "Cancelled or timed out. You can try again.",
+    "Dieser Passkey ist bereits registriert.": "This passkey is already registered.",
+    "Passkeys benötigen eine sichere Internetverbindung und einen unterstützten Browser.": "Passkeys require a secure Internet connection and a supported browser.",
     "Gemerkte als PDF herunterladen": "Download saved jobs as PDF",
     "PDF wird erstellt …": "Creating PDF …",
     "Exportiert alle Lesezeichen, unabhängig vom Suchfilter. Benötigt Internet und synchronisierte Änderungen.": "Exports all saved jobs, regardless of search filters. Requires Internet and synced changes.",

@@ -1,2 +1,4 @@
 # PDF generation only; no browser, build tools or external rendering service.
 reportlab>=4.4,<5
+# WebAuthn verification (cryptography is delegated to this maintained library).
+webauthn>=2.8,<3

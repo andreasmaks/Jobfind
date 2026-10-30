@@ -49,6 +49,7 @@ ASSETS = {
     "/manifest.webmanifest": ("manifest.webmanifest", "application/manifest+json; charset=utf-8"),
     "/assets/theme.js": ("assets/theme.js", "text/javascript; charset=utf-8"),
     "/assets/login.js": ("assets/login.js", "text/javascript; charset=utf-8"),
+    "/assets/passkeys.js": ("assets/passkeys.js", "text/javascript; charset=utf-8"),
     "/favicon.svg": ("favicon.svg", "image/svg+xml"),
     "/assets/brand-mark.svg": ("assets/brand-mark.svg", "image/svg+xml"),
     "/login": ("login.html", "text/html; charset=utf-8"),
@@ -59,6 +60,7 @@ PUBLIC_ASSETS = {
     "/manifest.webmanifest",
     "/login",
     "/assets/login.js",
+    "/assets/passkeys.js",
     "/assets/theme.js",
     "/assets/styles.css",
     "/favicon.svg",
@@ -83,6 +85,8 @@ def init_auth_db() -> None:
     finally:
         db.close()
     AUTH_DB.chmod(0o600)
+    from passkeys import init_db
+    init_db()
 
 
 def valid_session(token: str) -> bool:
@@ -253,6 +257,10 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(200, {"ok": True, **metadata()})
             elif path == "/api/csrf":
                 self.send_json(200, {"ok": True, "token": csrf_token(session)})
+            elif path == "/api/passkeys":
+                from passkeys import list_keys
+                origin = PUBLIC_ORIGIN or "http://" + self.headers["Host"]
+                self.send_json(200, {"ok": True, "passkeys": list_keys(origin)})
             elif re.fullmatch(r"/assets/company-logos/[0-9a-f]{24}\.png", path):
                 logo = company_logo_path(path.rsplit("/", 1)[-1])
                 if not logo or not logo.is_file():
@@ -278,6 +286,9 @@ class Handler(BaseHTTPRequestHandler):
         path = urlsplit(self.path).path
         if path == "/api/export/saved.pdf":
             self.handle_pdf_export()
+            return
+        if path.startswith("/api/passkeys/"):
+            self.handle_passkeys(path)
             return
         if path == "/login":
             self.handle_login()
@@ -319,6 +330,74 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(200 if found else 404, {"ok": found})
         except (ValueError, TypeError, UnicodeError, json.JSONDecodeError):
             self.send_json(400, {"ok": False, "error": "invalid_request"})
+        except (OSError, sqlite3.Error):
+            self.send_json(503, {"ok": False, "error": "temporarily_unavailable"})
+
+    def handle_passkeys(self, path: str) -> None:
+        from passkeys import begin, finish, remove, TTL
+        routes = {"/api/passkeys/auth/options", "/api/passkeys/auth/verify", "/api/passkeys/register/options", "/api/passkeys/register/verify", "/api/passkeys/delete"}
+        if path not in routes:
+            self.send_json(404, {"ok": False, "error": "not_found"})
+            return
+        if not self.same_origin():
+            self.send_json(403, {"ok": False, "error": "invalid_origin"})
+            return
+        registering = "/register/" in path
+        protected = registering or path.endswith("/delete")
+        session = self.session() if protected else ""
+        if protected and not session:
+            self.send_json(401, {"ok": False, "error": "auth_required"})
+            return
+        if protected and not hmac.compare_digest(self.headers.get("X-CSRF-Token", ""), csrf_token(session)):
+            self.send_json(403, {"ok": False, "error": "invalid_csrf"})
+            return
+        key = client_key(self)
+        if is_rate_limited(key):
+            self.send_json(429, {"ok": False, "error": "rate_limited"})
+            return
+        cookie_name = SESSION_COOKIE + "_passkey"
+        cookie_tail = f"; Path=/api/passkeys; HttpOnly{COOKIE_SECURITY}; SameSite=Strict"
+        clear = ("Set-Cookie", f"{cookie_name}=; Max-Age=0" + cookie_tail)
+        verifying = path.endswith("/verify")
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            if not 0 < length <= 65536 or self.headers.get("Content-Type", "").split(";", 1)[0] != "application/json":
+                raise ValueError("invalid_request")
+            payload = json.loads(self.rfile.read(length))
+            if not isinstance(payload, dict):
+                raise ValueError("invalid_request")
+            if path.endswith("/options"):
+                if protected and (not isinstance(payload.get("password"), str) or len(payload["password"]) > 256 or not verify_password(payload["password"])):
+                    record_failed_login(key)
+                    self.send_json(403, {"ok": False, "error": "password_required"})
+                    return
+                token, options = begin("register" if registering else "auth", self.headers["Origin"], session, payload.get("name", "Passkey"))
+                self.send_body(200, json.dumps({"ok": True, "options": options}).encode(), "application/json; charset=utf-8", headers=(
+                    ("Set-Cookie", f"{cookie_name}={token}; Max-Age={TTL}" + cookie_tail),))
+                return
+            if path.endswith("/delete"):
+                if not isinstance(payload.get("password"), str) or len(payload["password"]) > 256 or not verify_password(payload["password"]):
+                    record_failed_login(key)
+                    self.send_json(403, {"ok": False, "error": "password_required"})
+                    return
+                remove(payload.get("id"), self.headers["Origin"])
+                delete_session(session)
+                login_session = create_session()
+                body = json.dumps({"ok": True, "csrf": csrf_token(login_session)}).encode()
+                self.send_body(200, body, "application/json; charset=utf-8", headers=(
+                    ("Set-Cookie", f"{SESSION_COOKIE}={login_session}; Path=/; Max-Age={SESSION_LIFETIME}; HttpOnly{COOKIE_SECURITY}; SameSite=Strict"),))
+                return
+            challenge_cookie = cookie_value(self.headers.get("Cookie", ""), cookie_name)
+            login_session = finish(challenge_cookie, "register" if registering else "auth", self.headers["Origin"], payload.get("credential"), session, SESSION_LIFETIME)
+            headers = (clear,)
+            if not registering:
+                headers += (("Set-Cookie", f"{SESSION_COOKIE}={login_session}; Path=/; Max-Age={SESSION_LIFETIME}; HttpOnly{COOKIE_SECURITY}; SameSite=Strict"),)
+            clear_failed_logins(key)
+            self.send_body(200, b'{"ok":true}', "application/json; charset=utf-8", headers=headers)
+        except (ValueError, TypeError, KeyError, UnicodeError):
+            if verifying:
+                record_failed_login(key)
+            self.send_body(400, b'{"ok":false,"error":"passkey_failed"}', "application/json; charset=utf-8", headers=(clear,) if verifying else ())
         except (OSError, sqlite3.Error):
             self.send_json(503, {"ok": False, "error": "temporarily_unavailable"})
 

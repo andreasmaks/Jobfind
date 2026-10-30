@@ -205,6 +205,18 @@ dialog::backdrop{background:rgba(24,33,57,.45);backdrop-filter:blur(3px)}
 .login-card input:focus{border-color:#5ed7c1;box-shadow:0 0 0 3px #dbf8f2}
 .login-card .button-primary{width:100%;justify-content:space-between;margin-top:8px;font-size:14px}
 .login-error{margin:0;color:#a43e32;font-size:12px}
+.passkey-login{width:100%;margin-top:16px}
+.passkeys-dialog{width:min(520px,calc(100% - 28px));padding:26px;background:var(--white)}
+.passkeys-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.passkeys-heading h2{margin:0;font-size:24px;letter-spacing:-.03em}
+.passkeys-dialog p{font-size:14px;line-height:1.6;color:var(--muted)}
+.passkeys-dialog form{display:grid;gap:10px;margin-top:20px}
+.passkeys-dialog label{font-size:12px;font-weight:650}
+.passkeys-dialog input{width:100%;min-height:44px;padding:10px 12px;border-radius:10px;background:var(--paper);color:var(--ink);font-size:16px}
+.passkeys-list{list-style:none;padding:0;display:grid;gap:12px}
+.passkeys-list li{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:14px;overflow-wrap:anywhere}
+.passkeys-status{font-size:12px;line-height:1.5;color:var(--muted)}
+.passkeys-dialog button:disabled,.passkey-login:disabled{opacity:.55;cursor:not-allowed}
 
 :root[data-theme="dark"]{
   color-scheme:dark;
