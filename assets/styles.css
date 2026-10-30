@@ -211,11 +211,15 @@ dialog::backdrop{background:rgba(24,33,57,.45);backdrop-filter:blur(3px)}
 .passkeys-heading h2{margin:0;font-size:24px;letter-spacing:-.03em}
 .passkeys-dialog p{font-size:14px;line-height:1.6;color:var(--muted)}
 .passkeys-dialog form{display:grid;gap:10px;margin-top:20px}
+.passkeys-confirmation-fields{display:grid;gap:10px}
 .passkeys-dialog label{font-size:12px;font-weight:650}
 .passkeys-dialog input{width:100%;min-height:44px;padding:10px 12px;border-radius:10px;background:var(--paper);color:var(--ink);font-size:16px}
 .passkeys-list{list-style:none;padding:0;display:grid;gap:12px}
 .passkeys-list li{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:14px;overflow-wrap:anywhere}
 .passkeys-status{font-size:12px;line-height:1.5;color:var(--muted)}
+.passkeys-status:empty{display:none}
+.passkeys-status.has-error{padding:12px;border-radius:10px;background:#fdecef;color:#9b2335}
+[data-theme="dark"] .passkeys-status.has-error{background:#4c2029;color:#ffafa6}
 .passkeys-dialog button:disabled,.passkey-login:disabled{opacity:.55;cursor:not-allowed}
 
 :root[data-theme="dark"]{

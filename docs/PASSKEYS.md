@@ -2,8 +2,11 @@
 
 Jobfind supports the native WebAuthn API. Keep the password as a recovery method.
 After signing in, choose **Manage passkeys** in the header information/settings.
-Enter a label and confirm the current Jobfind password, then approve the native
-device/password-manager prompt. The login page offers **Sign in with passkey**.
+Enter a label and confirm the current Jobfind password. Then tap **Create passkey
+on this device** and approve the native device/password-manager prompt. This second
+explicit tap opens WebAuthn directly from a user gesture, without a preceding network
+await. Password-check failures keep the input for correction and show a focused alert
+above the fields. The login page offers **Sign in with passkey**.
 The same management dialog can revoke a key after password confirmation. This
 revokes its server credential and sessions signed in with that key, not the copy
 held by a device/password manager. The confirming browser receives a fresh password-

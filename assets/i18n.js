@@ -4,6 +4,13 @@
   const language = /^de(?:-|$)/i.test(preferred) ? "de" : "en";
   const locale = language === "de" ? "de-DE" : "en-GB";
   const english = {
+    "Passwort bestätigen": "Confirm password",
+    "Passkey auf diesem Gerät erstellen": "Create passkey on this device",
+    "Jobfind-Passwort wird geprüft …": "Checking Jobfind password …",
+    "Passwort bestätigt. Tippe jetzt auf „Passkey auf diesem Gerät erstellen“.": "Password confirmed. Now tap “Create passkey on this device”.",
+    "Das Jobfind-Passwort wurde nicht akzeptiert. Verwende dein Passwort für die Jobfind-Anmeldeseite, nicht den Gerätecode.": "The Jobfind password was not accepted. Use the password for the Jobfind sign-in page, not your device passcode.",
+    "Deine Anmeldung hat sich geändert. Bitte lade die Seite neu und melde dich bei Bedarf erneut an.": "Your session has changed. Reload the page and sign in again if needed.",
+    "Die Webadresse wurde nicht akzeptiert. Öffne Jobfind über seine übliche HTTPS-Adresse.": "This web address was not accepted. Open Jobfind using its usual HTTPS address.",
     "Passkeys verwalten": "Manage passkeys",
     "Mit einem Passkey kannst du dich ohne Passworteingabe anmelden. Dein Passwort bleibt als Rückfallmöglichkeit erhalten.": "Use a passkey to sign in without entering a password. Your password remains available as a fallback.",
     "Bezeichnung": "Label", "Mein Passkey": "My passkey",

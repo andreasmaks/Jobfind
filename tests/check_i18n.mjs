@@ -164,11 +164,11 @@ for (const preferred of ["de-DE", "fr-FR"]) {
   assert.equal(get("deletion-message").textContent, german ? "„Aufgaben“ gelöscht. Wird nach dem Verbinden übertragen." : "“Aufgaben” deleted. It will sync when reconnected.");
 }
 for (const page of ["index.html", "login.html"]) {
-  assert(source(page).indexOf("/assets/i18n.js?v=3") < source(page).indexOf("/assets/theme.js?v=2"));
+  assert(source(page).indexOf("/assets/i18n.js?v=4") < source(page).indexOf("/assets/theme.js?v=2"));
 }
-assert(source("sw.js").includes('"/assets/i18n.js?v=3"'));
-assert(source("sw.js").includes('"jobfind-shell-v12"'));
-assert(source("assets/offline.js").includes('"jobfind-shell-v12"'));
+assert(source("sw.js").includes('"/assets/i18n.js?v=4"'));
+assert(source("sw.js").includes('"jobfind-shell-v13"'));
+assert(source("assets/offline.js").includes('"jobfind-shell-v13"'));
 assert(!source("assets/app.js").includes("function changeLike("));
 assert(source("index.html").includes('data-tab="saved"'));
 assert(source("index.html").includes('id="dialog-save"'));

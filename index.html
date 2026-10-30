@@ -10,12 +10,12 @@
   <link rel="manifest" href="/manifest.webmanifest">
   <meta name="apple-mobile-web-app-title" content="jobfind">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <script src="/assets/i18n.js?v=3"></script>
+  <script src="/assets/i18n.js?v=4"></script>
   <script src="/assets/theme.js?v=2"></script>
-  <link rel="stylesheet" href="/assets/styles.css?v=9">
+  <link rel="stylesheet" href="/assets/styles.css?v=10">
   <link rel="stylesheet" href="/assets/local.css">
-  <script type="module" src="/assets/app.js?v=15"></script>
-  <script defer src="/assets/passkeys.js?v=1"></script>
+  <script type="module" src="/assets/app.js?v=16"></script>
+  <script defer src="/assets/passkeys.js?v=2"></script>
 </head>
 <body>
   <svg width="0" height="0" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
@@ -138,12 +138,14 @@
     <div class="passkeys-heading"><h2 id="passkeys-title">Passkeys verwalten</h2><button id="passkeys-close" class="theme-toggle" type="button">Schließen</button></div>
     <p>Mit einem Passkey kannst du dich ohne Passworteingabe anmelden. Dein Passwort bleibt als Rückfallmöglichkeit erhalten.</p>
     <ul id="passkeys-list" class="passkeys-list"></ul>
+    <p id="passkeys-status" class="passkeys-status" role="status" aria-live="polite" tabindex="-1"></p>
     <form id="passkeys-form">
+      <div id="passkeys-confirmation-fields" class="passkeys-confirmation-fields">
       <label for="passkeys-name">Bezeichnung</label><input id="passkeys-name" type="text" maxlength="80" value="Mein Passkey" required autocomplete="off">
       <label for="passkeys-password">Aktuelles Jobfind-Passwort</label><input id="passkeys-password" type="password" maxlength="256" required autocomplete="current-password">
-      <button class="button-primary" type="submit">Passkey hinzufügen</button>
+      </div>
+      <button id="passkeys-submit" class="button-primary" type="submit">Passwort bestätigen</button>
     </form>
-    <p id="passkeys-status" class="passkeys-status" role="status" aria-live="polite"></p>
   </dialog>
 </body>
 </html>

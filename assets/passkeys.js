@@ -41,7 +41,9 @@
   const errorText = (error) => {
     if (error.name === "NotAllowedError" || error.name === "AbortError") return t("Vorgang abgebrochen oder Zeit abgelaufen. Du kannst es erneut versuchen.");
     if (error.name === "InvalidStateError") return t("Dieser Passkey ist bereits registriert.");
-    if (error.message === "password_required") return t("Bitte bestätige dein aktuelles Jobfind-Passwort.");
+    if (error.message === "password_required") return t("Das Jobfind-Passwort wurde nicht akzeptiert. Verwende dein Passwort für die Jobfind-Anmeldeseite, nicht den Gerätecode.");
+    if (error.message === "invalid_csrf" || error.message === "auth_required") return t("Deine Anmeldung hat sich geändert. Bitte lade die Seite neu und melde dich bei Bedarf erneut an.");
+    if (error.message === "invalid_origin") return t("Die Webadresse wurde nicht akzeptiert. Öffne Jobfind über seine übliche HTTPS-Adresse.");
     if (error.message === "rate_limited") return t("Zu viele Versuche. Bitte warte kurz und versuche es erneut.");
     return t("Passkey-Vorgang fehlgeschlagen. Bitte versuche es erneut oder nutze dein Passwort.");
   };
@@ -71,10 +73,29 @@
   const form = document.getElementById("passkeys-form");
   const password = document.getElementById("passkeys-password");
   const message = document.getElementById("passkeys-status");
+  const fields = document.getElementById("passkeys-confirmation-fields");
+  const submit = document.getElementById("passkeys-submit");
   let busy = false;
+  let pendingRegistration = null;
+  const stage = () => {
+    fields.hidden = !!pendingRegistration;
+    password.required = !pendingRegistration;
+    submit.textContent = t(pendingRegistration ? "Passkey auf diesem Gerät erstellen" : "Passwort bestätigen");
+  };
+  const showMessage = (text, failed = false) => {
+    message.setAttribute("role", failed ? "alert" : "status");
+    message.setAttribute("aria-live", failed ? "assertive" : "polite");
+    message.classList.toggle("has-error", failed);
+    message.textContent = text;
+    if (failed) {
+      message.focus({ preventScroll: true });
+      message.scrollIntoView({ block: "nearest" });
+    }
+  };
   const setBusy = (value) => {
     busy = value;
-    form.querySelectorAll("button, input").forEach((item) => { item.disabled = value; });
+    form.querySelectorAll("button").forEach((item) => { item.disabled = value; });
+    form.querySelectorAll("input").forEach((item) => { item.readOnly = value; });
     document.getElementById("passkeys-list").querySelectorAll("button").forEach((item) => { item.disabled = value; });
   };
   const load = async () => {
@@ -100,14 +121,15 @@
         if (busy) return;
         if (!password.value) { password.focus(); message.textContent = t("Bitte bestätige dein aktuelles Jobfind-Passwort."); return; }
         if (!window.confirm(t("Diesen Passkey entfernen? Die Anmeldung mit Passwort bleibt möglich."))) return;
+        const enteredPassword = password.value;
         setBusy(true);
         try {
-          const result = await request("/api/passkeys/delete", { id: key.id, password: password.value }, true);
+          const result = await request("/api/passkeys/delete", { id: key.id, password: enteredPassword }, true);
           window.dispatchEvent(new CustomEvent("jobfind:session-changed", { detail: { csrf: result.csrf } }));
           password.value = "";
           await load();
-          message.textContent = t("Passkey entfernt.");
-        } catch (error) { message.textContent = errorText(error); }
+          showMessage(t("Passkey entfernt."));
+        } catch (error) { showMessage(errorText(error), true); }
         finally { setBusy(false); }
       });
       row.append(label, remove);
@@ -117,31 +139,49 @@
   manage.addEventListener("click", async () => {
     dialog.showModal();
     password.value = "";
-    message.textContent = "";
+    pendingRegistration = null;
+    stage();
+    showMessage("");
     if (!supported || !navigator.onLine) {
-      message.textContent = t("Passkeys benötigen eine sichere Internetverbindung und einen unterstützten Browser.");
+      showMessage(t("Passkeys benötigen eine sichere Internetverbindung und einen unterstützten Browser."), true);
       setBusy(true);
       return;
     }
     setBusy(false);
-    try { await load(); } catch (error) { message.textContent = errorText(error); }
+    try { await load(); } catch (error) { showMessage(errorText(error), true); }
   });
-  dialog.addEventListener("close", () => { password.value = ""; manage.focus(); });
+  dialog.addEventListener("close", () => { password.value = ""; pendingRegistration = null; stage(); manage.focus(); });
   document.getElementById("passkeys-close").addEventListener("click", () => dialog.close());
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (busy || !supported) return;
+    if (!pendingRegistration) {
+      // Read autofilled values before changing input state or awaiting network calls.
+      const enteredPassword = password.value;
+      const enteredName = document.getElementById("passkeys-name").value;
+      setBusy(true);
+      showMessage(t("Jobfind-Passwort wird geprüft …"));
+      try {
+        const { options } = await request("/api/passkeys/register/options", { password: enteredPassword, name: enteredName }, true);
+        pendingRegistration = options;
+        password.value = "";
+        stage();
+        showMessage(t("Passwort bestätigt. Tippe jetzt auf „Passkey auf diesem Gerät erstellen“."));
+        submit.focus();
+      } catch (error) { showMessage(errorText(error), true); }
+      finally { setBusy(false); }
+      return;
+    }
     setBusy(true);
-    message.textContent = t("Bestätige die Passkey-Erstellung auf deinem Gerät.");
+    showMessage(t("Bestätige die Passkey-Erstellung auf deinem Gerät."));
     try {
-      const { options } = await request("/api/passkeys/register/options", { password: password.value, name: document.getElementById("passkeys-name").value }, true);
-      password.value = "";
-      const credential = await navigator.credentials.create({ publicKey: optionsFor(options, true) });
+      // No fetch/await before this call: it runs directly inside the second tap.
+      const credential = await navigator.credentials.create({ publicKey: optionsFor(pendingRegistration, true) });
       if (!credential) throw new Error("passkey_failed");
       await request("/api/passkeys/register/verify", { credential: credentialJSON(credential) }, true);
       await load();
-      message.textContent = t("Passkey eingerichtet. Du kannst dich damit künftig anmelden.");
-    } catch (error) { message.textContent = errorText(error); }
-    finally { password.value = ""; setBusy(false); }
+      showMessage(t("Passkey eingerichtet. Du kannst dich damit künftig anmelden."));
+    } catch (error) { showMessage(errorText(error), true); }
+    finally { password.value = ""; pendingRegistration = null; stage(); setBusy(false); }
   });
 })();
