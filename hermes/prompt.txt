@@ -34,6 +34,21 @@ Bewerte digitale/conzeptionelle Aufgaben anhand der Anzeige, nicht allein anhand
 von Titel, Branche oder Arbeitgeber. Alle im aktuellen Profil ausgeschlossenen
 Tätigkeiten und Arbeitgeberarten beachten; Themeninteresse allein reicht nicht aus.
 Das konkrete Profil bleibt maßgeblich; fehlende Angaben nicht erfinden.
+FACHLICHE BELEGE: Prüfe den tatsächlichen Tätigkeitsschwerpunkt gegen das aktuelle
+Profil. Allgemeine Digitalisierung, Anforderungsmanagement, User Stories, Backlogs,
+Systemarchitektur und ein Product-Owner-Titel beweisen keine nutzerbezogene Gestaltung.
+Wenn das Profil UI/UX/HMI oder ähnliche Gestaltung verlangt, muss die Originalanzeige
+konkrete Aufgaben zur Bedienung, Interaktion oder Nutzererfahrung des digitalen Produkts
+belegen. Themeninteresse allein ersetzt diesen Nachweis nicht. Halte die belegten
+Aufgaben in summary fest; in fit keine Gestaltungstätigkeiten hinzuerfinden.
+Der Kontext enthält außerdem matching: ausgeschlossene Arbeitgeber-/Aufgabenbegriffe
+sind verbindlich. Bei nichtleeren required_task_terms muss mindestens ein Begriff in
+title oder in der originalgetreu formulierten Aufgaben-summary belegbar sein. Wörter
+nicht bloß ergänzen, um den Filter zu passieren. Der Import verwirft Treffer ohne Beleg
+unabhängig von Bewertung und Passungsbehauptung. Diese Textprüfung ersetzt nicht die
+inhaltliche Prüfung der Originalanzeige oder die übrigen harten Profilregeln.
+Ausdrücklich ausgeschlossene Branchen gelten auch für deren digitale Produkte,
+IT-Dienstleister und Beratungsprojekte. Keine Ausnahme wegen guter Designaufgaben.
 Ein erster passender Treffer beendet die Suche nicht: die übrigen geplanten Richtungen
 innerhalb der Budgets ebenfalls prüfen, sofern kein numerisches Tageslimit erreicht ist.
 Bei mehreren zulässigen Standorten muss die konkrete Rolle dort angeboten werden.

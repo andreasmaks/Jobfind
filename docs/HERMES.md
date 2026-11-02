@@ -82,6 +82,24 @@ job's prompt with the reviewed shared prompt and ensure its pre-run shim reads t
 canonical project and private configuration. Changing a file alone does not update
 an already-stored Hermes cron prompt. Do not modify unrelated jobs or credentials.
 
+## Optional task and employer screen
+
+An optional top-level `matching` object in the private configuration accepts three
+lists of literal phrases: `required_task_terms`, `excluded_company_terms` and
+`excluded_job_terms`. All default to empty, preserving existing installations.
+At least one required phrase must occur in the title or task summary; model scores,
+`fit` and company marketing do not count as evidence. Company exclusions inspect
+the employer name; job exclusions inspect employer, title and summary. Matching
+ignores case, respects word boundaries, and discards common negated mentions and
+mentions limited to optional knowledge rather than actual tasks.
+
+The importer applies this screen after the region filter and reports the separate
+`profile_filtered` count. It does not change existing jobs. Preferences and concrete
+terms belong in ignored configuration; no industry preferences are built into the
+shared code. This is a conservative text screen: it cannot independently verify a
+supplier's claims, infer unnamed clients or reliably classify an entire industry.
+The researcher must still check the original advertisement, employer and project.
+
 ## Prepare your own cron integration
 
 1. Set up Hermes using its [official instructions](https://hermes-agent.nousresearch.com/docs/getting-started/quickstart/).

@@ -19,7 +19,7 @@ def load_config(path: Path = CONFIG_PATH) -> dict:
     if not isinstance(cfg, dict) or cfg.get("config_version") != 1:
         raise ValueError("config_version muss 1 sein")
     required = {"config_version", "data_dir", "server", "search", "max_new_jobs_per_day", "timezone", "hermes"}
-    if set(cfg) - (required | {"local", "research"}) or not required <= set(cfg):
+    if set(cfg) - (required | {"local", "research", "matching"}) or not required <= set(cfg):
         raise ValueError("Unbekannte oder fehlende Konfigurationsfelder")
     ZoneInfo(cfg["timezone"])
     limit = cfg["max_new_jobs_per_day"]
@@ -82,6 +82,16 @@ def load_config(path: Path = CONFIG_PATH) -> dict:
             raise ValueError("Ungültige Suchrichtung")
         ids.add(identifier)
     cfg["research"] = research
+    matching = {"required_task_terms": [], "excluded_company_terms": [], "excluded_job_terms": []}
+    supplied = cfg.get("matching", {})
+    if not isinstance(supplied, dict) or set(supplied) - set(matching):
+        raise ValueError("Ungültige fachliche Importfilter")
+    matching.update(supplied)
+    for terms in matching.values():
+        if not isinstance(terms, list) or len(terms) > 100 or any(
+                not isinstance(term, str) or not term.strip() or len(term) > 120 for term in terms):
+            raise ValueError("Importfilter benötigen Listen kurzer Suchbegriffe")
+    cfg["matching"] = matching
     hermes = cfg["hermes"]
     if set(hermes) != {"job_id", "output_dir", "schedule"}:
         raise ValueError("Ungültige Hermes-Konfiguration")
@@ -122,6 +132,29 @@ def validate_data_dir(data: Path) -> None:
 
 
 CONFIG = load_config()
+
+
+def matching_rejection(job: dict) -> str:
+    """Optional literal text screen, independent of model scores and fit claims."""
+    rules = CONFIG["matching"]
+    def contains(text: str, term: str, positive: bool = False) -> bool:
+        for match in re.finditer(r"(?<!\w)" + re.escape(term.casefold()) + r"(?!\w)", text.casefold()):
+            # A negated mention is not task evidence. This is a conservative text
+            # screen, not semantic verification of the original advertisement.
+            prefix = text[max(0, match.start() - 65):match.start()].casefold()
+            clause = re.split(r"[.;:!?\n]", prefix)[-1]
+            if not positive or not re.search(r"\b(?:kein\w*|ohne|nicht|no|not|without|idealerweise|optional|kenntnisse|knowledge)\b", clause):
+                return True
+        return False
+    company = job.get("company", "")
+    tasks = job.get("title", "") + "\n" + job.get("summary", "")
+    if any(contains(company, term) for term in rules["excluded_company_terms"]):
+        return "excluded_company"
+    if any(contains(company + "\n" + tasks, term) for term in rules["excluded_job_terms"]):
+        return "excluded_job"
+    if rules["required_task_terms"] and not any(contains(tasks, term, positive=True) for term in rules["required_task_terms"]):
+        return "missing_task_evidence"
+    return ""
 
 
 def ensure_data_dir() -> Path:

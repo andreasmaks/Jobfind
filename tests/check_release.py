@@ -77,6 +77,50 @@ class ReleaseChecks(unittest.TestCase):
         self.assertEqual(ingest(envelope("three", [job(4)]))["count"], 0)
         self.assertEqual({j["original_url"] for j in store.list_jobs()}, {"https://example.org/job/1", "https://example.org/job/3"})
 
+    def test_optional_matching_configuration(self):
+        try:
+            candidate = copy.deepcopy(cfg)
+            CONFIG_FILE.write_text(json.dumps(candidate))
+            self.assertEqual(config.load_config(CONFIG_FILE)["matching"]["required_task_terms"], [])
+            for invalid in ([], {"unknown": []}, {"required_task_terms": "UX"},
+                            {"required_task_terms": [""]}, {"excluded_job_terms": [True]},
+                            {"excluded_company_terms": ["x"] * 101}):
+                candidate["matching"] = invalid
+                CONFIG_FILE.write_text(json.dumps(candidate))
+                with self.assertRaises(ValueError):
+                    config.load_config(CONFIG_FILE)
+        finally:
+            CONFIG_FILE.write_text(json.dumps(cfg))
+
+    def test_task_screen_and_independent_import_enforcement(self):
+        previous = config.CONFIG["matching"]
+        config.CONFIG["matching"] = {"required_task_terms": ["UI", "UX", "Bedienkonzepte"],
+                                     "excluded_company_terms": ["Demo Finance"],
+                                     "excluded_job_terms": ["excluded-sector"]}
+        try:
+            reject = config.matching_rejection
+            self.assertEqual(reject(job(title="UX/UI Designer")), "")
+            self.assertEqual(reject(job(title="Product Owner", summary="Bedienkonzepte entwickeln")), "")
+            self.assertEqual(reject(job(title="Systemarchitekt", summary="Architektur und Datenmodelle", fit="Gute UX-Passung")), "missing_task_evidence")
+            self.assertEqual(reject(job(title="UiPath Entwickler", summary="Automatisierung")), "missing_task_evidence")
+            self.assertEqual(reject(job(title="Product Owner", summary="Keine UX-Aufgaben, nur Datenmodelle")), "missing_task_evidence")
+            self.assertEqual(reject(job(title="Product Owner", summary="Without UI responsibilities")), "missing_task_evidence")
+            self.assertEqual(reject(job(title="Anforderungsmanagement", summary="Idealerweise Kenntnisse in UX")), "missing_task_evidence")
+            self.assertEqual(reject(job(title="UX Designer", company="Demo Finance AG")), "excluded_company")
+            self.assertEqual(reject(job(title="UX Designer", summary="Design für excluded-sector")), "excluded_job")
+            result = ingest(envelope("matching", [
+                job(1, title="UX/UI Designer"), job(2, title="UI Designer", company="Demo Finance AG"),
+                job(3, title="Systemarchitekt", fit="UI/UX wäre übertragbar", score=10),
+                job(4, title="UX Designer", summary="Projekt für excluded-sector"),
+                job(5, title="UI Designer", location="Fernstadt")]))
+            self.assertEqual(result["count"], 1)
+            self.assertEqual(result["region_filtered"], 1)
+            self.assertEqual(result["profile_filtered"], 3)
+            trusted = json.loads(context.build_context().split("AKTUELLES AUSDRÜCKLICHES SUCHPROFIL (Konfiguration):\n")[1].split("\n", 1)[0])
+            self.assertEqual(trusted["matching"], config.CONFIG["matching"])
+        finally:
+            config.CONFIG["matching"] = previous
+
     def test_concurrent_daily_limit(self):
         with ThreadPoolExecutor(max_workers=4) as executor:
             results = list(executor.map(lambda n: ingest(envelope(f"parallel-{n}", [job(n)])), range(10, 14)))

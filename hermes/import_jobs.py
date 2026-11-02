@@ -13,7 +13,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/modules"))
-from config import CONFIG, is_allowed_location
+from config import CONFIG, is_allowed_location, matching_rejection
 from store import canonical_url, has_run, import_run, normalize_job, now_iso
 
 MAX_BYTES = 1024 * 1024
@@ -131,10 +131,12 @@ def import_file(path: Path) -> dict:
         run_id = fallback_id if path.suffix.lower() == ".md" else "json:" + payload.get("run_id", digest)
         if has_run(run_id):
             return {"already_imported": True, "count": 0}
-        jobs = [job for job in payload["jobs"] if is_allowed_location(job)]
+        regional_jobs = [job for job in payload["jobs"] if is_allowed_location(job)]
+        jobs = [job for job in regional_jobs if not matching_rejection(job)]
         result = import_run(run_id, payload.get("ran_at", ran_at), payload["run_status"], jobs,
                             payload.get("error", ""), company_profiles=payload.get("company_profiles", []))
-        result["region_filtered"] = len(payload["jobs"]) - len(jobs)
+        result["region_filtered"] = len(payload["jobs"]) - len(regional_jobs)
+        result["profile_filtered"] = len(regional_jobs) - len(jobs)
         result["run_status"] = payload["run_status"]
         return result
     except (ValueError, TypeError, KeyError, RecursionError, UnicodeError):
