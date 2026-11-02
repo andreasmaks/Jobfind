@@ -1,5 +1,5 @@
 import { changeDeletion, loadPortal, updateLike, updateStatus } from "/assets/api.js?v=5";
-import { clearOfflineData, prepareOffline, readPendingActions, removePendingAction, savePendingAction } from "/assets/offline.js?v=10";
+import { clearOfflineData, prepareOffline, readPendingActions, removePendingAction, savePendingAction } from "/assets/offline.js?v=11";
 import { createCard, shortDate, showDetails } from "/assets/ui.js?v=5";
 
 const { t, locale, translatePage } = window.JobfindI18n;
@@ -267,9 +267,11 @@ function render() {
 
 function updateExportState() {
   $("saved-export").hidden = state.tab !== "saved";
+  $("export-status").hidden = state.tab !== "saved";
   const button = $("export-saved");
   button.disabled = exportInFlight || state.offline || !navigator.onLine || mutationPending || syncInFlight || state.pendingActions.length > 0 || !state.jobs.some((job) => job.user_status === "saved");
-  button.textContent = t(exportInFlight ? "PDF wird erstellt …" : "Gemerkte als PDF herunterladen");
+  button.setAttribute("aria-label", t(exportInFlight ? "PDF wird erstellt …" : "Gemerkte als PDF herunterladen"));
+  button.setAttribute("aria-busy", String(exportInFlight));
   button.title = t("Exportiert alle Lesezeichen, unabhängig vom Suchfilter. Benötigt Internet und synchronisierte Änderungen.");
 }
 
