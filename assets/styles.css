@@ -141,7 +141,7 @@ body:has(.deletion-notice:not([hidden])) .main-content{padding-bottom:180px}
 .feedback-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:10px;margin-top:24px}
 .feedback-actions button:disabled{opacity:.5;cursor:wait}
 .feedback-error{color:var(--tag-pink);font-size:13px;line-height:1.5}
-@media(max-width:430px){.feedback-dialog{padding:22px}.feedback-actions>*{flex:1 1 auto}.card-top{flex-wrap:wrap}.card-top .company-identity{flex-basis:calc(100% - 60px)}.card-actions{margin-left:auto}}
+@media(max-width:430px){.feedback-dialog{padding:22px}.feedback-actions>*{flex:1 1 auto}}
 .card-title{min-height:2.44em;margin:29px 0 12px;color:#242c39;font-size:22px;line-height:1.22;letter-spacing:-.045em;font-weight:705;overflow-wrap:anywhere}
 .match-line{display:flex;align-items:center;gap:7px;margin:0 0 15px;color:var(--accent-ink);font-size:13px;font-weight:700}
 .match-symbol{display:inline-flex;align-items:center}
