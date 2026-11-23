@@ -1,5 +1,9 @@
 # Hermes integration
 
+For independent API billing with a local monthly cost gate, see
+[budgeted API research](API_SEARCH.md). That optional mode uses Hermes only as a
+no-agent scheduler and does not draw from a Codex OAuth allowance.
+
 Jobfind uses a small file-based boundary: profile/feedback → Hermes research →
 schema-1 result → Jobfind import. Hermes is not copied into the package, no
 plugin API is invented, and no model provider is configured automatically.

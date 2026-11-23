@@ -35,16 +35,17 @@ Kontextanpassung ist kein Training des Modells. Laufende Suchen können älteren
 """
 
 
-def build_research_plan(at: datetime | None = None) -> dict:
+def build_research_plan(at: datetime | None = None, *, rotation_step: int | None = None) -> dict:
     """Read-only hourly rotation; only owner-configured topics and literal allowed places."""
     at = at or datetime.now(timezone.utc)
     if at.tzinfo is None or at.utcoffset() is None:
         raise ValueError("Recherchezeit benötigt eine Zeitzone")
     slot = int(at.timestamp()) // 3600
+    rotation = slot if rotation_step is None else rotation_step
     settings = CONFIG["research"]
     directions = settings["directions"]
     count = min(settings["directions_per_run"], len(directions), settings["max_search_queries"])
-    focus = [directions[(slot + index) % len(directions)] for index in range(count)]
+    focus = [directions[(rotation + index) % len(directions)] for index in range(count)]
     region = CONFIG["search"]["region"]
     def place_key(value: str) -> str:
         normalized = unicodedata.normalize("NFKD", value.casefold())
@@ -64,7 +65,7 @@ def build_research_plan(at: datetime | None = None) -> dict:
         for index, direction in enumerate(focus):
             if not places or round_number >= len(direction["query_terms"]):
                 continue
-            place = places[0] if round_number == 0 else places[(slot + index) % len(places)]
+            place = places[0] if round_number == 0 else places[(rotation + index) % len(places)]
             terms = direction["query_terms"][round_number].strip()
             query = f'{terms} "{place}" Stellenangebot'
             if query not in seen and len(queries) < settings["max_search_queries"]:
@@ -75,7 +76,7 @@ def build_research_plan(at: datetime | None = None) -> dict:
             "directions": [{"id": direction["id"], "label": direction["label"]} for direction in focus], "queries": queries}
 
 
-def build_context() -> str:
+def build_context(*, rotation_step: int | None = None) -> str:
     data = {"known_jobs": [], "rejections": [], "likes": [], "saved": [], "company_queue": []}
     count = 0
     if DB_PATH.exists():
@@ -130,7 +131,7 @@ def build_context() -> str:
     trusted = {"search": CONFIG["search"], "timezone": CONFIG["timezone"],
                "max_new_jobs_per_day": CONFIG["max_new_jobs_per_day"], "imported_today": count,
                "remaining_today": None if limit is None else max(0, limit - count),
-               "research_plan": build_research_plan(), "matching": CONFIG["matching"]}
+               "research_plan": build_research_plan(rotation_step=rotation_step), "matching": CONFIG["matching"]}
     profile_path = CONFIG["local_paths"].get("profile_file")
     local_profile = ("\nZUSÄTZLICHE AUSDRÜCKLICHE SUCHVORGABEN (lokale Datei):\n" + profile_path.read_text(encoding="utf-8")) if profile_path else ""
     return (RULES + "\nAKTUELLES AUSDRÜCKLICHES SUCHPROFIL (Konfiguration):\n"

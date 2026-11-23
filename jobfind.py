@@ -50,6 +50,9 @@ def main() -> int:
     availability.add_argument("--dry-run", action="store_true", help="Prüfbericht ohne Änderungen an Stellen erzeugen")
     availability.add_argument("--daily", action="store_true", help="Höchstens ein erfolgreicher Lauf pro lokalem Kalendertag")
     commands.add_parser("context", help="Aktuelles Profil und Feedback ausgeben (enthält private Daten)")
+    api_search = commands.add_parser("search-api", help="Budgetbegrenzte OpenAI-API-Recherche; kein Codex-Login")
+    api_search.add_argument("--force", action="store_true", help="Intervall überspringen; Monatsbudget bleibt verbindlich")
+    commands.add_parser("api-budget", help="Lokalen API-Budgetstand ohne Netzwerkanfrage anzeigen")
     commands.add_parser("hermes-prepare", help="Pre-Run-Shim und Prompt lokal erzeugen; nichts installieren")
     args = parser.parse_args()
     os.umask(0o077)
@@ -67,6 +70,11 @@ def main() -> int:
     sys.path.insert(0, str(ROOT / "scripts/modules"))
     sys.path.insert(0, str(ROOT / "hermes"))
     from config import CONFIG, ensure_data_dir
+    if args.command in {"search-api", "api-budget"}:
+        from api_search import run_search, budget_status
+        report = run_search(force=args.force) if args.command == "search-api" else budget_status()
+        print(json.dumps(report, ensure_ascii=False))
+        return int(report.get("status") == "error")
     if args.command == "doctor":
         print("Python:", sys.version.split()[0], "| SQLite:", __import__("sqlite3").sqlite_version)
         print("Konfiguration gültig | Zeitzone:", CONFIG["timezone"])

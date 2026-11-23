@@ -19,7 +19,7 @@ def load_config(path: Path = CONFIG_PATH) -> dict:
     if not isinstance(cfg, dict) or cfg.get("config_version") != 1:
         raise ValueError("config_version muss 1 sein")
     required = {"config_version", "data_dir", "server", "search", "max_new_jobs_per_day", "timezone", "hermes"}
-    if set(cfg) - (required | {"local", "research", "matching"}) or not required <= set(cfg):
+    if set(cfg) - (required | {"local", "research", "matching", "api_search"}) or not required <= set(cfg):
         raise ValueError("Unbekannte oder fehlende Konfigurationsfelder")
     ZoneInfo(cfg["timezone"])
     limit = cfg["max_new_jobs_per_day"]
@@ -92,6 +92,30 @@ def load_config(path: Path = CONFIG_PATH) -> dict:
                 not isinstance(term, str) or not term.strip() or len(term) > 120 for term in terms):
             raise ValueError("Importfilter benötigen Listen kurzer Suchbegriffe")
     cfg["matching"] = matching
+    api = {"enabled": False, "credential_file": "", "budget_file": "", "monthly_budget_usd": 5,
+           "min_interval_hours": 6, "max_candidates": 6, "max_web_searches": 2}
+    supplied = cfg.get("api_search", {})
+    if not isinstance(supplied, dict) or set(supplied) - set(api):
+        raise ValueError("Ungültige API-Suchkonfiguration")
+    api.update(supplied)
+    if type(api["enabled"]) is not bool:
+        raise ValueError("API-Aktivierung muss boolesch sein")
+    if type(api["monthly_budget_usd"]) not in {int, float} or not 0 < api["monthly_budget_usd"] <= 1000:
+        raise ValueError("API-Monatsbudget muss zwischen 0 und 1000 USD liegen")
+    for key, maximum in (("min_interval_hours", 24), ("max_candidates", 12), ("max_web_searches", 4)):
+        if type(api[key]) is not int or not 1 <= api[key] <= maximum:
+            raise ValueError("Ungültiges API-Recherchelimit")
+    for key in ("credential_file", "budget_file"):
+        if not isinstance(api[key], str) or "\x00" in api[key]:
+            raise ValueError("Ungültiger privater API-Pfad")
+    if api["enabled"] and (not api["credential_file"] or not api["budget_file"]):
+        raise ValueError("Aktive API-Suche benötigt Schlüssel- und Budgetdatei")
+    if api["enabled"]:
+        for key in ("credential_file", "budget_file"):
+            private = Path(api[key]).expanduser()
+            if not private.is_absolute() or private.resolve().is_relative_to(ROOT):
+                raise ValueError("Private API-Dateien müssen außerhalb des Projektordners liegen")
+    cfg["api_search"] = api
     hermes = cfg["hermes"]
     if set(hermes) != {"job_id", "output_dir", "schedule"}:
         raise ValueError("Ungültige Hermes-Konfiguration")

@@ -150,6 +150,10 @@ def scan_output() -> dict:
         raise ValueError("Hermes-Ausgabeordner fehlt; Konfiguration prüfen")
     summary = {"imported": 0, "errors": 0, "skipped_recent": 0}
     for path in sorted(output.iterdir()):
+        # API searches import their verified results directly. Hermes no-agent
+        # Markdown contains execution reports, not schema-1 research answers.
+        if CONFIG["api_search"]["enabled"] and path.suffix.lower() == ".md":
+            continue
         if path.suffix.lower() not in {".md", ".json"} or not path.is_file() or path.is_symlink():
             continue
         if time.time() - path.stat().st_mtime < 60:
