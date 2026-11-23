@@ -1,5 +1,5 @@
-import { request } from "/assets/api.js?v=7";
-import { readApplicationsSnapshot, saveApplicationsSnapshot } from "/assets/offline.js?v=16";
+import { request } from "/assets/api.js?v=8";
+import { readApplicationsSnapshot, saveApplicationsSnapshot } from "/assets/offline.js?v=17";
 import { companyMark, displayJobTitle, shortDate, applicationStatusLabel } from "/assets/ui.js?v=6";
 
 const { t } = window.JobfindI18n;

@@ -1,6 +1,6 @@
 # Applications
 
-The Applications view keeps an independent record of applications and their email evidence. Linking an application to a listing does not change its bookmark or deletion state. It also works for applications whose listings were never found by Jobfind.
+The Applications view tracks applications to listings found by Jobfind and their email evidence. Linking an application to a listing does not change its bookmark or deletion state. Unrelated mailbox history is ignored and excluded from lists, counts and detail APIs. Explicitly added manual entries remain available.
 
 ## Mail connection
 
@@ -28,7 +28,7 @@ Use the actual folder names from your provider. The password file must be outsid
 
 Run `python jobfind.py --config config/jobfind.json sync-applications` from a scheduler, or use the authenticated **Sync emails** button. A 15-minute schedule is suitable. The command reports only counts and fixed error codes. It locks concurrent runs. A failed run retains existing applications and resumes from the last successful folder checkpoint.
 
-Mailboxes are opened read-only; messages are fetched using `BODY.PEEK`. The integration never sends, moves or deletes email and never changes read flags. The first run searches application-related subjects across the configured folders, including old messages. A bounded batch is processed per folder; older history continues on subsequent runs. Later runs inspect new messages and thread references. There is no arbitrary age cutoff on application history.
+Mailboxes are opened read-only; messages are fetched using `BODY.PEEK`. The integration never sends, moves or deletes email and never changes read flags. The first run searches application-related subjects across the configured folders. A bounded batch is processed per folder; remaining matches continue on subsequent runs. Later runs inspect new messages and thread references. A message creates an automatic record only if it matches a known portal listing or supplies a plausible listing candidate. Follow-ups to unrelated old applications are ignored. Applications predating the listing's first appearance in Jobfind are excluded, with a one-day margin for date differences. A later message at the same employer does not turn an old application into a new portal application.
 
 ## Recognition and correction
 
@@ -36,7 +36,7 @@ Explicit receipts, rejections, offers and other clear application messages estab
 
 Listings are linked automatically only with strong, unique evidence: an exact listing URL or both employer and role. Old applications are not automatically linked to newly found listings. Company-only matches are suggestions that require confirmation. Users can correct the company, role, listing, note and status; a manual status overrides later automatic updates until changed back to **Automatic from emails**. Ignoring a false positive retains its deduplication record, so it does not reappear on the next scan.
 
-The private application database lives in the configured data directory, separately from the listings database. It stores only relevant message metadata and short text excerpts, not attachments or full mailbox copies. The authenticated APIs use `private, no-store` and require same-origin CSRF protection for changes. The service worker never caches mail APIs. Offline storage retains only application list metadata, without message excerpts, notes or mail subjects; signing out clears it together with the existing offline data. Email evidence is displayed as inert text.
+The private application database lives in the configured data directory, separately from the listings database. It stores only relevant message metadata and short text excerpts, not attachments or full mailbox copies. The authenticated APIs use `private, no-store` and require same-origin CSRF protection for changes. The service worker never caches mail APIs. Offline storage retains only application list metadata, without message excerpts, notes or mail subjects; signing out clears it together with the existing offline data. Older offline snapshots without portal scope are rejected. Email evidence is displayed as inert text.
 
 ## Verification
 

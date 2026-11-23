@@ -92,6 +92,14 @@ class Checks(unittest.TestCase):
             for name in ("job_feedback", "job_likes", "company_profiles", "company_logos", "jobs", "runs"):
                 db.execute("DELETE FROM " + name)
         secret.chmod(0o600)
+        payload = {"schema_version": 1, "run_id": "portal-fixture", "run_status": "ok", "error": "", "company_profiles": [],
+            "jobs": [{"title": "UX Designer", "company": "Example Services", "location": "Beispielstadt", "original_url": "https://example.org/jobs/ux", "summary": "Design", "score": 8}]}
+        path = TEMP / "portal.json"
+        path.write_text(json.dumps(payload))
+        import_jobs.import_file(path)
+        with closing(store.connect()) as db, db:
+            db.execute("UPDATE jobs SET first_seen_at='2026-10-01T00:00:00+00:00'")
+            self.jobs = [dict(row) for row in db.execute("SELECT id,company,title,original_url,first_seen_at FROM jobs")]
 
     def test_receipt_statuses_and_false_positives(self):
         for body, status in [("Thanks for your application!", "submitted"), ("We are reviewing your application", "reviewing"),
@@ -113,12 +121,13 @@ class Checks(unittest.TestCase):
         self.assertNotEqual(mail.classify_message(decoded)["status"], "rejected")
         value = EmailMessage()
         value["Subject"] = "Bewerbung"
+        value["From"] = "Example Services <jobs@example.org>"
         value.add_alternative('<html><head><style>danger</style></head><body><p>Danke für deine Bewerbung</p><script>bad()</script></body></html>', subtype="html")
         decoded = mail.decode_message(value.as_bytes(), "html")
         self.assertNotIn("bad()", decoded["body"])
         self.assertNotIn("danger", decoded["body"])
-        self.assertTrue(apps.ingest_message(decoded, mail.classify_message(decoded), []))
-        self.assertFalse(apps.ingest_message(decoded, mail.classify_message(decoded), []))
+        self.assertTrue(apps.ingest_message(decoded, mail.classify_message(decoded), self.jobs))
+        self.assertFalse(apps.ingest_message(decoded, mail.classify_message(decoded), self.jobs))
         self.assertEqual(apps.DATABASE.stat().st_mode & 0o777, 0o600)
 
     def test_matching_needs_employer_and_role_and_recent_listing(self):
@@ -136,13 +145,13 @@ class Checks(unittest.TestCase):
     def test_reverse_threads_order_status_and_manual_override(self):
         reply = message(uid="reply", body="Regarding your application: we are not moving forward.", references=["<initial@example.org>"], received_at="2026-11-03T10:00:00+00:00")
         receipt = message(uid="initial")
-        apps.ingest_message(reply, mail.classify_message(reply), [])
-        apps.ingest_message(receipt, mail.classify_message(receipt), [])
+        apps.ingest_message(reply, mail.classify_message(reply), self.jobs)
+        apps.ingest_message(receipt, mail.classify_message(receipt), self.jobs)
         items = apps.list_applications()["applications"]
         self.assertEqual(len(items), 1)
         self.assertEqual(items[0]["status"], "rejected")
         delayed = message(uid="delayed", references=[receipt["message_id"]], received_at="2026-11-04T10:00:00+00:00")
-        apps.ingest_message(delayed, mail.classify_message(delayed), [])
+        apps.ingest_message(delayed, mail.classify_message(delayed), self.jobs)
         app_id = items[0]["id"]
         self.assertEqual(apps.application_detail(app_id)["status"], "rejected")
         apps.update_application(app_id, {"override_status": "interview", "note": "<script>untrusted</script>"})
@@ -150,7 +159,7 @@ class Checks(unittest.TestCase):
         self.assertEqual(apps.application_detail(app_id)["note"], "<script>untrusted</script>")
         apps.update_application(app_id, {"dismissed": True})
         self.assertEqual(apps.list_applications()["applications"], [])
-        self.assertFalse(apps.ingest_message(receipt, mail.classify_message(receipt), []))
+        self.assertFalse(apps.ingest_message(receipt, mail.classify_message(receipt), self.jobs))
 
     def test_manual_link_keeps_bookmark_and_deleted_job(self):
         payload = {"schema_version": 1, "run_id": "fictional-application", "run_status": "ok", "error": "", "company_profiles": [],
@@ -178,17 +187,18 @@ class Checks(unittest.TestCase):
         with self.assertRaises(ValueError): apps.update_application(app_id, {"dismissed": "false"})
 
     def test_plain_rejection_and_unique_employer_followup(self):
+        jobs = [dict(self.jobs[0], title="Senior UX Interaction Designer")]
         initial = message(subject="Deine Bewerbung als UX Designer / Your application as UX Designer", body="Danke für deine Bewerbung.\nGesendet im Namen von Example Services GmbH über Personio")
-        apps.ingest_message(initial, mail.classify_message(initial), [])
+        apps.ingest_message(initial, mail.classify_message(initial), jobs)
         followup = message(uid="followup", subject="Deine Bewerbung", body="Wir haben uns entschieden, den Prozess mit anderen Bewerbenden fortzusetzen.\nGesendet im Namen von Example Services GmbH über Personio", received_at="2026-11-04T10:00:00+00:00")
         classification = mail.classify_message(followup)
         self.assertEqual(classification["status"], "rejected")
-        apps.ingest_message(followup, classification, [])
+        apps.ingest_message(followup, classification, jobs)
         rows = apps.list_applications()["applications"]
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]["status"], "rejected")
         self.assertEqual(rows[0]["title"], "UX Designer")
-        self.assertEqual(rows[0]["company"], "Example Services GmbH")
+        self.assertEqual(rows[0]["company"], "Example Services")
         self.assertEqual(rows[0]["job_id"], "", "Employer follow-up does not invent a listing match")
         self.assertIsNone(mail.classify_message(message(subject="Interview Findings", body="Hier sind die Ergebnisse unserer Nutzerinterviews.")))
         company, title = apps.inferred_identity(message(subject="Einladung zum Gespräch für die Position UX Design Lead bei Example Services", sender="Recruiter Name <jobs@example.org>"), [])
@@ -203,8 +213,27 @@ class Checks(unittest.TestCase):
         apps.create_manual({"company": "Example Services", "title": "UX Designer", "applied_at": "2026-11-01"})
         apps.create_manual({"company": "Example Services", "title": "Product Owner", "applied_at": "2026-11-02"})
         followup = message(subject="Your application at Example Services", body="We are not moving forward with your application.", received_at="2026-11-04T10:00:00+00:00")
-        apps.ingest_message(followup, mail.classify_message(followup), [])
+        apps.ingest_message(followup, mail.classify_message(followup), self.jobs)
         self.assertEqual(len(apps.list_applications()["applications"]), 3, "Ambiguous follow-up is not silently assigned")
+
+    def test_unrelated_and_pre_portal_mail_is_ignored(self):
+        unrelated = message(subject="Your application at Other Employer", sender="Other Employer <hr@other.example>", body="Thanks for your application!", uid="outside")
+        self.assertFalse(apps.ingest_message(unrelated, mail.classify_message(unrelated), self.jobs))
+        old = message(uid="old", received_at="2021-01-01T00:00:00+00:00", body="Thanks for your application as UX Designer at Example Services.")
+        self.assertFalse(apps.ingest_message(old, mail.classify_message(old), self.jobs))
+        self.assertEqual(apps.list_applications()["applications"], [])
+        # Existing imported history is hidden from list and detail, including old roles
+        # at an employer that has a different, newly listed job in the portal.
+        current = message(body="Thanks for your application as UX Designer at Example Services.")
+        self.assertTrue(apps.ingest_message(current, mail.classify_message(current), self.jobs))
+        record = apps.list_applications()["applications"][0]
+        with closing(apps.connect()) as db, db:
+            db.execute("UPDATE applications SET applied_at='2021-01-01T00:00:00+00:00' WHERE id=?", (record["id"],))
+        self.assertEqual(apps.list_applications()["applications"], [])
+        self.assertIsNone(apps.application_detail(record["id"]))
+        followup = message(uid="old-followup", references=[current["message_id"]], body="We are not moving forward with your application.")
+        self.assertFalse(apps.ingest_message(followup, mail.classify_message(followup), self.jobs))
+        self.assertEqual(apps.list_applications()["scope"], "portal")
 
     def test_readonly_incremental_backfill_and_uidvalidity(self):
         first = FakeIMAP()

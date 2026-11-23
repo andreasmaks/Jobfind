@@ -98,5 +98,5 @@ await Promise.all([inflight, suspended]);
 await logout.view.refresh();
 assert.equal(logout.getWrites(), writesBefore, "Logout blocks pending and future cache writes before clearing storage");
 assert(source("assets/app.js").indexOf("await applicationsView.suspend()") < source("assets/app.js").indexOf("await clearOfflineData()"));
-assert(source("sw.js").includes('"/assets/applications.js?v=2"'));
+assert(source("sw.js").includes('"/assets/applications.js?v=3"'));
 console.log("Application UI checks passed: DE/EN, counts, filters, explicit matches, safe evidence, save, offline.");

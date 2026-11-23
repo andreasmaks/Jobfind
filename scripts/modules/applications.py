@@ -119,7 +119,7 @@ def job_matches(message, jobs):
         score = (120 if exact else 0) + (40 if brand_present else 0) + (45 if domain else 0) + (45 if title_ratio >= .75 else 20 if title_ratio >= .5 else 0)
         timely = True
         if job.get("first_seen_at"):
-            timely = datetime.fromisoformat(message["received_at"]) >= datetime.fromisoformat(job["first_seen_at"]) - timedelta(days=180)
+            timely = datetime.fromisoformat(message["received_at"]) >= datetime.fromisoformat(job["first_seen_at"]) - timedelta(days=1)
         if score >= 35 and timely and (exact or brand_present or domain):
             results.append({"id": job["id"], "company": job["company"], "title": job["title"],
                 "score": score, "strong": exact or ((brand_present or domain) and title_ratio >= .75)})
@@ -158,6 +158,22 @@ def inferred_identity(message, candidates):
     return company[:180], title[:200]
 
 
+def portal_job_ids(application, jobs, db):
+    """A mailbox record belongs here only when it relates to a known portal listing."""
+    by_id = {job["id"]: job for job in jobs}
+    candidates = json.loads(application["candidates"]) if isinstance(application["candidates"], str) else application["candidates"]
+    ids = [application["job_id"]] if application["job_id"] else [item["id"] for item in candidates]
+    started = application["applied_at"] or db.execute("SELECT MIN(received_at) FROM events WHERE application_id=?", (application["id"],)).fetchone()[0]
+    result = []
+    for job_id in ids:
+        job = by_id.get(job_id)
+        if not job: continue
+        first_seen = job.get("first_seen_at")
+        if started and first_seen and datetime.fromisoformat(started) < datetime.fromisoformat(first_seen) - timedelta(days=1): continue
+        result.append(job_id)
+    return result
+
+
 def ingest_message(message, classification, jobs):
     """A mail is evidence, not a command; ambiguous matches never set a job link."""
     with closing(connect()) as db, db:
@@ -172,6 +188,7 @@ def ingest_message(message, classification, jobs):
                 app = dict(row)
                 break
         if classification is None and not app: return False
+        if app and not portal_job_ids(app, jobs, db): return False
         classification = classification or {"status": "message", "confidence": "high", "proof": False}
         if app and classification["status"] == "interview" and classification["confidence"] == "review":
             classification = dict(classification, confidence="high", proof=True)
@@ -198,6 +215,7 @@ def ingest_message(message, classification, jobs):
             # This does not establish a new listing link; multiple applications stay ambiguous.
             related = []
             for row in db.execute("SELECT a.*,MAX(e.received_at) AS latest FROM applications a JOIN events e ON e.application_id=a.id WHERE a.confirmed=1 AND a.dismissed=0 GROUP BY a.id"):
+                if not portal_job_ids(dict(row), jobs, db): continue
                 if not same_employer(row["company"], company): continue
                 if abs((datetime.fromisoformat(message["received_at"]) - datetime.fromisoformat(row["latest"])).days) > 90: continue
                 left, right = set(normalized(title).split()), set(normalized(row["title"]).split())
@@ -206,6 +224,7 @@ def ingest_message(message, classification, jobs):
             if len(related) == 1: app = related[0]
         confirmed = int(classification["proof"])
         if not app:
+            if not matched and not candidates: return False
             app_id = hashlib.sha256(("application:" + message["key"]).encode()).hexdigest()[:24]
             db.execute("INSERT INTO applications(id,company,title,job_id,confirmed,match_state,candidates,created_at,applied_at) VALUES(?,?,?,?,?,?,?,?,?)",
                 (app_id, company, title, matched["id"] if matched else "", confirmed,
@@ -237,20 +256,26 @@ def effective_status(events, override=""):
 
 
 def list_applications():
+    with closing(jobs_connect()) as jobs_db:
+        jobs = [dict(row) for row in jobs_db.execute("SELECT id,first_seen_at FROM jobs")]
     with closing(connect()) as db:
         rows = db.execute("SELECT * FROM applications WHERE dismissed=0 ORDER BY created_at DESC").fetchall()
         result = []
         for row in rows:
             item = dict(row)
+            related_ids = portal_job_ids(item, jobs, db)
+            manual = db.execute("SELECT 1 FROM events WHERE application_id=? AND source='manual' LIMIT 1", (item["id"],)).fetchone()
+            if not related_ids and not manual: continue
             events = [dict(e) for e in db.execute("SELECT * FROM events WHERE application_id=? ORDER BY received_at DESC,id DESC", (item["id"],))]
             item.update(status=effective_status(events, item["override_status"]), last_event_at=events[0]["received_at"] if events else item["created_at"],
                         last_subject=events[0]["subject"] if events else "", event_count=len(events), candidates=json.loads(item["candidates"]))
             item["confirmed"] = bool(item["confirmed"])
+            item["candidates"] = [candidate for candidate in item["candidates"] if candidate["id"] in related_ids]
             result.append(item)
         result.sort(key=lambda a: a["last_event_at"], reverse=True)
         sync = dict(db.execute("SELECT * FROM sync_state WHERE id=1").fetchone())
         sync["enabled"] = CONFIG["applications_mail"]["enabled"]
-        return {"applications": result, "sync": sync}
+        return {"applications": result, "sync": sync, "scope": "portal"}
 
 
 def application_detail(app_id):
