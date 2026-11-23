@@ -6,7 +6,7 @@ const trash = icon('<path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6"
 const building = icon('<path d="M10 12h4M10 8h4"/><path d="M14 21v-3a2 2 0 0 0-4 0v3"/><path d="M6 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2"/><path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/>');
 const sparkles = icon('<path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4M22 4h-4"/><circle cx="4" cy="20" r="2"/>');
 const externalLink = icon('<path d="M15 3h6v6M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>');
-function companyMark(company, logoUrl = "", logoMode = "alpha", darkUrl = "") {
+export function companyMark(company, logoUrl = "", logoMode = "alpha", darkUrl = "") {
   const mark = element("div", "company-mark is-fallback");
   mark.setAttribute("aria-hidden", "true");
   mark.innerHTML = building; // Constant licensed icon, never imported text.
@@ -47,6 +47,10 @@ export function displayJobTitle(value) {
     .replace(/([A-Za-zÄÖÜäöüß]+)(?::in|\*in|\/-?in)\b/gi, "$1")
     .replace(/\s{2,}/g, " ")
     .trim();
+}
+
+export function applicationStatusLabel(value) {
+  return t(({ submitted: "Eingegangen", reviewing: "In Prüfung", interview: "Im Gespräch", offer: "Angebot", rejected: "Absage", withdrawn: "Zurückgezogen" })[value] || "Stand prüfen");
 }
 
 export function shortDate(value) {
@@ -124,6 +128,11 @@ export function createCard(job, onOpen, onSave, onDelete) {
   actions.append(save, remove);
   top.append(mark, identity, actions);
   card.append(top, element("h2", "card-title", displayJobTitle(job.title)));
+  if (job.application_id) {
+    const status = element("span", "application-status card-application-status", t("Beworben") + " · " + applicationStatusLabel(job.application_status));
+    status.dataset.status = job.application_status;
+    card.append(status);
+  }
 
   const match = element("p", "match-line");
   const matchSymbol = element("span", "match-symbol");

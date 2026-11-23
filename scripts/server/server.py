@@ -41,6 +41,7 @@ ASSETS = {
     "/index.html": ("index.html", "text/html; charset=utf-8"),
     "/assets/styles.css": ("assets/styles.css", "text/css; charset=utf-8"),
     "/assets/app.js": ("assets/app.js", "text/javascript; charset=utf-8"),
+    "/assets/applications.js": ("assets/applications.js", "text/javascript; charset=utf-8"),
     "/assets/api.js": ("assets/api.js", "text/javascript; charset=utf-8"),
     "/assets/offline.js": ("assets/offline.js", "text/javascript; charset=utf-8"),
     "/assets/ui.js": ("assets/ui.js", "text/javascript; charset=utf-8"),
@@ -255,6 +256,13 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(200, {"ok": True, "jobs": list_jobs()})
             elif path == "/api/meta":
                 self.send_json(200, {"ok": True, **metadata()})
+            elif path == "/api/applications":
+                from applications import list_applications
+                self.send_json(200, {"ok": True, **list_applications()})
+            elif re.fullmatch(r"/api/applications/[0-9a-f]{24}", path):
+                from applications import application_detail
+                item = application_detail(path.rsplit("/", 1)[-1])
+                self.send_json(200 if item else 404, {"ok": bool(item), "application": item})
             elif path == "/api/csrf":
                 self.send_json(200, {"ok": True, "token": csrf_token(session)})
             elif path == "/api/passkeys":
@@ -284,6 +292,9 @@ class Handler(BaseHTTPRequestHandler):
         if not self.valid_host():
             return
         path = urlsplit(self.path).path
+        if path.startswith("/api/applications/"):
+            self.handle_applications(path)
+            return
         if path == "/api/export/saved.pdf":
             self.handle_pdf_export()
             return
@@ -329,6 +340,40 @@ class Handler(BaseHTTPRequestHandler):
                 found = set_user_status(match[1], payload.get("status"))
             self.send_json(200 if found else 404, {"ok": found})
         except (ValueError, TypeError, UnicodeError, json.JSONDecodeError):
+            self.send_json(400, {"ok": False, "error": "invalid_request"})
+        except (OSError, sqlite3.Error):
+            self.send_json(503, {"ok": False, "error": "temporarily_unavailable"})
+
+    def handle_applications(self, path: str) -> None:
+        if not re.fullmatch(r"/api/applications/(?:sync|manual|[0-9a-f]{24})", path):
+            self.send_json(404, {"ok": False, "error": "not_found"})
+            return
+        session = self.session()
+        if not session:
+            self.send_json(401, {"ok": False, "error": "auth_required"})
+            return
+        if not self.same_origin() or not hmac.compare_digest(self.headers.get("X-CSRF-Token", ""), csrf_token(session)):
+            self.send_json(403, {"ok": False, "error": "invalid_csrf"})
+            return
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            if not 0 < length <= 8192 or self.headers.get("Content-Type", "").split(";", 1)[0] != "application/json":
+                raise ValueError("invalid_request")
+            payload = json.loads(self.rfile.read(length))
+            if not isinstance(payload, dict): raise ValueError("invalid_request")
+            if path.endswith("/sync"):
+                if payload or not CONFIG["applications_mail"]["enabled"]: raise ValueError("mail_disabled")
+                from application_mail import start_sync
+                started = start_sync()
+                self.send_json(202, {"ok": True, "started": started})
+            elif path.endswith("/manual"):
+                from applications import create_manual
+                self.send_json(201, {"ok": True, "id": create_manual(payload)})
+            else:
+                from applications import update_application
+                found = update_application(path.rsplit("/", 1)[-1], payload)
+                self.send_json(200 if found else 404, {"ok": found})
+        except (ValueError, TypeError, UnicodeError):
             self.send_json(400, {"ok": False, "error": "invalid_request"})
         except (OSError, sqlite3.Error):
             self.send_json(503, {"ok": False, "error": "temporarily_unavailable"})

@@ -10,11 +10,11 @@
   <link rel="manifest" href="/manifest.webmanifest">
   <meta name="apple-mobile-web-app-title" content="jobfind">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <script src="/assets/i18n.js?v=4"></script>
+  <script src="/assets/i18n.js?v=6"></script>
   <script src="/assets/theme.js?v=2"></script>
-  <link rel="stylesheet" href="/assets/styles.css?v=14">
+  <link rel="stylesheet" href="/assets/styles.css?v=15">
   <link rel="stylesheet" href="/assets/local.css">
-  <script type="module" src="/assets/app.js?v=20"></script>
+  <script type="module" src="/assets/app.js?v=22"></script>
   <script defer src="/assets/passkeys.js?v=2"></script>
 </head>
 <body>
@@ -58,6 +58,7 @@
       <nav class="top-nav" aria-label="Hauptnavigation">
         <button type="button" data-tab="all" class="active" aria-current="page">Alle</button>
         <button type="button" data-tab="saved">Gemerkte <span id="nav-saved-count" class="nav-count" hidden></span></button>
+        <button type="button" data-tab="applications">Bewerbungen <span id="nav-applications-count" class="nav-count" hidden></span></button>
       </nav>
       <div id="header-actions" class="header-actions">
         <button id="header-info-toggle" class="header-info-toggle" type="button" aria-label="Informationen und Einstellungen" aria-expanded="false" aria-controls="header-info-content">
@@ -75,7 +76,7 @@
 
   <main class="main-content">
     <p id="offline-state" class="offline-state" role="status" hidden></p>
-    <section class="search-section" aria-label="Stellensuche">
+    <section id="job-search-section" class="search-section" aria-label="Stellensuche">
       <div class="search-line">
         <span id="header-job-count" class="header-job-count" aria-live="polite" aria-label="Anzahl der Jobs wird geladen">Jobs</span>
         <label class="search-field"><span class="visually-hidden">Stellen durchsuchen</span>
@@ -101,10 +102,11 @@
       <p id="run-note" class="run-note" role="status" hidden></p>
     </section>
 
-    <section aria-label="Stellenübersicht">
+    <section id="jobs-section" aria-label="Stellenübersicht">
       <div id="empty-state" class="empty-state" hidden><div class="empty-symbol" aria-hidden="true"><svg class="lucide-icon" viewBox="0 0 24 24"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4M22 4h-4"/><circle cx="4" cy="20" r="2"/></svg></div><h2>Hier ist noch Platz für etwas Gutes.</h2><p id="empty-copy">Sobald Hermes passende Stellen findet, erscheinen sie hier.</p></div>
       <div id="jobs-grid" class="jobs-grid" aria-live="polite"></div>
     </section>
+    <section id="applications-panel" aria-label="Bewerbungen" hidden></section>
   </main>
   <aside id="deletion-notice" class="deletion-notice" aria-label="Gelöschte Stelle" hidden>
     <p id="deletion-message" role="status"></p>

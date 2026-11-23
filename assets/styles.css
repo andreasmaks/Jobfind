@@ -49,6 +49,59 @@ a{color:inherit}
 .logout-button:hover{color:var(--accent-ink)}
 .logout-button:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
 
+.applications-heading{display:flex;align-items:center;justify-content:space-between;gap:24px;margin:10px 0 16px}
+.applications-heading h1{font-size:34px;letter-spacing:-.04em;line-height:1.15;margin:6px 0}
+.applications-eyebrow{color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.12em;margin:0}
+.applications-actions,.application-form-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.applications-actions button,.application-form-actions button{min-height:44px;font-size:13px;padding:10px 16px}
+.applications-summary{color:var(--muted);font-size:14px;margin:0 0 28px;font-variant-numeric:tabular-nums}
+.applications-toolbar{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:16px}
+.applications-filters{display:flex;gap:3px;padding:4px;background:var(--white);border-radius:16px}
+.applications-filters button{min-height:44px;padding:8px 15px;border-radius:12px;background:transparent;color:var(--muted);font-size:13px;white-space:nowrap}
+.applications-filters button.active{background:var(--accent-soft);color:var(--ink);font-weight:650}
+.applications-search{flex:0 1 290px;min-width:0}
+.applications-search input{width:100%;min-height:48px;padding:10px 17px;border-radius:24px;background:var(--white);color:var(--ink);font-size:14px}
+.applications-notice{color:var(--muted);font-size:12px;line-height:1.6;margin:12px 0 22px}
+.applications-list{display:grid;gap:10px}
+.application-row{display:grid;grid-template-columns:44px minmax(0,1fr) 125px 125px 12px;align-items:center;gap:20px;width:100%;padding:22px 24px;border-radius:20px;background:var(--white);color:var(--ink);text-align:left;transition:transform .18s ease-out,box-shadow .18s ease-out}
+.application-row .company-mark{width:44px;height:44px;max-width:44px}
+.application-identity{display:grid;gap:5px;min-width:0}
+.application-company{color:var(--muted);font-size:12px;font-weight:600}
+.application-title{font-size:16px;line-height:1.4;font-weight:650;overflow-wrap:anywhere}
+.application-context{color:var(--muted);font-size:12px;line-height:1.6}
+.application-status{display:inline-flex;align-items:center;justify-self:start;gap:7px;padding:7px 10px;border-radius:20px;background:var(--paper);color:var(--muted);font-size:11px;font-weight:650;line-height:1.35}
+.application-status::before{content:"";width:6px;height:6px;flex:0 0 6px;border-radius:50%;background:currentColor}
+.application-status[data-status="interview"],.application-status[data-status="offer"]{background:var(--accent-soft);color:var(--ink)}
+.application-status[data-status="offer"]::before{background:var(--accent)}
+.card-application-status{margin:0 0 16px}
+.application-date{display:grid;gap:5px;color:var(--muted);font-size:10px;font-variant-numeric:tabular-nums}
+.application-date time{font-size:12px;color:var(--ink)}
+.application-arrow{font-size:24px;color:var(--muted)}
+.applications-empty{padding:60px 20px}
+.application-dialog{width:min(740px,calc(100% - 28px));padding:0;color:var(--ink);background:var(--white);border-radius:24px;max-height:90dvh;overflow-y:auto}
+.application-dialog-top{display:flex;align-items:center;justify-content:space-between;gap:20px;position:sticky;top:0;padding:20px 28px;background:var(--white);z-index:1}
+.application-dialog-top h2{margin:0;font-size:18px;letter-spacing:-.02em}
+.application-dialog-top button{min-height:44px;padding:0 12px;width:auto}
+.application-dialog-content{padding:0 28px 30px}
+.application-detail-title{font-size:25px;line-height:1.3;letter-spacing:-.025em;margin:6px 0 26px}
+.application-form{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.application-form label{display:grid;align-content:start;gap:8px;font-size:12px;font-weight:600}
+.application-form input,.application-form select,.application-form textarea{width:100%;min-width:0;min-height:46px;padding:12px;border-radius:12px;color:var(--ink);background:var(--paper);font:inherit;font-size:16px;font-weight:400}
+.application-form textarea{resize:vertical}
+.application-form label:has(textarea),.application-form-actions,.application-form .feedback-error{grid-column:1/-1}
+.application-form .feedback-error:empty{display:none}
+.application-form button:disabled,.applications-actions button:disabled{opacity:.5;cursor:default}
+.application-timeline{margin-top:36px}
+.application-timeline h3{font-size:17px;letter-spacing:-.02em;margin-bottom:8px}
+.application-event{margin-top:10px;padding:16px;border-radius:14px;background:var(--paper)}
+.application-event summary{display:flex;align-items:start;justify-content:space-between;gap:18px;cursor:pointer;font-size:13px;font-weight:600;line-height:1.5;min-height:44px}
+.application-event summary time{flex:0 0 auto;color:var(--muted);font-size:11px;font-weight:400}
+.application-excerpt{white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;line-height:1.7}
+@media(hover:hover) and (pointer:fine){.application-row:hover{box-shadow:0 4px 20px #0000000a;transform:translateY(-1px)}}
+@media(prefers-reduced-motion:reduce){.application-row{transition:none}}
+@media(max-width:650px){.applications-heading{align-items:start;flex-direction:column;gap:18px}.applications-heading h1{font-size:30px}.applications-summary{line-height:1.7;margin-bottom:20px}.applications-toolbar{display:grid;gap:12px}.applications-search{width:100%}.applications-filters{width:max-content;max-width:100%;overflow:auto}.applications-filters button{font-size:12px;padding:8px 12px}.application-row{grid-template-columns:36px minmax(0,1fr) 12px;gap:12px 14px;padding:20px}.application-row .company-mark{width:36px;height:36px;max-width:36px}.application-identity{grid-column:2}.application-title{font-size:16px}.application-row .application-status{grid-column:2;grid-row:2}.application-date{grid-column:2;grid-row:3;display:flex;align-items:center;gap:8px}.application-arrow{grid-column:3;grid-row:1/4}.application-form{grid-template-columns:1fr}.application-dialog-top{padding:14px 20px}.application-dialog-content{padding:0 20px 24px}.application-event summary{display:grid;gap:5px}}
+@media(max-width:650px){.top-nav .nav-count{display:none}}
+
 .main-content{width:min(100% - 48px,944px);margin:auto;padding:32px 0 70px}
 .search-section{margin-bottom:44px}
 .search-actions{position:relative;display:flex;align-items:center;gap:10px;flex:0 0 auto;margin-left:auto}

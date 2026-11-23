@@ -340,6 +340,8 @@ def list_jobs() -> list[dict]:
             if company_logo_path(row["filename"]) and company_logo_path(row["filename"]).is_file()
         }
         result = []
+        from applications import linked_jobs
+        applications = linked_jobs()
         profiles = {row["company_key"]: dict(row) for row in db.execute("SELECT * FROM company_profiles")}
         liked_ids = {row[0] for row in db.execute("SELECT job_id FROM job_likes")}
         for row in rows:
@@ -355,6 +357,7 @@ def list_jobs() -> list[dict]:
             item["company_logo_url"] = f"/assets/company-logos/{filename}{suffix}" if filename else ""
             item["company_logo_mode"] = mode if mode in {"alpha", "dark", "light", "tone"} else "alpha"
             decorate_job(item)
+            item.update(applications.get(item["id"], {}))
             result.append(item)
         return result
     finally:

@@ -19,7 +19,7 @@ def load_config(path: Path = CONFIG_PATH) -> dict:
     if not isinstance(cfg, dict) or cfg.get("config_version") != 1:
         raise ValueError("config_version muss 1 sein")
     required = {"config_version", "data_dir", "server", "search", "max_new_jobs_per_day", "timezone", "hermes"}
-    if set(cfg) - (required | {"local", "research", "matching", "api_search"}) or not required <= set(cfg):
+    if set(cfg) - (required | {"local", "research", "matching", "api_search", "applications_mail"}) or not required <= set(cfg):
         raise ValueError("Unbekannte oder fehlende Konfigurationsfelder")
     ZoneInfo(cfg["timezone"])
     limit = cfg["max_new_jobs_per_day"]
@@ -116,6 +116,29 @@ def load_config(path: Path = CONFIG_PATH) -> dict:
             if not private.is_absolute() or private.resolve().is_relative_to(ROOT):
                 raise ValueError("Private API-Dateien müssen außerhalb des Projektordners liegen")
     cfg["api_search"] = api
+    mailbox = {"enabled": False, "host": "", "port": 993, "username": "", "credential_file": "",
+               "folders": [{"name": "INBOX", "sent": False}], "max_messages_per_folder": 250}
+    supplied = cfg.get("applications_mail", {})
+    if not isinstance(supplied, dict) or set(supplied) - set(mailbox):
+        raise ValueError("Ungültige Postfach-Konfiguration")
+    mailbox.update(supplied)
+    if type(mailbox["enabled"]) is not bool or type(mailbox["port"]) is not int or not 1 <= mailbox["port"] <= 65535:
+        raise ValueError("Ungültige Postfach-Verbindung")
+    for key in ("host", "username", "credential_file"):
+        if not isinstance(mailbox[key], str) or len(mailbox[key]) > 500 or any(c in mailbox[key] for c in "\r\n\x00"):
+            raise ValueError("Ungültige Postfach-Angabe")
+    if mailbox["enabled"]:
+        secret = Path(mailbox["credential_file"]).expanduser()
+        if not mailbox["host"] or not mailbox["username"] or not secret.is_absolute() or secret.resolve().is_relative_to(ROOT):
+            raise ValueError("Postfach benötigt eigene Verbindung und externe Schlüsseldatei")
+    if not isinstance(mailbox["folders"], list) or not 1 <= len(mailbox["folders"]) <= 10:
+        raise ValueError("Ungültige Postfach-Ordner")
+    for folder in mailbox["folders"]:
+        if not isinstance(folder, dict) or set(folder) != {"name", "sent"} or not isinstance(folder["name"], str) or not 1 <= len(folder["name"]) <= 200 or any(c in folder["name"] for c in "\r\n\x00") or type(folder["sent"]) is not bool:
+            raise ValueError("Ungültiger Postfach-Ordner")
+    if type(mailbox["max_messages_per_folder"]) is not int or not 1 <= mailbox["max_messages_per_folder"] <= 500:
+        raise ValueError("Ungültige Postfach-Abrufmenge")
+    cfg["applications_mail"] = mailbox
     hermes = cfg["hermes"]
     if set(hermes) != {"job_id", "output_dir", "schedule"}:
         raise ValueError("Ungültige Hermes-Konfiguration")

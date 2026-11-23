@@ -1,6 +1,7 @@
-import { changeDeletion, loadPortal, updateLike, updateStatus } from "/assets/api.js?v=5";
-import { clearOfflineData, prepareOffline, readPendingActions, removePendingAction, savePendingAction } from "/assets/offline.js?v=14";
-import { createCard, shortDate, showDetails } from "/assets/ui.js?v=5";
+import { changeDeletion, loadPortal, updateLike, updateStatus } from "/assets/api.js?v=7";
+import { clearOfflineData, prepareOffline, readPendingActions, removePendingAction, savePendingAction } from "/assets/offline.js?v=16";
+import { createCard, shortDate, showDetails } from "/assets/ui.js?v=6";
+import { createApplicationsView } from "/assets/applications.js?v=2";
 
 const { t, locale, translatePage } = window.JobfindI18n;
 translatePage();
@@ -20,6 +21,8 @@ const dialog = $("job-dialog");
 const feedbackDialog = $("feedback-dialog");
 let feedbackJob = null;
 const controls = ["search", "remote-filter", "hours-filter", "score-filter", "sort-filter", "visibility-filter"];
+const applicationsView = createApplicationsView({ getJobs: () => state.jobs, getCsrf: () => state.csrf,
+  onOpenJob: openJob, onDataChanged: () => refreshPortal() });
 
 function setupHeaderInfoMenu() {
   const actions = $("header-actions");
@@ -245,6 +248,11 @@ function updateSummary(jobs = filteredJobs()) {
 }
 
 function render() {
+  const applications = state.tab === "applications";
+  $("job-search-section").hidden = applications;
+  $("jobs-section").hidden = applications;
+  applicationsView.show(applications);
+  if (applications) { updateSummary(); updateOfflineState(); return; }
   const jobs = filteredJobs();
   const fragment = document.createDocumentFragment();
   jobs.forEach((job) => fragment.append(createCard(job, openJob, changeStatus, askDelete)));
@@ -455,6 +463,7 @@ document.querySelectorAll(".top-nav [data-tab]").forEach((button) => {
       else item.removeAttribute("aria-current");
     });
     render();
+    if (state.tab === "applications") applicationsView.refresh();
   });
 });
 controls.forEach((id) => $(id).addEventListener(id === "search" ? "input" : "change", render));
@@ -482,6 +491,7 @@ document.querySelector(".header-actions form").addEventListener("submit", async 
       window.alert(t("Offline-Änderungen konnten noch nicht übertragen werden. Bitte später erneut abmelden."));
       return;
     }
+    await applicationsView.suspend();
     await offlinePreparation;
     await clearOfflineData();
     const response = await fetch("/logout", {
@@ -490,6 +500,7 @@ document.querySelector(".header-actions form").addEventListener("submit", async 
     if (!response.ok) throw new Error("Logout failed");
     window.location.href = "/login";
   } catch (_) {
+    applicationsView.resume();
     window.alert(t("Die Offline-Kopie konnte nicht entfernt werden. Bitte versuche es erneut."));
   }
 });
@@ -505,6 +516,7 @@ try {
   state.offlineReady = loaded.offline;
   portalLoaded = true;
   render();
+  applicationsView.refresh();
   if (!loaded.offline) {
     if (state.pendingActions.length) syncPendingActions();
     else queueOfflineCopy();
@@ -518,7 +530,7 @@ try {
 
 let refreshInFlight = false;
 async function refreshPortal() {
-  if (refreshInFlight || syncInFlight || mutationPending || document.hidden || dialog.open || feedbackDialog.open) return;
+  if (refreshInFlight || syncInFlight || mutationPending || document.hidden || dialog.open || feedbackDialog.open || applicationsView.isOpen()) return;
   refreshInFlight = true;
   const version = mutationVersion;
   try {
@@ -549,17 +561,18 @@ async function refreshPortal() {
   }
 }
 
-window.setInterval(refreshPortal, 5 * 60 * 1000);
+window.setInterval(() => { refreshPortal(); applicationsView.refresh(); }, 5 * 60 * 1000);
 document.addEventListener("visibilitychange", () => {
-  if (!document.hidden) refreshPortal();
+  if (!document.hidden) { refreshPortal(); applicationsView.refresh(); }
 });
 window.addEventListener("offline", () => {
   if (!portalLoaded) return;
   state.offline = true;
   state.csrf = "";
   render();
+  applicationsView.refresh();
 });
-window.addEventListener("online", refreshPortal);
+window.addEventListener("online", () => { refreshPortal(); applicationsView.refresh(); });
 window.addEventListener("jobfind:session-changed", (event) => {
   if (typeof event.detail?.csrf !== "string") return;
   mutationVersion += 1; // Discard any background refresh from the previous session.

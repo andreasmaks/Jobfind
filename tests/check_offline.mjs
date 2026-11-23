@@ -97,8 +97,16 @@ assert.equal(pending[0].kind, "restore");
 await o.removePendingAction(pending[0].id);
 await o.clearOfflineData();
 assert.equal(await o.readSnapshot(), null);
-assert.equal(cacheClears, 1, "Only own caches removed");
-assert.equal(unregistered, 1);
+await o.saveApplicationsSnapshot({ applications: [{ id: "app", company: "Example", status: "submitted", note: "private note", events: [{ excerpt: "private mail" }], last_subject: "private subject" }], sync: { status: "ok" } });
+const applicationSnapshot = await o.readApplicationsSnapshot();
+assert.equal(applicationSnapshot.applications[0].company, "Example");
+assert.equal(applicationSnapshot.applications[0].note, undefined);
+assert.equal(applicationSnapshot.applications[0].events, undefined);
+assert.equal(applicationSnapshot.applications[0].last_subject, undefined);
+await o.clearOfflineData();
+assert.equal(await o.readApplicationsSnapshot(), null, "Sign-out clears application metadata too");
+assert.equal(cacheClears, 2, "Each cleanup removes only own caches");
+assert.equal(unregistered, 2);
 
 // API: network failure falls back to snapshot, authentication failure must never do so.
 await o.prepareOffline([{ id: "a" }], { total: 1 });
@@ -147,6 +155,7 @@ const viewCtx = vm.createContext({
   $: element, grid: cardGrid, mutationPending: false, syncInFlight: false,
   document: { createDocumentFragment: () => ({ cards: [], append(card) { this.cards.push(card); } }) },
   createCard: (job) => job, shortDate: () => "", updateRunNote() {}, updateOfflineState() {},
+  applicationsView: { show() {} },
   openJob() {}, changeStatus() {}, askDelete() {}, updateExportState() {},
 });
 vm.runInContext(functionText("filteredJobs", "updateRunNote") + "\n" + functionText("updateSummary", "render") + "\n" + functionText("render", "updateExportState"), viewCtx);
@@ -157,7 +166,7 @@ const checkCount = (tab, count) => {
   assert.equal(element("header-job-count").textContent, `${count} ${count === 1 ? "Job" : "Jobs"}`);
   assert.match(element("header-job-count").attributes["aria-label"], /in dieser Auswahl/);
 };
-assert.deepEqual([...source("index.html").matchAll(/data-tab="([^"]+)"/g)].map((match) => match[1]), ["all", "saved"], "Navigation offers only All and Saved, with no archive view");
+assert.deepEqual([...source("index.html").matchAll(/data-tab="([^"]+)"/g)].map((match) => match[1]), ["all", "saved", "applications"], "Navigation includes applications, with no archive view");
 assert(!app.includes('state.tab === "history"'), "Remove the archive-only filter, not historical listings");
 checkCount("all", 3);
 assert(cardGrid.cards.some((job) => job.id === "b"), "Older imports remain visible under All, including offline");

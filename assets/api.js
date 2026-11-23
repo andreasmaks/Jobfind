@@ -1,6 +1,6 @@
-import { readSnapshot } from "/assets/offline.js?v=5";
+import { readSnapshot } from "/assets/offline.js?v=16";
 
-async function request(path, options = {}) {
+export async function request(path, options = {}) {
   let response;
   try {
     response = await fetch(path, { credentials: "same-origin", cache: "no-store", ...options });

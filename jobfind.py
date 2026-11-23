@@ -53,6 +53,7 @@ def main() -> int:
     api_search = commands.add_parser("search-api", help="Budgetbegrenzte OpenAI-API-Recherche; kein Codex-Login")
     api_search.add_argument("--force", action="store_true", help="Intervall überspringen; Monatsbudget bleibt verbindlich")
     commands.add_parser("api-budget", help="Lokalen API-Budgetstand ohne Netzwerkanfrage anzeigen")
+    commands.add_parser("sync-applications", help="Bewerbungs-Mails schreibgeschützt abgleichen; keine KI-Aufrufe")
     commands.add_parser("hermes-prepare", help="Pre-Run-Shim und Prompt lokal erzeugen; nichts installieren")
     args = parser.parse_args()
     os.umask(0o077)
@@ -70,6 +71,11 @@ def main() -> int:
     sys.path.insert(0, str(ROOT / "scripts/modules"))
     sys.path.insert(0, str(ROOT / "hermes"))
     from config import CONFIG, ensure_data_dir
+    if args.command == "sync-applications":
+        from application_mail import sync_applications
+        result = sync_applications()
+        print(json.dumps(result, ensure_ascii=False))
+        return int(result.get("status") == "error")
     if args.command in {"search-api", "api-budget"}:
         from api_search import run_search, budget_status
         report = run_search(force=args.force) if args.command == "search-api" else budget_status()

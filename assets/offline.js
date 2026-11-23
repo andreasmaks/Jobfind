@@ -39,6 +39,17 @@ export async function readSnapshot() {
     ? snapshot : null;
 }
 
+export async function readApplicationsSnapshot() {
+  const snapshot = await snapshotTransaction("readonly", (store) => store.get("applications"));
+  return snapshot && Array.isArray(snapshot.applications) ? snapshot : null;
+}
+
+export async function saveApplicationsSnapshot(data) {
+  const fields = ["id", "company", "title", "job_id", "confirmed", "match_state", "status", "last_event_at", "applied_at"];
+  const applications = data.applications.map((item) => Object.fromEntries(fields.map((key) => [key, item[key]])));
+  return snapshotTransaction("readwrite", (store) => store.put({ applications, sync: data.sync }, "applications"));
+}
+
 export async function readPendingActions() {
   const database = await openDatabase();
   try {
@@ -129,7 +140,7 @@ export async function prepareOffline(jobs, meta) {
   }
   let shellReady = false;
   for (let attempt = 0; attempt < 40; attempt += 1) {
-    const shell = await caches.open("jobfind-shell-v17");
+    const shell = await caches.open("jobfind-shell-v19");
     if (await shell.match("/")) {
       shellReady = true;
       break;
