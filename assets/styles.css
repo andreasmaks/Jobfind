@@ -49,13 +49,20 @@ a{color:inherit}
 .logout-button:hover{color:var(--accent-ink)}
 .logout-button:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
 
-.applications-header .search-line{margin-bottom:18px}
+.applications-header .search-line{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:16px;margin-bottom:0}
 .applications-header .header-job-count{gap:6px;font-variant-numeric:tabular-nums}
+.applications-header .applications-count{grid-column:1;grid-row:1;justify-self:start}
+.applications-header .applications-filters{grid-column:2;grid-row:1;justify-self:center}
+.applications-tools{grid-column:3;grid-row:1;justify-self:end;display:flex;align-items:center;gap:10px;width:min(284px,100%);min-width:0}
+.applications-header .search-field{flex:0 1 160px;width:160px;max-width:160px}
 .application-form-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .application-form-actions button{min-height:44px;font-size:13px;padding:10px 16px}
-.applications-filters{display:flex;width:max-content;max-width:100%;overflow-x:auto;gap:3px;padding:4px;background:var(--white);border-radius:16px}
-.applications-filters button{min-height:44px;padding:8px 15px;border-radius:12px;background:transparent;color:var(--muted);font-size:13px;white-space:nowrap}
-.applications-filters button.active{background:var(--accent-soft);color:var(--ink);font-weight:650}
+.applications-filters{display:flex;width:max-content;max-width:100%;height:55px;overflow-x:auto;gap:3px;padding:4px;background:var(--white);border-radius:999px}
+.applications-filters button{min-height:44px;padding:8px 14px;border-radius:999px;background:transparent;color:var(--muted);font-size:13px;white-space:nowrap}
+.applications-filters button.active{background:var(--accent);color:#1b2431;font-weight:650}
+@media(hover:hover) and (pointer:fine){.applications-filters button:not(.active):hover{background:var(--accent-soft);color:var(--ink)}}
+@media(max-width:1000px){.applications-header .search-line{grid-template-columns:auto minmax(0,1fr);gap:16px}.applications-header .applications-count{grid-column:1;grid-row:2}.applications-header .applications-filters{grid-column:1/-1;grid-row:1}.applications-tools{grid-column:2;grid-row:2}}
+@media(max-width:650px){.applications-header .search-line{gap:12px 10px}.applications-header .applications-filters{height:52px}}
 .applications-notice{color:var(--muted);font-size:12px;line-height:1.6;margin:12px 0 22px}
 .applications-header .applications-notice{margin:14px 0 0}
 .applications-notice:empty{display:none}

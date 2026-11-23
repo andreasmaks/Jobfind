@@ -1,5 +1,5 @@
-import { request } from "/assets/api.js?v=13";
-import { readApplicationsSnapshot, saveApplicationsSnapshot } from "/assets/offline.js?v=22";
+import { request } from "/assets/api.js?v=14";
+import { readApplicationsSnapshot, saveApplicationsSnapshot } from "/assets/offline.js?v=23";
 import { companyMark, displayJobTitle, shortDate, applicationStatusLabel } from "/assets/ui.js?v=7";
 
 const { t } = window.JobfindI18n;
@@ -76,12 +76,14 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
   search.placeholder = t("Unternehmen oder Position suchen");
   search.addEventListener("input", () => { query = search.value.trim().toLocaleLowerCase(); render(); });
   searchLabel.append(search, icon(["m21 21-4.34-4.34", "M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0"]));
-  searchLine.append(count, searchLabel, actions);
+  const tools = node("div", "applications-tools");
+  tools.append(actions, searchLabel);
+  searchLine.append(count, filters, tools);
   const notice = node("p", "applications-notice");
   notice.setAttribute("role", "status");
   const list = node("div", "applications-list");
   const empty = node("div", "empty-state applications-empty");
-  header.append(searchLine, filters, notice);
+  header.append(searchLine, notice);
   panel.append(heading, header, list, empty);
   const dialog = node("dialog", "application-dialog");
   dialog.setAttribute("aria-labelledby", "application-dialog-title");

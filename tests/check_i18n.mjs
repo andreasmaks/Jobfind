@@ -169,8 +169,8 @@ for (const page of ["index.html", "login.html"]) {
   assert(source(page).indexOf("/assets/i18n.js?v=6") < source(page).indexOf("/assets/theme.js?v=2"));
 }
 assert(source("sw.js").includes('"/assets/i18n.js?v=6"'));
-assert(source("sw.js").includes('"jobfind-shell-v25"'));
-assert(source("assets/offline.js").includes('"jobfind-shell-v25"'));
+assert(source("sw.js").includes('"jobfind-shell-v26"'));
+assert(source("assets/offline.js").includes('"jobfind-shell-v26"'));
 assert(!source("assets/app.js").includes("function changeLike("));
 assert(source("index.html").includes('data-tab="saved"'));
 assert(source("index.html").includes('id="dialog-save"'));
