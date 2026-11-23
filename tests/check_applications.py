@@ -235,6 +235,21 @@ class Checks(unittest.TestCase):
         self.assertFalse(apps.ingest_message(followup, mail.classify_message(followup), self.jobs))
         self.assertEqual(apps.list_applications()["scope"], "portal")
 
+    def test_hiring_company_precedes_shared_recruiting_sender_and_footer(self):
+        message_data = message(subject="Child Company | Deine Bewerbung", sender="Recruiter <career@parent.example>",
+            body="Deine Bewerbung als UX Designer bei Child Company können wir leider nicht weiter berücksichtigen. Gesendet im Namen von Parent Digital GmbH über Personio")
+        company, title = apps.inferred_identity(message_data, [])
+        self.assertEqual(company, "Child Company")
+        self.assertEqual(title, "UX Designer")
+        child = dict(self.jobs[0], company="Child Company GmbH", original_url="https://child.jobs.personio.com/job/1")
+        parent = dict(child, id="p" * 20, company="Parent Digital GmbH", original_url="https://parent.jobs.personio.com/job/2")
+        matched, candidates = apps.job_matches(message_data, [parent, child])
+        self.assertEqual(matched["id"], child["id"])
+        self.assertEqual([candidate["id"] for candidate in candidates], [child["id"]])
+        self.assertEqual(mail.classify_message(message_data)["status"], "rejected")
+        reply = dict(message_data, subject="AW: Child Company | Deine Bewerbung")
+        self.assertEqual(apps.inferred_identity(reply, [])[0], "Child Company")
+
     def test_readonly_incremental_backfill_and_uidvalidity(self):
         first = FakeIMAP()
         result = mail.sync_applications(lambda: first)

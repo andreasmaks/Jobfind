@@ -97,6 +97,14 @@ def clean_role(title):
     return title
 
 
+def subject_employer(subject):
+    subject = re.sub(r"^(?:(?:re|aw|fw|fwd)\s*:\s*)+", "", subject, flags=re.I)
+    match = re.search(r"^([^|\n]{2,80}?)\s*\|\s*(?:Deine|Ihre|Your)\s+(?:Bewerbung|application)\b", subject, re.I)
+    if match and not re.search(r"bewerb|application|eingang|rückmeldung|status|danke|thank", match[1], re.I):
+        return match[1].strip()
+    return ""
+
+
 def job_matches(message, jobs):
     subject = normalized(message["subject"])
     text = normalized(message["body"][:10000])
@@ -104,8 +112,12 @@ def job_matches(message, jobs):
     sender = normalized(sender_name + " " + address)
     sender_host = address.rsplit("@", 1)[-1].casefold()
     results = []
+    explicit_employer = subject_employer(message["subject"])
     for job in jobs:
         exact = bool(job["original_url"]) and job["original_url"] in message["body"]
+        # The recruiting sender/footer may belong to a shared HR provider or parent.
+        # A named hiring company in the subject takes precedence over that boilerplate.
+        if explicit_employer and not exact and not same_employer(explicit_employer, job["company"]): continue
         brand = " ".join(company_words(job["company"]))
         brand_present = bool(brand) and (" " + brand + " ") in (" " + subject + " " + text + " " + sender + " ")
         host = (urlsplit(job["original_url"]).hostname or "").removeprefix("www.")
@@ -139,7 +151,7 @@ def inferred_identity(message, candidates):
             title = re.split(r"\s(?:bei|at)\s|[\n|\"“]|\s/\sYour application|\sI\sEingangsbestätigung|\s[-–]\sEingangsbestätigung|\.\s", match[1], maxsplit=1, flags=re.I)[0].strip(' .„“"')
             break
     title = clean_role(title)
-    company = candidates[0]["company"] if candidates else ""
+    company = candidates[0]["company"] if candidates else subject_employer(subject)
     if not company:
         match = re.search(r"(?:bewerbung\s+(?:bei|@)|application.{0,150}?\s(?:at|to)|(?:interview|gespräch|gespraech).{0,160}?\sbei)\s+(?:der\s+|dem\s+)?(.{2,100})", subject, re.I)
         if match: company = re.split(r"[|:]|\sauf die Position|\s[-–/]\s(?=.{0,60}(?:Designer|Manager|UX|UI|Lead|Owner))", match[1], flags=re.I)[0].strip(' .!')
