@@ -25,11 +25,12 @@ async function environment(language) {
   const body = new Element("body");
   const document = { body, documentElement: {}, addEventListener() {},
     createElement: (tag) => new Element(tag),
+    createElementNS: (_, tag) => new Element(tag),
     getElementById: (id) => { if (!elements.has(id)) elements.set(id, new Element("div")); return elements.get(id); } };
   const ctx = vm.createContext({ document, navigator: { language, onLine: true }, window: { confirm: () => true }, console, setTimeout, clearTimeout });
   vm.runInContext(source("assets/i18n.js"), ctx);
   const applications = [
-    { id: "a".repeat(24), company: "Example", title: "UX Designer", job_id: "j", confirmed: true, match_state: "matched", status: "interview", last_event_at: "2026-11-20T10:00:00Z" },
+    { id: "a".repeat(24), company: "Example", title: "UX Designer", job_id: "j", candidates: [{ id: "j" }], confirmed: true, match_state: "matched", status: "interview", last_event_at: "2026-11-20T10:00:00Z" },
     { id: "b".repeat(24), company: "Closed", title: "HMI Designer", confirmed: true, match_state: "unmatched", status: "rejected", last_event_at: "2026-11-19T10:00:00Z" },
     { id: "c".repeat(24), company: "Review", title: "", confirmed: false, match_state: "review", status: "unknown", candidates: [{ id: "j" }], last_event_at: "2026-11-18T10:00:00Z" },
   ];
@@ -66,14 +67,37 @@ for (const language of ["de-DE", "en-US"]) {
   const rows = () => panel.querySelectorAll("button").filter((n) => n.className === "application-row");
   assert.equal(rows().length, 2, "Unconfirmed mail does not appear among confirmed applications");
   assert.equal(env.elements.get("nav-applications-count").textContent, "2", "Navigation counts all confirmed applications, including rejections");
+  const count = panel.querySelectorAll("span").find((node) => node.className === "header-job-count applications-count");
+  const search = panel.querySelectorAll("input").find((node) => node.type === "search");
+  assert.equal(count.attributes["aria-label"], english ? "2 Applications" : "2 Bewerbungen");
+  assert(panel.querySelectorAll("label").some((node) => node.className === "search-field"), "Applications reuse the main search field");
+  assert(panel.querySelectorAll("div").some((node) => node.className === "search-line"), "Count, search and actions share the standard header row");
+  search.value = "Closed";
+  search.events.input();
+  assert.equal(rows().length, 1);
+  assert.equal(count.attributes["aria-label"], english ? "1 Application" : "1 Bewerbung", "Header count follows search results");
+  assert.equal(env.elements.get("nav-applications-count").textContent, "2", "Navigation retains the overall total");
+  search.value = "no matching employer";
+  search.events.input();
+  assert.equal(count.children[0].textContent, "0");
+  search.value = "";
+  search.events.input();
+  const add = panel.querySelectorAll("button").find((node) => node.attributes["aria-label"] === (english ? "Add application" : "Bewerbung erfassen"));
+  assert.equal(add.className, "export-button", "Header actions reuse the standard round icon button");
+  assert.equal(add.children[0].tag, "svg");
+  await add.events.click();
+  assert.equal(env.body.children[0].open, true, "The add icon opens manual entry");
+  env.body.children[0].close();
   assert(rows()[0].textContent.includes(english ? "Interviewing" : "Im Gespräch"));
   await find("button", english ? "Needs review" : "Zu prüfen").events.click();
   assert.equal(rows().length, 1);
+  assert.equal(count.children[0].textContent, "1", "Header count follows the selected status filter");
   assert.equal(env.elements.get("nav-applications-count").textContent, "2", "Navigation total is independent of the selected filter");
   await rows()[0].events.click();
   const dialog = env.body.children[0];
   const selects = dialog.querySelectorAll("select");
   assert.equal(dialog.querySelectorAll("span").find((node) => node.className === "application-status").dataset.status, "unknown");
+  assert.equal(dialog.querySelectorAll("label").filter((node) => node.className === "application-field-wide").length, 2, "Listing assignment and status each have a full-width row");
   assert.equal(selects[0].value, "", "A matching suggestion requires confirmation");
   assert(dialog.textContent.includes("<script>untrusted</script>"), "Mail text remains inert text");
   const form = dialog.querySelectorAll("form")[0];
@@ -90,6 +114,12 @@ for (const language of ["de-DE", "en-US"]) {
   assert(!dialog.textContent.includes("untrusted"), "Mail bodies are not loaded offline");
 }
 assert(!source("assets/applications.js").includes(".innerHTML"), "Mail UI uses textContent throughout");
+const failedSync = await environment("de-DE");
+failedSync.setFailed();
+const syncControl = failedSync.elements.get("applications-panel").querySelectorAll("button").find((node) => node.attributes["aria-label"] === "Mails abgleichen");
+await syncControl.events.click();
+assert.equal(syncControl.attributes["aria-busy"], "false", "A failed sync restores the idle icon state");
+assert.equal(syncControl.children[0].tag, "svg");
 const colourStates = await environment("de-DE");
 for (const status of ["submitted", "reviewing", "interview", "offer", "rejected", "withdrawn"]) {
   colourStates.applications[0].status = status;
@@ -98,6 +128,9 @@ for (const status of ["submitted", "reviewing", "interview", "offer", "rejected"
   assert.equal(row.querySelectorAll("span").find((node) => node.className === "application-status").dataset.status, status);
   await row.events.click();
   const detail = colourStates.body.children[0];
+  const assignment = detail.querySelectorAll("select")[0];
+  const selected = assignment.children.find((option) => option.value === "j");
+  assert.equal(selected.textContent, "Example · UX Designer", "An assigned listing is shown without redundant suggestion/bookmark labels");
   assert.equal(detail.querySelectorAll("span").find((node) => node.className === "application-status").dataset.status, status, "List and detail use the same status colour code");
   detail.close();
 }
@@ -116,6 +149,6 @@ await Promise.all([inflight, suspended]);
 await logout.view.refresh();
 assert.equal(logout.getWrites(), writesBefore, "Logout blocks pending and future cache writes before clearing storage");
 assert(source("assets/app.js").indexOf("await applicationsView.suspend()") < source("assets/app.js").indexOf("await clearOfflineData()"));
-assert(source("sw.js").includes('"/assets/applications.js?v=7"'));
+assert(source("sw.js").includes('"/assets/applications.js?v=8"'));
 assert(source("assets/styles.css").includes('.top-nav [data-tab="applications"] .nav-count{display:inline-flex}'), "Application total remains visible on mobile");
 console.log("Application UI checks passed: DE/EN, counts, filters, explicit matches, safe evidence, save, offline.");

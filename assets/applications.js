@@ -1,5 +1,5 @@
-import { request } from "/assets/api.js?v=12";
-import { readApplicationsSnapshot, saveApplicationsSnapshot } from "/assets/offline.js?v=21";
+import { request } from "/assets/api.js?v=13";
+import { readApplicationsSnapshot, saveApplicationsSnapshot } from "/assets/offline.js?v=22";
 import { companyMark, displayJobTitle, shortDate, applicationStatusLabel } from "/assets/ui.js?v=7";
 
 const { t } = window.JobfindI18n;
@@ -17,6 +17,25 @@ const button = (label, className, action) => {
   el.addEventListener("click", action);
   return el;
 };
+const icon = (paths) => {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("class", "lucide-icon");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  for (const d of paths) {
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", d);
+    svg.append(path);
+  }
+  return svg;
+};
+const iconButton = (label, paths, action) => {
+  const control = button(label, "export-button", action);
+  control.replaceChildren(icon(paths));
+  control.setAttribute("aria-label", t(label));
+  control.title = t(label);
+  return control;
+};
 
 function statusBadge(app) {
   const status = node("span", "application-status", app.confirmed ? applicationStatusLabel(app.status) : t("Zu prüfen"));
@@ -29,16 +48,18 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
   let data = { applications: [], sync: {} }, offline = false, loaded = false, loading = false;
   let filter = "all", query = "", pending = false, pollTimer, visible = false;
   let suspended = false, idle = Promise.resolve();
-  const heading = node("div", "applications-heading");
-  const titleBlock = node("div");
-  titleBlock.append(node("p", "applications-eyebrow", t("DEIN NÄCHSTER SCHRITT")), node("h1", "", t("Bewerbungen")));
-  const actions = node("div", "applications-actions");
-  const syncButton = button("Mails abgleichen", "button-secondary", sync);
-  const addButton = button("Bewerbung erfassen", "button-primary", () => openEditor());
+  const heading = node("h1", "visually-hidden", t("Bewerbungen"));
+  const header = node("div", "search-section applications-header");
+  const searchLine = node("div", "search-line");
+  const count = node("span", "header-job-count applications-count");
+  count.setAttribute("aria-live", "polite");
+  const countValue = node("span");
+  const countLabel = node("span", "applications-count-label");
+  count.append(countValue, countLabel);
+  const actions = node("div", "search-actions");
+  const syncButton = iconButton("Mails abgleichen", ["M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8", "M21 3v5h-5", "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16", "M8 16H3v5"], sync);
+  const addButton = iconButton("Bewerbung erfassen", ["M12 5v14M5 12h14"], () => openEditor());
   actions.append(syncButton, addButton);
-  heading.append(titleBlock, actions);
-  const summary = node("p", "applications-summary");
-  const toolbar = node("div", "applications-toolbar");
   const filters = node("div", "applications-filters");
   filters.setAttribute("role", "group");
   filters.setAttribute("aria-label", t("Bewerbungen filtern"));
@@ -47,19 +68,21 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
     control.dataset.filter = key;
     filters.append(control);
   }
-  const searchLabel = node("label", "applications-search");
+  const searchLabel = node("label", "search-field");
   searchLabel.append(node("span", "visually-hidden", t("Bewerbungen durchsuchen")));
   const search = node("input");
   search.type = "search";
+  search.autocomplete = "off";
   search.placeholder = t("Unternehmen oder Position suchen");
   search.addEventListener("input", () => { query = search.value.trim().toLocaleLowerCase(); render(); });
-  searchLabel.append(search);
-  toolbar.append(filters, searchLabel);
+  searchLabel.append(search, icon(["m21 21-4.34-4.34", "M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0"]));
+  searchLine.append(count, searchLabel, actions);
   const notice = node("p", "applications-notice");
   notice.setAttribute("role", "status");
   const list = node("div", "applications-list");
   const empty = node("div", "empty-state applications-empty");
-  panel.append(heading, summary, toolbar, notice, list, empty);
+  header.append(searchLine, filters, notice);
+  panel.append(heading, header, list, empty);
   const dialog = node("dialog", "application-dialog");
   dialog.setAttribute("aria-labelledby", "application-dialog-title");
   document.body.append(dialog);
@@ -73,8 +96,15 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
   function render() {
     const confirmed = data.applications.filter((a) => a.confirmed);
     const review = data.applications.filter((a) => !a.confirmed || a.match_state === "review");
-    const open = confirmed.filter((a) => !closed.has(a.status));
-    summary.textContent = t("{total} Bewerbungen · {open} offen · {review} zu prüfen", { total: confirmed.length, open: open.length, review: review.length });
+    const items = data.applications.filter((a) => {
+      if (filter === "review" ? !review.includes(a) : !a.confirmed) return false;
+      if (filter === "open" && closed.has(a.status)) return false;
+      if (filter === "closed" && !closed.has(a.status)) return false;
+      return !query || `${a.company} ${a.title}`.toLocaleLowerCase().includes(query);
+    });
+    countValue.textContent = items.length;
+    countLabel.textContent = t(items.length === 1 ? "Bewerbung" : "Bewerbungen");
+    count.setAttribute("aria-label", `${items.length} ${countLabel.textContent}`);
     const badge = document.getElementById("nav-applications-count");
     badge.textContent = confirmed.length;
     badge.hidden = !confirmed.length;
@@ -83,7 +113,10 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
       control.setAttribute("aria-pressed", String(control.dataset.filter === filter));
     }
     syncButton.disabled = pending || offline || !navigator.onLine || data.sync.status === "running" || !data.sync.enabled;
-    syncButton.textContent = t(pending || data.sync.status === "running" ? "Wird abgeglichen …" : "Mails abgleichen");
+    const syncing = pending || data.sync.status === "running";
+    syncButton.setAttribute("aria-label", t(syncing ? "Wird abgeglichen …" : "Mails abgleichen"));
+    syncButton.setAttribute("aria-busy", String(syncing));
+    syncButton.title = t(syncing ? "Wird abgeglichen …" : "Mails abgleichen");
     addButton.disabled = offline || !navigator.onLine;
     const notes = [];
     if (offline) notes.push(t("Offline: Gespeicherte Bewerbungen. Zum Bearbeiten bitte verbinden."));
@@ -92,12 +125,6 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
     else if (data.sync.last_success_at) notes.push(t("Letzter Mail-Abgleich: {date}", { date: shortDate(data.sync.last_success_at) }));
     if (data.sync.more_history) notes.push(t("Ältere Nachrichten werden beim nächsten Abgleich weiter geprüft."));
     notice.textContent = notes.join(" ");
-    const items = data.applications.filter((a) => {
-      if (filter === "review" ? !review.includes(a) : !a.confirmed) return false;
-      if (filter === "open" && closed.has(a.status)) return false;
-      if (filter === "closed" && !closed.has(a.status)) return false;
-      return !query || `${a.company} ${a.title}`.toLocaleLowerCase().includes(query);
-    });
     list.replaceChildren();
     for (const app of items) {
       const job = getJobs().find((j) => j.id === app.job_id);
@@ -170,8 +197,8 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
       pollTimer = setTimeout(poll, 1000);
     } catch (_) {
       pending = false;
+      render();
       notice.textContent = t("Der Mail-Abgleich konnte nicht gestartet werden. Bitte prüfe deine Verbindung.");
-      syncButton.disabled = false;
     }
   }
 
@@ -203,15 +230,16 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
       if (!app.confirmed) content.append(node("p", "applications-notice", t("Diese Nachricht ist noch kein eindeutiger Bewerbungsnachweis. Bitte prüfen und bestätigen.")));
     }
     const form = node("form", "application-form");
-    const field = (label, input) => { const wrap = node("label"); wrap.append(node("span", "", t(label)), input); form.append(wrap); return input; };
+    const field = (label, input, className = "") => { const wrap = node("label", className); wrap.append(node("span", "", t(label)), input); form.append(wrap); return input; };
     const company = field("Unternehmen", node("input")); company.maxLength = 180; company.value = app?.company || "";
     const role = field("Position", node("input")); role.maxLength = 200; role.value = app?.title || "";
-    const jobs = field("Stelle in Jobfind zuordnen", node("select"));
+    const jobs = field("Stelle in Jobfind zuordnen", node("select"), "application-field-wide");
     const none = node("option", "", t("Keine Zuordnung")); none.value = ""; jobs.append(none);
     const suggestions = new Set((app?.candidates || []).map((c) => c.id));
     const options = [...getJobs()].sort((a, b) => Number(suggestions.has(b.id)) - Number(suggestions.has(a.id)) || a.company.localeCompare(b.company));
     for (const job of options) {
-      const option = node("option", "", `${suggestions.has(job.id) ? t("Vorschlag") + ": " : ""}${job.company} · ${displayJobTitle(job.title)}${job.user_status === "saved" ? " · " + t("Gemerkt") : ""}`);
+      const assigned = job.id === app?.job_id;
+      const option = node("option", "", `${!assigned && suggestions.has(job.id) ? t("Vorschlag") + ": " : ""}${job.company} · ${displayJobTitle(job.title)}${!assigned && job.user_status === "saved" ? " · " + t("Gemerkt") : ""}`);
       option.value = job.id;
       jobs.append(option);
     }
@@ -223,7 +251,7 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
       const job = getJobs().find((j) => j.id === jobs.value);
       if (job) { company.value = job.company; role.value = job.title; }
     });
-    const status = field("Stand", node("select"));
+    const status = field("Stand", node("select"), "application-field-wide");
     if (app) { const auto = node("option", "", t("Automatisch aus Mails")); auto.value = ""; status.append(auto); }
     for (const value of statuses) { const option = node("option", "", applicationStatusLabel(value)); option.value = value; status.append(option); }
     status.value = app?.override_status || (app ? "" : "submitted");
