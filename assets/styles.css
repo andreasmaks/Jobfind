@@ -69,11 +69,20 @@ a{color:inherit}
 .application-company{color:var(--muted);font-size:12px;font-weight:600}
 .application-title{font-size:16px;line-height:1.4;font-weight:650;overflow-wrap:anywhere}
 .application-context{color:var(--muted);font-size:12px;line-height:1.6}
-.application-status{display:inline-flex;align-items:center;justify-self:start;gap:7px;padding:7px 10px;border-radius:20px;background:var(--paper);color:var(--muted);font-size:11px;font-weight:650;line-height:1.35}
-.application-status::before{content:"";width:6px;height:6px;flex:0 0 6px;border-radius:50%;background:currentColor}
-.application-status[data-status="interview"],.application-status[data-status="offer"]{background:var(--accent-soft);color:var(--ink)}
-.application-status[data-status="offer"]::before{background:var(--accent)}
-.card-application-status{margin:0 0 16px}
+.application-status{display:inline-flex;align-items:center;justify-self:start;gap:7px;padding:7px 10px;border-radius:20px;background:var(--status-bg,var(--paper));color:var(--status-ink,var(--muted));font-size:11px;font-weight:650;line-height:1.35}
+.application-status::before{content:"";width:6px;height:6px;flex:0 0 6px;border-radius:50%;background:var(--status-dot,currentColor)}
+.application-status[data-status="submitted"]{--status-bg:#e4effa;--status-ink:#285e8d;--status-dot:#4e8cbd}
+.application-status[data-status="reviewing"]{--status-bg:#fff3c2;--status-ink:#725600;--status-dot:#b68a00}
+.application-status[data-status="interview"]{--status-bg:#f4e3f3;--status-ink:#81317e;--status-dot:var(--tag-purple)}
+.application-status[data-status="offer"]{--status-bg:var(--accent-soft);--status-ink:#166557;--status-dot:#009b80}
+.application-status[data-status="rejected"]{--status-bg:#ffe4ee;--status-ink:#a02854;--status-dot:#dc3570}
+.application-status[data-status="withdrawn"]{--status-bg:var(--paper);--status-ink:var(--muted);--status-dot:var(--subtle)}
+[data-theme="dark"] .application-status[data-status="submitted"]{--status-bg:#203547;--status-ink:#a8d3f5;--status-dot:#7ab9eb}
+[data-theme="dark"] .application-status[data-status="reviewing"]{--status-bg:#433a20;--status-ink:#ffe083;--status-dot:var(--tag-yellow)}
+[data-theme="dark"] .application-status[data-status="interview"]{--status-bg:#3d2840;--status-ink:#efb0e9;--status-dot:#d887d5}
+[data-theme="dark"] .application-status[data-status="offer"]{--status-bg:var(--accent-soft);--status-ink:#80ebd1;--status-dot:var(--accent)}
+[data-theme="dark"] .application-status[data-status="rejected"]{--status-bg:#462b39;--status-ink:#ffb4cf;--status-dot:var(--tag-pink)}
+.application-detail-status{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:-10px 0 24px}
 .application-date{display:grid;gap:5px;color:var(--muted);font-size:10px;font-variant-numeric:tabular-nums}
 .application-date time{font-size:12px;color:var(--ink)}
 .application-arrow{font-size:24px;color:var(--muted)}

@@ -73,6 +73,7 @@ for (const language of ["de-DE", "en-US"]) {
   await rows()[0].events.click();
   const dialog = env.body.children[0];
   const selects = dialog.querySelectorAll("select");
+  assert.equal(dialog.querySelectorAll("span").find((node) => node.className === "application-status").dataset.status, "unknown");
   assert.equal(selects[0].value, "", "A matching suggestion requires confirmation");
   assert(dialog.textContent.includes("<script>untrusted</script>"), "Mail text remains inert text");
   const form = dialog.querySelectorAll("form")[0];
@@ -89,6 +90,17 @@ for (const language of ["de-DE", "en-US"]) {
   assert(!dialog.textContent.includes("untrusted"), "Mail bodies are not loaded offline");
 }
 assert(!source("assets/applications.js").includes(".innerHTML"), "Mail UI uses textContent throughout");
+const colourStates = await environment("de-DE");
+for (const status of ["submitted", "reviewing", "interview", "offer", "rejected", "withdrawn"]) {
+  colourStates.applications[0].status = status;
+  await colourStates.view.refresh();
+  const row = colourStates.elements.get("applications-panel").querySelectorAll("button").find((node) => node.className === "application-row");
+  assert.equal(row.querySelectorAll("span").find((node) => node.className === "application-status").dataset.status, status);
+  await row.events.click();
+  const detail = colourStates.body.children[0];
+  assert.equal(detail.querySelectorAll("span").find((node) => node.className === "application-status").dataset.status, status, "List and detail use the same status colour code");
+  detail.close();
+}
 const finished = await environment("de-DE");
 for (const app of finished.applications) if (app.confirmed) app.status = "rejected";
 await finished.view.refresh();
@@ -104,6 +116,6 @@ await Promise.all([inflight, suspended]);
 await logout.view.refresh();
 assert.equal(logout.getWrites(), writesBefore, "Logout blocks pending and future cache writes before clearing storage");
 assert(source("assets/app.js").indexOf("await applicationsView.suspend()") < source("assets/app.js").indexOf("await clearOfflineData()"));
-assert(source("sw.js").includes('"/assets/applications.js?v=4"'));
+assert(source("sw.js").includes('"/assets/applications.js?v=5"'));
 assert(source("assets/styles.css").includes('.top-nav [data-tab="applications"] .nav-count{display:inline-flex}'), "Application total remains visible on mobile");
 console.log("Application UI checks passed: DE/EN, counts, filters, explicit matches, safe evidence, save, offline.");

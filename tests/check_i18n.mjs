@@ -97,11 +97,13 @@ for (const preferred of ["de-DE", "fr-FR"]) {
   const job = { id: "a", title: "Aufgaben", company: "Unternehmen", summary: "Gründe", fit: "Fachbereich",
     hours: "30–32 Stunden", remote: "Remote möglich", user_status: "new", score: 8,
     first_seen_at: new Date().toISOString(), original_url: "https://example.org/fictional", location: "Stuttgart",
-    company_description: "Unternehmensangaben im Original", company_products: "Produkte im Original" };
+    company_description: "Unternehmensangaben im Original", company_products: "Produkte im Original",
+    application_id: "fictional-application", application_status: "rejected" };
   job.liked = true; // Legacy data must not bring back the removed heart button.
   const bookmarkActions = [];
   const cards = module.namespace.createCard(job, () => {}, (selected, status) => bookmarkActions.push([selected, status]), () => {});
   const descendants = (node) => [node, ...node.children.flatMap(descendants)];
+  assert(!descendants(cards).some((node) => /application-status/.test(node.className)), "Job cards do not show application tags; application tracking remains separate");
   assert(!descendants(cards).some((node) => /like-button/.test(node.className)), "No like control, even for previously liked jobs");
   const bookmarkButton = descendants(cards).find((node) => node.tag === "button" && node.getAttribute("aria-label") === (german ? "Stelle merken" : "Save job"));
   assert(bookmarkButton, "Bookmarks must remain available");
@@ -167,8 +169,8 @@ for (const page of ["index.html", "login.html"]) {
   assert(source(page).indexOf("/assets/i18n.js?v=6") < source(page).indexOf("/assets/theme.js?v=2"));
 }
 assert(source("sw.js").includes('"/assets/i18n.js?v=6"'));
-assert(source("sw.js").includes('"jobfind-shell-v21"'));
-assert(source("assets/offline.js").includes('"jobfind-shell-v21"'));
+assert(source("sw.js").includes('"jobfind-shell-v22"'));
+assert(source("assets/offline.js").includes('"jobfind-shell-v22"'));
 assert(!source("assets/app.js").includes("function changeLike("));
 assert(source("index.html").includes('data-tab="saved"'));
 assert(source("index.html").includes('id="dialog-save"'));

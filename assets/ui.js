@@ -128,11 +128,6 @@ export function createCard(job, onOpen, onSave, onDelete) {
   actions.append(save, remove);
   top.append(mark, identity, actions);
   card.append(top, element("h2", "card-title", displayJobTitle(job.title)));
-  if (job.application_id) {
-    const status = element("span", "application-status card-application-status", t("Beworben") + " · " + applicationStatusLabel(job.application_status));
-    status.dataset.status = job.application_status;
-    card.append(status);
-  }
 
   const match = element("p", "match-line");
   const matchSymbol = element("span", "match-symbol");

@@ -1,6 +1,6 @@
-import { request } from "/assets/api.js?v=9";
-import { readApplicationsSnapshot, saveApplicationsSnapshot } from "/assets/offline.js?v=18";
-import { companyMark, displayJobTitle, shortDate, applicationStatusLabel } from "/assets/ui.js?v=6";
+import { request } from "/assets/api.js?v=10";
+import { readApplicationsSnapshot, saveApplicationsSnapshot } from "/assets/offline.js?v=19";
+import { companyMark, displayJobTitle, shortDate, applicationStatusLabel } from "/assets/ui.js?v=7";
 
 const { t } = window.JobfindI18n;
 const closed = new Set(["rejected", "withdrawn"]);
@@ -17,6 +17,12 @@ const button = (label, className, action) => {
   el.addEventListener("click", action);
   return el;
 };
+
+function statusBadge(app) {
+  const status = node("span", "application-status", app.confirmed ? applicationStatusLabel(app.status) : t("Zu prüfen"));
+  status.dataset.status = app.confirmed ? app.status : "unknown";
+  return status;
+}
 
 export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChanged }) {
   const panel = document.getElementById("applications-panel");
@@ -105,8 +111,7 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
       if (app.match_state === "review") context.push(t("Zuordnung prüfen"));
       if (!app.confirmed) context.push(t("Bewerbung bestätigen"));
       if (context.length) identity.append(node("span", "application-context", context.join(" · ")));
-      const status = node("span", "application-status", app.confirmed ? applicationStatusLabel(app.status) : t("Zu prüfen"));
-      status.dataset.status = app.confirmed ? app.status : "unknown";
+      const status = statusBadge(app);
       const date = node("span", "application-date");
       date.append(node("span", "", t("Letzte Nachricht")), node("time", "", shortDate(app.last_event_at)));
       const arrow = node("span", "application-arrow", "›");
@@ -191,7 +196,10 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
     if (app) {
       content.append(node("p", "application-context", app.company || t("Unternehmen prüfen")),
         node("h3", "application-detail-title", displayJobTitle(app.title) || t("Position noch nicht erkannt")));
-      content.append(node("p", "application-context", [applicationStatusLabel(app.status), app.applied_at ? t("Beworben am") + " " + shortDate(app.applied_at) : ""].filter(Boolean).join(" · ")));
+      const statusLine = node("div", "application-detail-status");
+      statusLine.append(statusBadge(app));
+      if (app.applied_at) statusLine.append(node("span", "application-context", t("Beworben am") + " " + shortDate(app.applied_at)));
+      content.append(statusLine);
       if (!app.confirmed) content.append(node("p", "applications-notice", t("Diese Nachricht ist noch kein eindeutiger Bewerbungsnachweis. Bitte prüfen und bestätigen.")));
     }
     const form = node("form", "application-form");
