@@ -1,5 +1,5 @@
-import { request } from "/assets/api.js?v=8";
-import { readApplicationsSnapshot, saveApplicationsSnapshot } from "/assets/offline.js?v=17";
+import { request } from "/assets/api.js?v=9";
+import { readApplicationsSnapshot, saveApplicationsSnapshot } from "/assets/offline.js?v=18";
 import { companyMark, displayJobTitle, shortDate, applicationStatusLabel } from "/assets/ui.js?v=6";
 
 const { t } = window.JobfindI18n;
@@ -70,8 +70,8 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
     const open = confirmed.filter((a) => !closed.has(a.status));
     summary.textContent = t("{total} Bewerbungen · {open} offen · {review} zu prüfen", { total: confirmed.length, open: open.length, review: review.length });
     const badge = document.getElementById("nav-applications-count");
-    badge.textContent = open.length;
-    badge.hidden = !open.length;
+    badge.textContent = confirmed.length;
+    badge.hidden = !confirmed.length;
     for (const control of filters.children) {
       control.classList.toggle("active", control.dataset.filter === filter);
       control.setAttribute("aria-pressed", String(control.dataset.filter === filter));

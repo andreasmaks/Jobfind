@@ -65,10 +65,11 @@ for (const language of ["de-DE", "en-US"]) {
   const find = (tag, label) => panel.querySelectorAll(tag).find((n) => n.textContent === label);
   const rows = () => panel.querySelectorAll("button").filter((n) => n.className === "application-row");
   assert.equal(rows().length, 2, "Unconfirmed mail does not appear among confirmed applications");
-  assert.equal(env.elements.get("nav-applications-count").textContent, "1");
+  assert.equal(env.elements.get("nav-applications-count").textContent, "2", "Navigation counts all confirmed applications, including rejections");
   assert(rows()[0].textContent.includes(english ? "Interviewing" : "Im Gespräch"));
   await find("button", english ? "Needs review" : "Zu prüfen").events.click();
   assert.equal(rows().length, 1);
+  assert.equal(env.elements.get("nav-applications-count").textContent, "2", "Navigation total is independent of the selected filter");
   await rows()[0].events.click();
   const dialog = env.body.children[0];
   const selects = dialog.querySelectorAll("select");
@@ -88,6 +89,11 @@ for (const language of ["de-DE", "en-US"]) {
   assert(!dialog.textContent.includes("untrusted"), "Mail bodies are not loaded offline");
 }
 assert(!source("assets/applications.js").includes(".innerHTML"), "Mail UI uses textContent throughout");
+const finished = await environment("de-DE");
+for (const app of finished.applications) if (app.confirmed) app.status = "rejected";
+await finished.view.refresh();
+assert.equal(finished.elements.get("nav-applications-count").textContent, "2", "Completed applications remain in the total even when none are open");
+assert.equal(finished.elements.get("nav-applications-count").hidden, false);
 const logout = await environment("de-DE");
 const writesBefore = logout.getWrites();
 const release = logout.pauseNext();
@@ -98,5 +104,6 @@ await Promise.all([inflight, suspended]);
 await logout.view.refresh();
 assert.equal(logout.getWrites(), writesBefore, "Logout blocks pending and future cache writes before clearing storage");
 assert(source("assets/app.js").indexOf("await applicationsView.suspend()") < source("assets/app.js").indexOf("await clearOfflineData()"));
-assert(source("sw.js").includes('"/assets/applications.js?v=3"'));
+assert(source("sw.js").includes('"/assets/applications.js?v=4"'));
+assert(source("assets/styles.css").includes('.top-nav [data-tab="applications"] .nav-count{display:inline-flex}'), "Application total remains visible on mobile");
 console.log("Application UI checks passed: DE/EN, counts, filters, explicit matches, safe evidence, save, offline.");
