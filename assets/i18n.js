@@ -4,6 +4,8 @@
   const language = /^de(?:-|$)/i.test(preferred) ? "de" : "en";
   const locale = language === "de" ? "de-DE" : "en-GB";
   const english = {
+    "Eingeladen": "Invited",
+    "Für diese Auswahl gibt es noch keine Bewerbungen.": "No applications match this selection yet.",
     "Automatische Bewerbung · ab 9/10 · {count} offen": "Automatic applications · 9/10 and above · {count} pending",
     "Bereits beworbene Stellen werden übersprungen. Nur bestätigte Übermittlungen zählen als Bewerbung.": "Previous applications are skipped. Only confirmed submissions count as applications.",
     "Bewerbungsportal: weiterer Schritt erforderlich": "Application portal: another step is required",

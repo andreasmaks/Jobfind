@@ -1,9 +1,8 @@
-import { request } from "/assets/api.js?v=17";
-import { readApplicationsSnapshot, saveApplicationsSnapshot } from "/assets/offline.js?v=26";
+import { request } from "/assets/api.js?v=18";
+import { readApplicationsSnapshot, saveApplicationsSnapshot } from "/assets/offline.js?v=27";
 import { companyMark, displayJobTitle, shortDate, applicationStatusLabel } from "/assets/ui.js?v=8";
 
 const { t } = window.JobfindI18n;
-const closed = new Set(["rejected", "withdrawn"]);
 const statuses = ["submitted", "reviewing", "interview", "offer", "rejected", "withdrawn"];
 const node = (tag, className = "", text) => {
   const el = document.createElement(tag);
@@ -62,7 +61,7 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
   const filters = node("div", "applications-filters");
   filters.setAttribute("role", "group");
   filters.setAttribute("aria-label", t("Bewerbungen filtern"));
-  for (const [key, label] of [["all", "Alle"], ["open", "Offen"], ["review", "Zu prüfen"], ["closed", "Abgeschlossen"]]) {
+  for (const [key, label] of [["all", "Alle"], ["received", "Eingegangen"], ["invited", "Eingeladen"], ["rejected", "Absage"]]) {
     const control = button(label, "", () => { filter = key; render(); });
     control.dataset.filter = key;
     filters.append(control);
@@ -97,11 +96,12 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
 
   function render() {
     const confirmed = data.applications.filter((a) => a.confirmed);
-    const review = data.applications.filter((a) => !a.confirmed || a.match_state === "review");
     const items = data.applications.filter((a) => {
-      if (filter === "review" ? !review.includes(a) : !a.confirmed) return false;
-      if (filter === "open" && closed.has(a.status)) return false;
-      if (filter === "closed" && !closed.has(a.status)) return false;
+      // Keep uncertain mail matches accessible under All without promoting them.
+      if (filter !== "all" && !a.confirmed) return false;
+      if (filter === "received" && !["submitted", "reviewing"].includes(a.status)) return false;
+      if (filter === "invited" && a.status !== "interview") return false;
+      if (filter === "rejected" && a.status !== "rejected") return false;
       return !query || `${a.company} ${a.title}`.toLocaleLowerCase().includes(query);
     });
     countValue.textContent = items.length;
@@ -173,7 +173,7 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
     }
     empty.hidden = items.length > 0;
     empty.replaceChildren(node("h2", "", t(loading ? "Bewerbungen werden geladen …" : "Hier beginnt dein nächster Schritt.")),
-      node("p", "", t(filter === "review" ? "Aktuell gibt es keine Treffer zu prüfen." : "Bewerbungen zu deinen Jobfind-Stellen erscheinen hier.")));
+      node("p", "", t(filter === "all" ? "Bewerbungen zu deinen Jobfind-Stellen erscheinen hier." : "Für diese Auswahl gibt es noch keine Bewerbungen.")));
   }
 
   async function refresh() {
