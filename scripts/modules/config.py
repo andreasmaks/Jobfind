@@ -19,7 +19,7 @@ def load_config(path: Path = CONFIG_PATH) -> dict:
     if not isinstance(cfg, dict) or cfg.get("config_version") != 1:
         raise ValueError("config_version muss 1 sein")
     required = {"config_version", "data_dir", "server", "search", "max_new_jobs_per_day", "timezone", "hermes"}
-    if set(cfg) - (required | {"local", "research", "matching", "api_search", "applications_mail"}) or not required <= set(cfg):
+    if set(cfg) - (required | {"local", "research", "matching", "api_search", "applications_mail", "auto_apply"}) or not required <= set(cfg):
         raise ValueError("Unbekannte oder fehlende Konfigurationsfelder")
     ZoneInfo(cfg["timezone"])
     limit = cfg["max_new_jobs_per_day"]
@@ -139,6 +139,18 @@ def load_config(path: Path = CONFIG_PATH) -> dict:
     if type(mailbox["max_messages_per_folder"]) is not int or not 1 <= mailbox["max_messages_per_folder"] <= 500:
         raise ValueError("Ungültige Postfach-Abrufmenge")
     cfg["applications_mail"] = mailbox
+    automatic = {"enabled": False, "profile_file": "", "routes": {}}
+    supplied = cfg.get("auto_apply", {})
+    if not isinstance(supplied, dict) or set(supplied) - set(automatic):
+        raise ValueError("Ungültige automatische Bewerbung")
+    automatic.update(supplied)
+    if type(automatic["enabled"]) is not bool or not isinstance(automatic["profile_file"], str) or not isinstance(automatic["routes"], dict):
+        raise ValueError("Ungültige automatische Bewerbung")
+    if automatic["enabled"]:
+        private = Path(automatic["profile_file"]).expanduser()
+        if not private.is_absolute() or private.resolve().is_relative_to(ROOT):
+            raise ValueError("Bewerbungsprofil muss außerhalb des Projekts liegen")
+    cfg["auto_apply"] = automatic
     hermes = cfg["hermes"]
     if set(hermes) != {"job_id", "output_dir", "schedule"}:
         raise ValueError("Ungültige Hermes-Konfiguration")

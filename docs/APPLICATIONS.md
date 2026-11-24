@@ -1,5 +1,8 @@
 # Applications
 
+Optional outgoing automation is documented in [Automatic applications](AUTO_APPLY.md).
+Its pending queue is separate from confirmed applications and their counts.
+
 The Applications view tracks applications to listings found by Jobfind and their email evidence. Linking an application to a listing does not change its bookmark or deletion state. Unrelated mailbox history is ignored and excluded from lists, counts and detail APIs. Explicitly added manual entries remain available.
 
 ## Mail connection

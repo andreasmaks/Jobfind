@@ -1,6 +1,6 @@
-import { request } from "/assets/api.js?v=16";
-import { readApplicationsSnapshot, saveApplicationsSnapshot } from "/assets/offline.js?v=25";
-import { companyMark, displayJobTitle, shortDate, applicationStatusLabel } from "/assets/ui.js?v=7";
+import { request } from "/assets/api.js?v=17";
+import { readApplicationsSnapshot, saveApplicationsSnapshot } from "/assets/offline.js?v=26";
+import { companyMark, displayJobTitle, shortDate, applicationStatusLabel } from "/assets/ui.js?v=8";
 
 const { t } = window.JobfindI18n;
 const closed = new Set(["rejected", "withdrawn"]);
@@ -81,9 +81,10 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
   const notice = node("p", "applications-notice");
   notice.setAttribute("role", "status");
   const list = node("div", "applications-list");
+  const automation = node("details", "application-automation");
   const empty = node("div", "empty-state applications-empty");
   header.append(searchLine, notice);
-  panel.append(heading, header, list, empty);
+  panel.append(heading, header, automation, list, empty);
   const dialog = node("dialog", "application-dialog");
   dialog.setAttribute("aria-labelledby", "application-dialog-title");
   document.body.append(dialog);
@@ -125,6 +126,30 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
     else if (data.sync.last_success_at) notes.push(t("Letzter Mail-Abgleich: {date}", { date: shortDate(data.sync.last_success_at) }));
     if (data.sync.more_history) notes.push(t("Ältere Nachrichten werden beim nächsten Abgleich weiter geprüft."));
     notice.textContent = notes.join(" ");
+    const automatic = data.automation || {};
+    const pendingApplications = (automatic.items || []).filter((item) => item.state !== "sent");
+    automation.hidden = offline || !automatic.enabled;
+    automation.replaceChildren(node("summary", "", t("Automatische Bewerbung · ab 9/10 · {count} offen", { count: pendingApplications.length })));
+    const automaticNotes = node("div", "application-automation-items");
+    automaticNotes.append(node("p", "application-context", t("Bereits beworbene Stellen werden übersprungen. Nur bestätigte Übermittlungen zählen als Bewerbung.")));
+    const reasons = {
+      portal_required: "Bewerbungsportal: weiterer Schritt erforderlich",
+      listing_unverified: "Anzeige derzeit nicht sicher prüfbar",
+      listing_expired: "Anzeige abgelaufen",
+      route_unverified: "Bewerbungsadresse muss erneut geprüft werden",
+      delivery_unknown: "Versandantwort unklar · kein erneuter Versand",
+      mail_connection_failed: "Mail-Verbindung fehlgeschlagen",
+      sender_rejected: "Absender wurde nicht akzeptiert",
+      recipient_rejected: "Empfänger wurde nicht akzeptiert",
+    };
+    for (const item of pendingApplications) {
+      const entry = node("div", "application-automation-item");
+      entry.append(node("strong", "", `${item.company} · ${item.title}`), node("span", "application-context", t(reasons[item.reason] || "Bewerbungsportal: weiterer Schritt erforderlich")));
+      const job = getJobs().find((j) => j.id === item.job_id);
+      if (job) entry.append(button("Details", "text-button", () => onOpenJob(job)));
+      automaticNotes.append(entry);
+    }
+    automation.append(automaticNotes);
     list.replaceChildren();
     for (const app of items) {
       const job = getJobs().find((j) => j.id === app.job_id);

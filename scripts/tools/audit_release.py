@@ -22,6 +22,7 @@ scripts/tools/set_password.py scripts/tools/audit_release.py scripts/start_serve
 scripts/modules/passkeys.py tests/check_passkeys.py tests/check_passkeys.mjs docs/PASSKEYS.md
 scripts/modules/api_search.py tests/check_api_search.py docs/API_SEARCH.md
 scripts/modules/applications.py scripts/modules/application_mail.py assets/applications.js
+scripts/modules/auto_apply.py tests/check_auto_apply.py docs/AUTO_APPLY.md
 tests/check_applications.py tests/check_applications.mjs docs/APPLICATIONS.md
 tests/check_release.py tests/check_setup.py tests/check_offline.mjs tests/check_local.py tests/check_i18n.mjs tests/check_availability.py
 docs/HERMES.md docs/IMPORT_FORMAT.md docs/RELEASE_CHECKLIST.md docs/DEVELOPMENT.md

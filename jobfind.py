@@ -54,6 +54,9 @@ def main() -> int:
     api_search.add_argument("--force", action="store_true", help="Intervall überspringen; Monatsbudget bleibt verbindlich")
     commands.add_parser("api-budget", help="Lokalen API-Budgetstand ohne Netzwerkanfrage anzeigen")
     commands.add_parser("sync-applications", help="Bewerbungs-Mails schreibgeschützt abgleichen; keine KI-Aufrufe")
+    automatic = commands.add_parser("auto-apply", help="Bewerbungen über 8 Punkten über geprüfte Wege versenden")
+    automatic.add_argument("--dry-run", action="store_true", help="Nur prüfen; keine persönlichen Daten versenden")
+    commands.add_parser("application-outbox", help="Automatische Bewerbungen und offene Schritte anzeigen")
     commands.add_parser("hermes-prepare", help="Pre-Run-Shim und Prompt lokal erzeugen; nichts installieren")
     args = parser.parse_args()
     os.umask(0o077)
@@ -71,6 +74,10 @@ def main() -> int:
     sys.path.insert(0, str(ROOT / "scripts/modules"))
     sys.path.insert(0, str(ROOT / "hermes"))
     from config import CONFIG, ensure_data_dir
+    if args.command in {"auto-apply", "application-outbox"}:
+        from auto_apply import run, status
+        print(json.dumps(run(dry_run=args.dry_run) if args.command == "auto-apply" else status(), ensure_ascii=False))
+        return 0
     if args.command == "sync-applications":
         from application_mail import sync_applications
         result = sync_applications()

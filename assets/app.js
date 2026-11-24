@@ -1,7 +1,7 @@
-import { changeDeletion, loadPortal, updateLike, updateStatus } from "/assets/api.js?v=16";
-import { clearOfflineData, prepareOffline, readPendingActions, removePendingAction, savePendingAction } from "/assets/offline.js?v=25";
-import { createCard, shortDate, showDetails } from "/assets/ui.js?v=7";
-import { createApplicationsView } from "/assets/applications.js?v=11";
+import { changeDeletion, loadPortal, updateLike, updateStatus } from "/assets/api.js?v=17";
+import { clearOfflineData, prepareOffline, readPendingActions, removePendingAction, savePendingAction } from "/assets/offline.js?v=26";
+import { createCard, shortDate, showDetails } from "/assets/ui.js?v=8";
+import { createApplicationsView } from "/assets/applications.js?v=12";
 
 const { t, locale, translatePage } = window.JobfindI18n;
 translatePage();

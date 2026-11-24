@@ -4,6 +4,16 @@
   const language = /^de(?:-|$)/i.test(preferred) ? "de" : "en";
   const locale = language === "de" ? "de-DE" : "en-GB";
   const english = {
+    "Automatische Bewerbung · ab 9/10 · {count} offen": "Automatic applications · 9/10 and above · {count} pending",
+    "Bereits beworbene Stellen werden übersprungen. Nur bestätigte Übermittlungen zählen als Bewerbung.": "Previous applications are skipped. Only confirmed submissions count as applications.",
+    "Bewerbungsportal: weiterer Schritt erforderlich": "Application portal: another step is required",
+    "Anzeige derzeit nicht sicher prüfbar": "Listing cannot currently be verified",
+    "Anzeige abgelaufen": "Listing has expired",
+    "Bewerbungsadresse muss erneut geprüft werden": "Application address needs to be verified again",
+    "Versandantwort unklar · kein erneuter Versand": "Delivery response unclear · will not resend",
+    "Mail-Verbindung fehlgeschlagen": "Email connection failed",
+    "Absender wurde nicht akzeptiert": "Sender was not accepted",
+    "Empfänger wurde nicht akzeptiert": "Recipient was not accepted",
     "Bewerbungen": "Applications",
     "DEIN NÄCHSTER SCHRITT": "YOUR NEXT STEP",
     "Mails abgleichen": "Sync emails",

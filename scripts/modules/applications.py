@@ -287,7 +287,8 @@ def list_applications():
         result.sort(key=lambda a: a["last_event_at"], reverse=True)
         sync = dict(db.execute("SELECT * FROM sync_state WHERE id=1").fetchone())
         sync["enabled"] = CONFIG["applications_mail"]["enabled"]
-        return {"applications": result, "sync": sync, "scope": "portal"}
+        from auto_apply import status as automatic_status
+        return {"applications": result, "sync": sync, "scope": "portal", "automation": automatic_status()}
 
 
 def application_detail(app_id):
