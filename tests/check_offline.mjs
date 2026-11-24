@@ -165,7 +165,10 @@ const checkCount = (tab, count) => {
   viewCtx.state.tab = tab;
   vm.runInContext("render()", viewCtx);
   assert.equal(cardGrid.cards.length, count);
-  assert.equal(element("header-job-count").textContent, `${count} ${count === 1 ? "Job" : "Jobs"}`);
+  const expected = tab === "saved"
+    ? (count === 1 ? "1 gemerkte Stelle" : `${count} Gemerkte`)
+    : `${count} ${count === 1 ? "Job" : "Jobs"}`;
+  assert.equal(element("header-job-count").textContent, expected);
   assert.match(element("header-job-count").attributes["aria-label"], /in dieser Auswahl/);
 };
 assert.deepEqual([...source("index.html").matchAll(/data-tab="([^"]+)"/g)].map((match) => match[1]), ["all", "saved", "applications"], "Navigation includes applications, with no archive view");

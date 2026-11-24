@@ -1,7 +1,7 @@
-import { changeDeletion, loadPortal, updateLike, updateStatus } from "/assets/api.js?v=15";
-import { clearOfflineData, prepareOffline, readPendingActions, removePendingAction, savePendingAction } from "/assets/offline.js?v=24";
+import { changeDeletion, loadPortal, updateLike, updateStatus } from "/assets/api.js?v=16";
+import { clearOfflineData, prepareOffline, readPendingActions, removePendingAction, savePendingAction } from "/assets/offline.js?v=25";
 import { createCard, shortDate, showDetails } from "/assets/ui.js?v=7";
-import { createApplicationsView } from "/assets/applications.js?v=10";
+import { createApplicationsView } from "/assets/applications.js?v=11";
 
 const { t, locale, translatePage } = window.JobfindI18n;
 translatePage();
@@ -239,8 +239,15 @@ function updateSummary(jobs = filteredJobs()) {
   const total = jobs.length;
   const saved = state.jobs.filter((job) => job.user_status === "saved").length;
   const updated = shortDate(state.meta?.last_success_at);
-  $("header-job-count").textContent = t(total === 1 ? "{count} Job" : "{count} Jobs", { count: total });
-  $("header-job-count").setAttribute("aria-label", t(total === 1 ? "{count} Job in dieser Auswahl" : "{count} Jobs in dieser Auswahl", { count: total }));
+  const savedView = state.tab === "saved";
+  const label = savedView
+    ? (total === 1 ? "{count} gemerkte Stelle" : "{count} Gemerkte")
+    : (total === 1 ? "{count} Job" : "{count} Jobs");
+  const accessibleLabel = savedView
+    ? (total === 1 ? "{count} gemerkte Stelle in dieser Auswahl" : "{count} Gemerkte in dieser Auswahl")
+    : (total === 1 ? "{count} Job in dieser Auswahl" : "{count} Jobs in dieser Auswahl");
+  $("header-job-count").textContent = t(label, { count: total });
+  $("header-job-count").setAttribute("aria-label", t(accessibleLabel, { count: total }));
   $("header-updated").textContent = updated ? t("Stand: {date}", { date: updated }) : "";
   $("header-updated").hidden = !updated;
   $("nav-saved-count").textContent = saved;

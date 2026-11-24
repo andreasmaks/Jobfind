@@ -159,6 +159,10 @@ for (const preferred of ["de-DE", "fr-FR"]) {
   vm.runInContext(functionText("updateSummary", "render") + functionText("updateOfflineState", "queueOfflineCopy") + functionText("deletionNotice", "askDelete"), appCtx);
   vm.runInContext("updateSummary(); updateOfflineState();", appCtx);
   assert.equal(get("header-job-count").textContent, german ? "1 Job" : "1 job");
+  appCtx.state.tab = "saved";
+  vm.runInContext("updateSummary()", appCtx);
+  assert.equal(get("header-job-count").textContent, german ? "1 gemerkte Stelle" : "1 saved job");
+  appCtx.state.tab = "all";
   assert.equal(get("offline-state").hidden, true);
   state.pendingActions = [{ kind: "delete", jobId: "a" }, { kind: "like", jobId: "b" }];
   vm.runInContext("updateOfflineState(); deletionNotice();", appCtx);
@@ -166,11 +170,11 @@ for (const preferred of ["de-DE", "fr-FR"]) {
   assert.equal(get("deletion-message").textContent, german ? "„Aufgaben“ gelöscht. Wird nach dem Verbinden übertragen." : "“Aufgaben” deleted. It will sync when reconnected.");
 }
 for (const page of ["index.html", "login.html"]) {
-  assert(source(page).indexOf("/assets/i18n.js?v=7") < source(page).indexOf("/assets/theme.js?v=2"));
+  assert(source(page).indexOf("/assets/i18n.js?v=8") < source(page).indexOf("/assets/theme.js?v=2"));
 }
-assert(source("sw.js").includes('"/assets/i18n.js?v=7"'));
-assert(source("sw.js").includes('"jobfind-shell-v27"'));
-assert(source("assets/offline.js").includes('"jobfind-shell-v27"'));
+assert(source("sw.js").includes('"/assets/i18n.js?v=8"'));
+assert(source("sw.js").includes('"jobfind-shell-v28"'));
+assert(source("assets/offline.js").includes('"jobfind-shell-v28"'));
 assert(!source("assets/app.js").includes("function changeLike("));
 assert(source("index.html").includes('data-tab="saved"'));
 assert(source("index.html").includes('id="dialog-save"'));
