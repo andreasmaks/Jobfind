@@ -1,7 +1,7 @@
-import { changeDeletion, loadPortal, updateLike, updateStatus } from "/assets/api.js?v=19";
-import { clearOfflineData, prepareOffline, readPendingActions, removePendingAction, savePendingAction } from "/assets/offline.js?v=28";
+import { changeDeletion, loadPortal, updateLike, updateStatus } from "/assets/api.js?v=20";
+import { clearOfflineData, prepareOffline, readPendingActions, removePendingAction, savePendingAction } from "/assets/offline.js?v=29";
 import { createCard, shortDate, showDetails } from "/assets/ui.js?v=8";
-import { createApplicationsView } from "/assets/applications.js?v=14";
+import { createApplicationsView } from "/assets/applications.js?v=15";
 
 const { t, locale, translatePage } = window.JobfindI18n;
 translatePage();
@@ -79,8 +79,10 @@ function filteredJobs() {
   const minScore = Number($("score-filter").value);
   const hidden = $("visibility-filter").value === "hidden";
   const items = state.jobs.filter((job) => {
+    if (job.application_status === "rejected") return false;
     if ((job.user_status === "hidden") !== hidden) return false;
     if (state.tab === "saved" && job.user_status !== "saved") return false;
+    if (state.tab === "all" && job.user_status === "saved") return false;
     const haystack = [job.title, job.company, job.location, job.remote].join(" ").toLocaleLowerCase("de-DE");
     if (search && !haystack.includes(search)) return false;
     const work = [job.remote, job.location].join(" ").toLocaleLowerCase("de-DE");
@@ -237,7 +239,7 @@ async function syncPendingActions() {
 
 function updateSummary(jobs = filteredJobs()) {
   const total = jobs.length;
-  const saved = state.jobs.filter((job) => job.user_status === "saved").length;
+  const saved = state.jobs.filter((job) => job.user_status === "saved" && job.application_status !== "rejected").length;
   const updated = shortDate(state.meta?.last_success_at);
   const savedView = state.tab === "saved";
   const label = savedView
@@ -284,7 +286,7 @@ function updateExportState() {
   $("saved-export").hidden = state.tab !== "saved";
   $("export-status").hidden = state.tab !== "saved";
   const button = $("export-saved");
-  button.disabled = exportInFlight || state.offline || !navigator.onLine || mutationPending || syncInFlight || state.pendingActions.length > 0 || !state.jobs.some((job) => job.user_status === "saved");
+  button.disabled = exportInFlight || state.offline || !navigator.onLine || mutationPending || syncInFlight || state.pendingActions.length > 0 || !state.jobs.some((job) => job.user_status === "saved" && job.application_status !== "rejected");
   button.setAttribute("aria-label", t(exportInFlight ? "PDF wird erstellt …" : "Gemerkte als PDF herunterladen"));
   button.setAttribute("aria-busy", String(exportInFlight));
   button.title = t("Exportiert alle Lesezeichen, unabhängig vom Suchfilter. Benötigt Internet und synchronisierte Änderungen.");

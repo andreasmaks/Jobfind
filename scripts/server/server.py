@@ -469,7 +469,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(409, {"ok": False, "error": "export_busy"})
             return
         try:
-            jobs = [job for job in list_jobs() if job["user_status"] == "saved"]
+            jobs = [job for job in list_jobs() if job["user_status"] == "saved" and job.get("application_status") != "rejected"]
             if not jobs:
                 self.send_json(400, {"ok": False, "error": "no_saved_jobs"})
                 return

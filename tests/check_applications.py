@@ -285,7 +285,8 @@ class Checks(unittest.TestCase):
             conn = http.client.HTTPConnection("127.0.0.1", cfg["server"]["port"])
             conn.request(method, path, json.dumps(payload) if payload is not None else None, headers or {})
             response = conn.getresponse()
-            result = response.status, dict(response.getheaders()), json.loads(response.read())
+            raw_body = response.read()
+            result = response.status, dict(response.getheaders()), raw_body if response.getheader("Content-Type") == "application/pdf" else json.loads(raw_body)
             conn.close()
             return result
         try:
@@ -299,10 +300,31 @@ class Checks(unittest.TestCase):
             self.assertEqual(result[0], 200)
             self.assertIn("no-store", result[1]["Cache-Control"])
             self.assertEqual(request("POST", "/api/applications/manual", {"company": "Example", "extra": True}, headers)[0], 400)
+            rejected = {"id": "rejected", "user_status": "saved", "application_status": "rejected"}
+            available = {"id": "available", "user_status": "saved", "application_status": "reviewing"}
+            with patch.object(server, "list_jobs", return_value=[rejected, available]), patch("pdf_export.build_pdf", return_value=b"%PDF-fixture") as build:
+                self.assertEqual(request("POST", "/api/export/saved.pdf", {"language": "de"}, headers)[0], 200)
+                self.assertEqual(build.call_args.args[0], [available], "Rejected listings are not sent to the PDF builder")
+            with patch.object(server, "list_jobs", return_value=[rejected]), patch("pdf_export.build_pdf") as build:
+                self.assertEqual(request("POST", "/api/export/saved.pdf", {"language": "de"}, headers)[0], 400)
+                build.assert_not_called()
         finally:
             httpd.shutdown()
             httpd.server_close()
             server.delete_session(session)
+
+    def test_rejection_keeps_application_details_and_bookmark(self):
+        job = store.list_jobs()[0]
+        store.set_user_status(job["id"], "saved")
+        app_id = apps.create_manual({"job_id": job["id"], "override_status": "rejected"})
+        listed = store.list_jobs()[0]
+        self.assertEqual(listed["application_status"], "rejected")
+        self.assertEqual(listed["user_status"], "saved")
+        self.assertEqual(apps.application_detail(app_id)["status"], "rejected")
+        with closing(store.connect()) as db:
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM job_feedback").fetchone()[0], 0)
+        apps.update_application(app_id, {"override_status": "reviewing"})
+        self.assertEqual(store.list_jobs()[0]["application_status"], "reviewing")
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

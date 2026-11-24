@@ -153,6 +153,9 @@ const viewCtx = vm.createContext({
     { id: "b", title: "Older import", company: "Example", user_status: "new", historical: true, first_seen_at: "2026-09-29" },
     { id: "c", title: "Product", company: "Other", user_status: "new", first_seen_at: "2026-09-28" },
     { id: "d", title: "Hidden", company: "Other", user_status: "hidden", first_seen_at: "2026-09-27" },
+    { id: "e", title: "Rejected saved", company: "Declined", user_status: "saved", application_status: "rejected", first_seen_at: "2026-09-26" },
+    { id: "f", title: "Rejected new", company: "Declined", user_status: "new", application_status: "rejected", first_seen_at: "2026-09-25" },
+    { id: "g", title: "Rejected hidden", company: "Declined", user_status: "hidden", application_status: "rejected", first_seen_at: "2026-09-24" },
   ] },
   $: element, grid: cardGrid, mutationPending: false, syncInFlight: false,
   document: { createDocumentFragment: () => ({ cards: [], append(card) { this.cards.push(card); } }) },
@@ -173,12 +176,26 @@ const checkCount = (tab, count) => {
 };
 assert.deepEqual([...source("index.html").matchAll(/data-tab="([^"]+)"/g)].map((match) => match[1]), ["all", "saved", "applications"], "Navigation includes applications, with no archive view");
 assert(!app.includes('state.tab === "history"'), "Remove the archive-only filter, not historical listings");
-checkCount("all", 3);
+checkCount("all", 2);
+assert(!cardGrid.cards.some((job) => job.id === "a"), "Saved jobs leave All immediately, including offline");
 assert(cardGrid.cards.some((job) => job.id === "b"), "Older imports remain visible under All, including offline");
 checkCount("saved", 1);
+assert.equal(element("nav-saved-count").textContent, 1, "Rejected bookmarks do not increase the saved count");
+element("search").value = "rejected";
+checkCount("all", 0);
+checkCount("saved", 0);
+element("visibility-filter").value = "hidden";
+checkCount("all", 0);
+element("visibility-filter").value = "visible";
+element("search").value = "";
 viewCtx.state.jobs.find((job) => job.id === "b").user_status = "saved";
 checkCount("saved", 2);
+checkCount("all", 1);
 viewCtx.state.jobs.find((job) => job.id === "b").user_status = "new";
+viewCtx.state.jobs.find((job) => job.id === "a").user_status = "new";
+checkCount("all", 3);
+checkCount("saved", 0);
+viewCtx.state.jobs.find((job) => job.id === "a").user_status = "saved";
 element("search").value = "not present";
 checkCount("all", 0);
 element("search").value = "other";
@@ -212,7 +229,7 @@ assert.equal(element("export-saved").disabled, true);
 assert.equal(element("export-saved").attributes["aria-busy"], "true");
 assert.equal(element("export-saved").attributes["aria-label"], "PDF wird erstellt …");
 viewCtx.exportInFlight = false;
-checkCount("all", 2);
+checkCount("all", 1);
 assert.equal(element("saved-export").hidden, true);
 assert.equal(element("export-status").hidden, true);
 checkCount("saved", 1);
@@ -224,6 +241,15 @@ viewCtx.state.pendingActions = [{ kind: "status" }];
 vm.runInContext("updateExportState()", viewCtx);
 assert.equal(element("export-saved").disabled, true, "Pending offline changes must sync first");
 viewCtx.state.pendingActions = [];
+element("search").value = "";
+const keptBookmark = viewCtx.state.jobs.find((job) => job.id === "b");
+keptBookmark.application_status = "rejected";
+checkCount("saved", 0);
+assert.equal(element("export-saved").disabled, true, "Only rejected bookmarks cannot be exported");
+assert.equal(element("nav-saved-count").hidden, true);
+keptBookmark.application_status = "reviewing";
+checkCount("saved", 1);
+assert.equal(element("export-saved").disabled, false, "Correcting the rejection restores the bookmark without data loss");
 viewCtx.state.offline = true;
 vm.runInContext("updateExportState()", viewCtx);
 assert.equal(element("export-saved").disabled, true);

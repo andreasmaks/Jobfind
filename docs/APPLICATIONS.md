@@ -3,6 +3,13 @@
 Optional outgoing automation is documented in [Automatic applications](AUTO_APPLY.md).
 Its pending queue is separate from confirmed applications and their counts.
 
+Bookmarked listings appear only in Saved, not in All. A listing linked to a
+confirmed application whose current effective status is Rejected is excluded
+from every job list, saved counters and bookmark PDF exports. Its job metadata,
+bookmark and application history are retained for the Applications view. This
+display rule is not deletion feedback. Uncertain mail matches do not suppress
+listings. A corrected application status restores the normal list placement.
+
 The Applications view tracks applications to listings found by Jobfind and their email evidence. Linking an application to a listing does not change its bookmark or deletion state. Unrelated mailbox history is ignored and excluded from lists, counts and detail APIs. Explicitly added manual entries remain available.
 
 ## Mail connection
