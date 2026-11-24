@@ -47,7 +47,7 @@ for (const screen of ["login", "management", "rejected"]) {
       location: { assign: (url) => { assigned = url; } } },
     navigator: { onLine: true, credentials: { get: (options) => native(options, false), create: (options) => native(options, true) } },
     document: { getElementById: (id) => nodes.get(id) || null, createElement: (tag) => new Element(tag) },
-    Uint8Array, atob, btoa, CustomEvent: class { constructor(type, options) { this.type = type; this.detail = options.detail; } },
+    Uint8Array, atob, btoa, URLSearchParams, URL, CustomEvent: class { constructor(type, options) { this.type = type; this.detail = options.detail; } },
     fetch: async (path, options = {}) => {
       calls.push([path, options]);
       if (path === "/api/passkeys/register/options") {
@@ -111,3 +111,47 @@ for (const screen of ["login", "management", "rejected"]) {
   }
 }
 console.log("Passkey client checks passed: login, registration, removal, base64url, CSRF, password cleanup.");
+
+for (const wrongPassword of [false, true]) {
+  const ids = ["passkey-login", "passkey-login-status", "passkey-setup", "login-form", "password-login", "password", "login-submit", "login-divider", "passkey-continue"];
+  const nodes = new Map(ids.map((id) => [id, new Element()]));
+  let assigned = null, creates = 0;
+  const calls = [];
+  const context = vm.createContext({
+    window: { isSecureContext: true, PublicKeyCredential: class {}, JobfindI18n: { t: (text) => text },
+      location: { origin: "https://jobfind.example", search: "?next=%2Fbewerbungen", assign(value) { assigned = value; } } },
+    navigator: { credentials: { async create() { creates++; return credential(true); } } },
+    document: { getElementById: (id) => nodes.get(id) || null }, Uint8Array, atob, btoa, URL, URLSearchParams,
+    fetch: async (path, options) => {
+      calls.push([path, options]);
+      if (path === "/login") {
+        assert.equal(new URLSearchParams(options.body).get("password"), "fixture password");
+        return { ok: true, url: "https://jobfind.example/" + (wrongPassword ? "login?error=pw" : "bewerbungen") };
+      }
+      if (path === "/api/csrf") return { ok: true, json: async () => ({ token: "csrf-fixture" }) };
+      if (path.endsWith("/options")) {
+        assert.equal(JSON.parse(options.body).password, "fixture password");
+        return { ok: true, json: async () => ({ ok: true, options: { challenge: encoded, user: { id: encoded } } }) };
+      }
+      return { ok: true, json: async () => ({ ok: true }) };
+    },
+  });
+  vm.runInContext(source, context);
+  await nodes.get("passkey-setup").events.click();
+  assert.equal(nodes.get("password-login").open, true);
+  nodes.get("password").value = "fixture password";
+  await nodes.get("login-form").events.submit({ preventDefault() {} });
+  assert.equal(creates, 0, "Preparing a passkey does not consume the native user gesture");
+  if (wrongPassword) {
+    assert.equal(calls.filter(([path]) => path.endsWith("/options")).length, 0, "Wrong passwords never reach registration");
+    assert.equal(nodes.get("password").value, "fixture password");
+  } else {
+    assert.equal(nodes.get("password").value, "", "No password is retained after preparation");
+    const before = calls.length;
+    const completion = nodes.get("passkey-setup").events.click();
+    assert.equal(creates, 1, "The second explicit click starts native creation synchronously");
+    assert.equal(calls.length, before);
+    await completion;
+    assert.equal(assigned, "/bewerbungen", "Setup returns to the requested section");
+  }
+}

@@ -1,4 +1,4 @@
-import { readSnapshot } from "/assets/offline.js?v=30";
+import { readSnapshot } from "/assets/offline.js?v=32";
 
 export async function request(path, options = {}) {
   let response;
@@ -9,7 +9,8 @@ export async function request(path, options = {}) {
     throw error;
   }
   if (response.status === 401) {
-    window.location.href = "/login?next=/";
+    const next = ["/", "/gemerkte", "/bewerbungen"].includes(window.location.pathname) ? window.location.pathname : "/";
+    window.location.href = "/login?next=" + encodeURIComponent(next);
     const error = new Error("Anmeldung erforderlich");
     error.authRequired = true;
     throw error;

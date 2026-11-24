@@ -4,6 +4,17 @@
   const language = /^de(?:-|$)/i.test(preferred) ? "de" : "en";
   const locale = language === "de" ? "de-DE" : "en-GB";
   const english = {
+    "Prüfen": "Review",
+    "Letzter Abgleich": "Last sync",
+    "Noch kein Abgleich": "Not synced yet",
+    "Übermittlung noch nicht bestätigt": "Submission not yet confirmed",
+    "oder": "or",
+    "Mit Passwort anmelden": "Sign in with password",
+    "Passkey auf diesem Gerät einrichten": "Set up a passkey on this device",
+    "Weiter zu Jobfind": "Continue to Jobfind",
+    "Passwort anzeigen": "Show password",
+    "Passwort verbergen": "Hide password",
+    "Melde dich zuerst mit deinem Passwort an. Danach kannst du den Passkey auf diesem Gerät einrichten.": "Sign in with your password first. You can then set up a passkey on this device.",
     "Nicht zugestellt": "Not delivered",
     "Nicht zugestellt · manueller Schritt erforderlich": "Not delivered · manual action required",
     "Eingeladen": "Invited",

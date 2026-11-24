@@ -3,6 +3,17 @@
 Optional outgoing automation is documented in [Automatic applications](AUTO_APPLY.md).
 Its pending queue is separate from confirmed applications and their counts.
 
+Sections have shareable URLs: `/` for All, `/gemerkte` for Saved and `/bewerbungen`
+for Applications. Reloads, sign-in returns, browser back/forward and offline
+navigation retain the selected section.
+
+Pending automatic intents share the Applications list with a **Review** action;
+there is no separate automatic-applications panel. An intent is explicitly marked
+as not yet confirmed and never increases the confirmed application total. Review
+opens its blocker and original listing, without sending or confirming an application.
+The sync pill shows the last successful mail sync date and time. Application dialogs
+use the job title as their heading.
+
 Bookmarked listings appear only in Saved, not in All. A listing linked to a
 confirmed application whose current effective status is Rejected is excluded
 from every job list, saved counters and bookmark PDF exports. Its job metadata,

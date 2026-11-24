@@ -1,6 +1,14 @@
 # Passkey sign-in
 
 Jobfind supports the native WebAuthn API. Keep the password as a recovery method.
+Like the other local web apps, the login page offers passkey sign-in first and a
+collapsible password alternative. **Set up a passkey on this device** opens password
+sign-in, then prepares registration with that same one-time input. The password is
+cleared after preparation and never stored in browser storage. A second explicit
+tap opens the native device prompt. Setup and authentication return to the selected
+Jobfind section; external return URLs are rejected. This flow retains the existing
+session, CSRF and password requirements, without a network-based registration bypass.
+
 After signing in, choose **Manage passkeys** in the header information/settings.
 Enter a label and confirm the current Jobfind password. Then tap **Create passkey
 on this device** and approve the native device/password-manager prompt. This second

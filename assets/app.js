@@ -1,7 +1,7 @@
-import { changeDeletion, loadPortal, updateLike, updateStatus } from "/assets/api.js?v=21";
-import { clearOfflineData, prepareOffline, readPendingActions, removePendingAction, savePendingAction } from "/assets/offline.js?v=30";
+import { changeDeletion, loadPortal, updateLike, updateStatus } from "/assets/api.js?v=23";
+import { clearOfflineData, prepareOffline, readPendingActions, removePendingAction, savePendingAction } from "/assets/offline.js?v=32";
 import { createCard, shortDate, showDetails } from "/assets/ui.js?v=9";
-import { createApplicationsView } from "/assets/applications.js?v=16";
+import { createApplicationsView } from "/assets/applications.js?v=18";
 
 const { t, locale, translatePage } = window.JobfindI18n;
 translatePage();
@@ -23,6 +23,39 @@ let feedbackJob = null;
 const controls = ["search", "remote-filter", "hours-filter", "score-filter", "sort-filter", "visibility-filter"];
 const applicationsView = createApplicationsView({ getJobs: () => state.jobs, getCsrf: () => state.csrf,
   onOpenJob: openJob, onDataChanged: () => refreshPortal() });
+
+const tabPaths = { all: "/", saved: "/gemerkte", applications: "/bewerbungen" };
+function tabForPathname(pathname) {
+  return Object.keys(tabPaths).find((tab) => tabPaths[tab] === pathname) || "all";
+}
+
+function selectTab(tab, push = false) {
+  if (!Object.hasOwn(tabPaths, tab)) return;
+  if (state.tab !== tab) {
+    if (dialog.open) dialog.close();
+    if (feedbackDialog.open) feedbackDialog.close();
+    applicationsView.close();
+  }
+  state.tab = tab;
+  $("visibility-filter").value = "visible";
+  document.querySelectorAll(".top-nav [data-tab]").forEach((item) => {
+    const active = item.dataset.tab === tab;
+    item.classList.toggle("active", active);
+    if (active) item.setAttribute("aria-current", "page");
+    else item.removeAttribute("aria-current");
+  });
+  if (push && window.location.pathname !== tabPaths[tab]) window.history.pushState({ tab }, "", tabPaths[tab]);
+  render();
+  if (tab === "applications") applicationsView.refresh();
+}
+
+function setupNavigation() {
+  document.querySelectorAll(".top-nav [data-tab]").forEach((button) => {
+    button.addEventListener("click", () => selectTab(button.dataset.tab, true));
+  });
+  window.addEventListener("popstate", () => selectTab(tabForPathname(window.location.pathname)));
+  selectTab(tabForPathname(window.location.pathname));
+}
 
 function setupHeaderInfoMenu() {
   const actions = $("header-actions");
@@ -461,20 +494,7 @@ $("undo-delete").addEventListener("click", async () => {
 setupHeaderInfoMenu();
 setupFilterPanel();
 
-document.querySelectorAll(".top-nav [data-tab]").forEach((button) => {
-  button.addEventListener("click", () => {
-    state.tab = button.dataset.tab;
-    $("visibility-filter").value = "visible";
-    document.querySelectorAll(".top-nav [data-tab]").forEach((item) => {
-      const active = item === button;
-      item.classList.toggle("active", active);
-      if (active) item.setAttribute("aria-current", "page");
-      else item.removeAttribute("aria-current");
-    });
-    render();
-    if (state.tab === "applications") applicationsView.refresh();
-  });
-});
+setupNavigation();
 controls.forEach((id) => $(id).addEventListener(id === "search" ? "input" : "change", render));
 dialog.addEventListener("click", (event) => {
   if (event.target !== dialog) return;

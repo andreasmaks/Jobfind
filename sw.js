@@ -1,11 +1,11 @@
-const SHELL = "jobfind-shell-v33";
+const SHELL = "jobfind-shell-v35";
 const LOGOS = "jobfind-logos-v1";
 const PREFIX = "jobfind-";
 const CORE = [
-  "/assets/applications.js?v=16",
-  "/assets/passkeys.js?v=2",
-  "/", "/assets/app.js?v=36", "/assets/api.js?v=21", "/assets/offline.js?v=30", "/assets/ui.js?v=9",
-  "/assets/i18n.js?v=11", "/assets/theme.js?v=2", "/assets/styles.css?v=26", "/assets/local.css", "/assets/brand-mark.svg", "/favicon.svg",
+  "/assets/applications.js?v=18",
+  "/assets/passkeys.js?v=3",
+  "/", "/assets/app.js?v=38", "/assets/api.js?v=23", "/assets/offline.js?v=32", "/assets/ui.js?v=9",
+  "/assets/i18n.js?v=12", "/assets/theme.js?v=2", "/assets/styles.css?v=28", "/assets/local.css", "/assets/brand-mark.svg", "/favicon.svg",
   "/manifest.webmanifest",
 ];
 const CURATED_LOGOS = [];
@@ -49,7 +49,7 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  if (request.mode === "navigate" && (url.pathname === "/" || url.pathname === "/index.html")) {
+  if (request.mode === "navigate" && ["/", "/index.html", "/gemerkte", "/bewerbungen"].includes(url.pathname)) {
     event.respondWith((async () => {
       try {
         return await fetch(request);

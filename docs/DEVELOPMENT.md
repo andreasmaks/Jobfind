@@ -24,7 +24,13 @@ git worktree add -b feature/my-change ../jobfind-change
 
 The worktree starts without private configuration or data. Use `jobfind.py demo --prepare-only` there and run the release, offline and fresh-install checks described in the README. Never point a test configuration at the live data directory.
 
-After reviewing the change, commit it, merge it into the live checkout, restart the service and check its health. Publish the same commit to GitHub. Remove the temporary worktree when finished. A change appears on GitHub only after it has been pushed.
+After reviewing a functional change, commit it locally, merge it into the live checkout, restart the service and check its health. Remove the temporary worktree when finished. Documentation-only changes do not require a service restart.
+
+## GitHub publication cadence
+
+Owner preference: publish to GitHub after larger changes or when explicitly requested, not after every small adjustment. Small text, styling and interaction fixes still require proportionate checks and live activation; keep their commits locally until the next larger update. A new substantial feature, a broader refactor or a larger accumulated set of changes is an appropriate publication point.
+
+When publishing, include the intended accumulated changes and verify that GitHub contains the same reviewed code as the live installation. Preserve unrelated local work and continue excluding private settings, assets, credentials and databases. A change appears on GitHub only after it has been pushed. State whether work was activated only locally or also published.
 
 Before publishing, stage the intended files and run:
 

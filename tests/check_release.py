@@ -395,6 +395,16 @@ class ReleaseChecks(unittest.TestCase):
             self.assertIn("SameSite=Strict", headers["Set-Cookie"])
             self.assertNotIn("Secure", headers["Set-Cookie"])
             cookie = headers["Set-Cookie"].split(";", 1)[0]
+            for section in ("/gemerkte", "/bewerbungen"):
+                status, redirect, _ = request("GET", section)
+                self.assertEqual(status, 302)
+                self.assertIn("next=%2F" + section[1:], redirect["Location"])
+                self.assertEqual(request("GET", section, headers={"Cookie": cookie})[0], 200)
+            for next_path, expected in (("%2Fbewerbungen", "/bewerbungen"), ("%2Fgemerkte", "/gemerkte"), ("%2F%2Fevil.example", "/"), ("https%3A%2F%2Fevil.example", "/"), ("http%3A%2F%2F%5B", "/")):
+                status, redirected, _ = request("POST", "/login", "password=" + password + "&next=" + next_path,
+                    {"Origin": origin, "Content-Type": "application/x-www-form-urlencoded"})
+                self.assertEqual(status, 303)
+                self.assertEqual(redirected["Location"], expected, "Login only returns to known local sections")
             headers = {"Cookie": cookie, "Origin": origin, "Content-Type": "application/json"}
             token = json.loads(request("GET", "/api/csrf", headers=headers)[2])["token"]
             self.assertEqual(request("POST", "/api/export/saved.pdf", '{"language":"de"}', headers)[0], 403)

@@ -38,6 +38,8 @@ failed_logins: dict[str, list[float]] = {}
 failed_lock = threading.Lock()
 ASSETS = {
     "/": ("index.html", "text/html; charset=utf-8"),
+    "/gemerkte": ("index.html", "text/html; charset=utf-8"),
+    "/bewerbungen": ("index.html", "text/html; charset=utf-8"),
     "/index.html": ("index.html", "text/html; charset=utf-8"),
     "/assets/styles.css": ("assets/styles.css", "text/css; charset=utf-8"),
     "/assets/app.js": ("assets/app.js", "text/javascript; charset=utf-8"),
@@ -67,6 +69,17 @@ PUBLIC_ASSETS = {
     "/favicon.svg",
     "/assets/brand-mark.svg",
 }
+
+
+def safe_return_path(value: str) -> str:
+    if not isinstance(value, str) or len(value) > 2048 or any(ord(c) < 32 or c == "\\" for c in value):
+        return "/"
+    try: parsed = urlsplit(value)
+    except ValueError: return "/"
+    if parsed.scheme or parsed.netloc or parsed.path not in {"/", "/index.html", "/gemerkte", "/bewerbungen"}:
+        return "/"
+    path = "/" if parsed.path == "/index.html" else parsed.path
+    return path + ("?" + parsed.query if parsed.query else "")
 
 
 def cookie_value(header: str, name: str) -> str:
@@ -249,7 +262,7 @@ class Handler(BaseHTTPRequestHandler):
             if path.startswith("/api/"):
                 self.send_json(401, {"ok": False, "error": "auth_required"})
             else:
-                self.send_body(302, b"", "text/plain", location="/login?next=" + quote("/"))
+                self.send_body(302, b"", "text/plain", location="/login?next=" + quote(safe_return_path(self.path), safe=""))
             return
         try:
             if path == "/api/jobs":
@@ -507,7 +520,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         if not verify_password(password):
             record_failed_login(key)
-            self.send_body(303, b"", "text/plain", location="/login?error=pw")
+            self.send_body(303, b"", "text/plain", location="/login?error=pw&next=" + quote(safe_return_path(fields.get("next", ["/"])[0]), safe=""))
             return
         clear_failed_logins(key)
         try:
@@ -515,7 +528,7 @@ class Handler(BaseHTTPRequestHandler):
         except (OSError, sqlite3.Error):
             self.send_json(503, {"ok": False, "error": "temporarily_unavailable"})
             return
-        self.send_body(303, b"", "text/plain", location="/", headers=(
+        self.send_body(303, b"", "text/plain", location=safe_return_path(fields.get("next", ["/"])[0]), headers=(
             ("Set-Cookie", f"{SESSION_COOKIE}={token}; Path=/; Max-Age={SESSION_LIFETIME}; HttpOnly{COOKIE_SECURITY}; SameSite=Strict"),
         ))
 

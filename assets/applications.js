@@ -1,8 +1,19 @@
-import { request } from "/assets/api.js?v=21";
-import { readApplicationsSnapshot, saveApplicationsSnapshot } from "/assets/offline.js?v=30";
+import { request } from "/assets/api.js?v=23";
+import { readApplicationsSnapshot, saveApplicationsSnapshot } from "/assets/offline.js?v=32";
 import { companyMark, displayJobTitle, shortDate, applicationStatusLabel } from "/assets/ui.js?v=9";
 
-const { t } = window.JobfindI18n;
+const { t, locale } = window.JobfindI18n;
+const reviewReasons = {
+  portal_required: "Bewerbungsportal: weiterer Schritt erforderlich",
+  listing_unverified: "Anzeige derzeit nicht sicher prüfbar",
+  listing_expired: "Anzeige abgelaufen",
+  route_unverified: "Bewerbungsadresse muss erneut geprüft werden",
+  delivery_unknown: "Versandantwort unklar · kein erneuter Versand",
+  delivery_failed: "Nicht zugestellt · manueller Schritt erforderlich",
+  mail_connection_failed: "Mail-Verbindung fehlgeschlagen",
+  sender_rejected: "Absender wurde nicht akzeptiert",
+  recipient_rejected: "Empfänger wurde nicht akzeptiert",
+};
 const statuses = ["submitted", "reviewing", "interview", "offer", "rejected", "withdrawn", "delivery_failed"];
 const node = (tag, className = "", text) => {
   const el = document.createElement(tag);
@@ -55,9 +66,15 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
   const countValue = node("span");
   const countLabel = node("span", "applications-count-label");
   count.append(countValue, countLabel);
-  const actions = node("div", "search-actions");
   const syncButton = iconButton("Mails abgleichen", ["M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8", "M21 3v5h-5", "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16", "M8 16H3v5"], sync);
-  actions.append(syncButton);
+  syncButton.className = "applications-sync";
+  const syncCopy = node("span", "applications-sync-copy");
+  const syncLabel = node("span", "applications-sync-label");
+  const syncDate = node("span", "applications-sync-date");
+  syncCopy.append(syncLabel, syncDate);
+  syncButton.append(syncCopy);
+  const overview = node("div", "applications-overview");
+  overview.append(count, syncButton);
   const filters = node("div", "applications-filters");
   filters.setAttribute("role", "group");
   filters.setAttribute("aria-label", t("Bewerbungen filtern"));
@@ -75,15 +92,14 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
   search.addEventListener("input", () => { query = search.value.trim().toLocaleLowerCase(); render(); });
   searchLabel.append(search, icon(["m21 21-4.34-4.34", "M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0"]));
   const tools = node("div", "applications-tools");
-  tools.append(actions, searchLabel);
-  searchLine.append(count, filters, tools);
+  tools.append(searchLabel);
+  searchLine.append(overview, filters, tools);
   const notice = node("p", "applications-notice");
   notice.setAttribute("role", "status");
   const list = node("div", "applications-list");
-  const automation = node("details", "application-automation");
   const empty = node("div", "empty-state applications-empty");
   header.append(searchLine, notice);
-  panel.append(heading, header, automation, list, empty);
+  panel.append(heading, header, list, empty);
   const dialog = node("dialog", "application-dialog");
   dialog.setAttribute("aria-labelledby", "application-dialog-title");
   document.body.append(dialog);
@@ -116,49 +132,38 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
     }
     syncButton.disabled = pending || offline || !navigator.onLine || data.sync.status === "running" || !data.sync.enabled;
     const syncing = pending || data.sync.status === "running";
-    syncButton.setAttribute("aria-label", t(syncing ? "Wird abgeglichen …" : "Mails abgleichen"));
+    const lastSync = data.sync.last_success_at ? new Date(data.sync.last_success_at) : null;
+    const lastSyncText = lastSync && !Number.isNaN(lastSync.getTime())
+      ? new Intl.DateTimeFormat(locale, { dateStyle: "short", timeStyle: "short" }).format(lastSync)
+      : t("Noch kein Abgleich");
+    syncLabel.textContent = t(syncing ? "Wird abgeglichen …" : "Letzter Abgleich");
+    syncDate.textContent = lastSyncText;
+    const syncDescription = t(syncing ? "Wird abgeglichen …" : "Mails abgleichen") + ". " + t("Letzter Abgleich") + ": " + lastSyncText;
+    syncButton.setAttribute("aria-label", syncDescription);
     syncButton.setAttribute("aria-busy", String(syncing));
-    syncButton.title = t(syncing ? "Wird abgeglichen …" : "Mails abgleichen");
+    syncButton.title = syncDescription;
     const notes = [];
     if (offline) notes.push(t("Offline: Gespeicherte Bewerbungen. Zum Bearbeiten bitte verbinden."));
     else if (data.sync.status === "error") notes.push(t("Der Mail-Abgleich ist fehlgeschlagen. Vorhandene Bewerbungen bleiben erhalten. Bitte erneut versuchen."));
     else if (!data.sync.enabled) notes.push(t("Der automatische Mail-Abgleich ist noch nicht eingerichtet."));
-    else if (data.sync.last_success_at) notes.push(t("Letzter Mail-Abgleich: {date}", { date: shortDate(data.sync.last_success_at) }));
     if (data.sync.more_history) notes.push(t("Ältere Nachrichten werden beim nächsten Abgleich weiter geprüft."));
     notice.textContent = notes.join(" ");
-    const automatic = data.automation || {};
-    const pendingApplications = (automatic.items || []).filter((item) => item.state !== "sent");
-    automation.hidden = offline || !automatic.enabled;
-    automation.replaceChildren(node("summary", "", t("Automatische Bewerbung · ab 9/10 · {count} offen", { count: pendingApplications.length })));
-    const automaticNotes = node("div", "application-automation-items");
-    automaticNotes.append(node("p", "application-context", t("Bereits beworbene Stellen werden übersprungen. Nur bestätigte Übermittlungen zählen als Bewerbung.")));
-    const reasons = {
-      portal_required: "Bewerbungsportal: weiterer Schritt erforderlich",
-      listing_unverified: "Anzeige derzeit nicht sicher prüfbar",
-      listing_expired: "Anzeige abgelaufen",
-      route_unverified: "Bewerbungsadresse muss erneut geprüft werden",
-      delivery_unknown: "Versandantwort unklar · kein erneuter Versand",
-      delivery_failed: "Nicht zugestellt · manueller Schritt erforderlich",
-      mail_connection_failed: "Mail-Verbindung fehlgeschlagen",
-      sender_rejected: "Absender wurde nicht akzeptiert",
-      recipient_rejected: "Empfänger wurde nicht akzeptiert",
-    };
-    for (const item of pendingApplications) {
-      const entry = node("div", "application-automation-item");
-      entry.append(node("strong", "", `${item.company} · ${item.title}`), node("span", "application-context", t(reasons[item.reason] || "Bewerbungsportal: weiterer Schritt erforderlich")));
-      const job = getJobs().find((j) => j.id === item.job_id);
-      if (job) entry.append(button("Details", "text-button", () => onOpenJob(job)));
-      automaticNotes.append(entry);
-    }
-    automation.append(automaticNotes);
+    const intents = data.automation?.items || [];
+    const linked = new Set(data.applications.flatMap((app) => [app.job_id, ...(app.candidates || []).map((job) => job.id)]).filter(Boolean));
+    const pendingApplications = offline || filter !== "all" ? [] : intents.filter((item) => item.state !== "sent" && !linked.has(item.job_id)
+      && (!query || `${item.company} ${item.title}`.toLocaleLowerCase().includes(query)));
     list.replaceChildren();
     for (const app of items) {
       const job = getJobs().find((j) => j.id === app.job_id);
-      const row = button("", "application-row", () => openEditor(app.id));
+      const open = () => openEditor(app.id);
+      const row = node("article", "application-row");
+      row.addEventListener("click", (event) => { if (!event?.target?.closest("button, a")) return open(); });
       row.append(companyMark(app.company, job?.company_logo_url, job?.company_logo_mode, job?.company_logo_dark_url));
       const identity = node("div", "application-identity");
+      const titleButton = button("", "application-title application-title-button", open);
+      titleButton.textContent = displayJobTitle(app.title) || t("Position noch nicht erkannt");
       identity.append(node("span", "application-company", app.company || t("Unternehmen prüfen")),
-        node("strong", "application-title", displayJobTitle(app.title) || t("Position noch nicht erkannt")));
+        titleButton);
       const context = [];
       if (job?.user_status === "saved") context.push(t("Gemerkt"));
       if (app.match_state === "review") context.push(t("Zuordnung prüfen"));
@@ -167,12 +172,29 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
       const status = statusBadge(app);
       const date = node("span", "application-date");
       date.append(node("span", "", t("Letzte Nachricht")), node("time", "", shortDate(app.last_event_at)));
-      const arrow = node("span", "application-arrow", "›");
-      arrow.setAttribute("aria-hidden", "true");
-      row.append(identity, status, date, arrow);
+      const needsReview = !app.confirmed || app.match_state === "review" || app.status === "delivery_failed"
+        || intents.some((item) => item.job_id === app.job_id && item.state !== "sent");
+      const action = needsReview ? button("Prüfen", "application-review-button", open)
+        : iconButton("Details", ["m9 18 6-6-6-6"], open);
+      if (!needsReview) action.className = "application-open-button";
+      row.append(identity, status, date, action);
       list.append(row);
     }
-    empty.hidden = items.length > 0;
+    for (const item of pendingApplications) {
+      const job = getJobs().find((candidate) => candidate.id === item.job_id);
+      const open = () => openReview(item);
+      const row = node("article", "application-row application-pending-row");
+      row.addEventListener("click", (event) => { if (!event?.target?.closest("button, a")) return open(); });
+      const identity = node("div", "application-identity");
+      const titleButton = button("", "application-title application-title-button", open);
+      titleButton.textContent = displayJobTitle(item.title);
+      identity.append(node("span", "application-company", item.company), titleButton,
+        node("span", "application-context", t("Übermittlung noch nicht bestätigt")));
+      row.append(companyMark(item.company, job?.company_logo_url, job?.company_logo_mode, job?.company_logo_dark_url), identity,
+        statusBadge({ confirmed: false }), node("span", "application-date", shortDate(item.checked_at)), button("Prüfen", "application-review-button", open));
+      list.append(row);
+    }
+    empty.hidden = items.length + pendingApplications.length > 0;
     empty.replaceChildren(node("h2", "", t(loading ? "Bewerbungen werden geladen …" : "Hier beginnt dein nächster Schritt.")),
       node("p", "", t(filter === "all" ? "Bewerbungen zu deinen Jobfind-Stellen erscheinen hier." : "Für diese Auswahl gibt es noch keine Bewerbungen.")));
   }
@@ -228,11 +250,10 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
     }
   }
 
-  async function openEditor(id = "") {
-    if (dialog.open) return;
-    let app = id ? data.applications.find((a) => a.id === id) : null;
+  function openShell(titleText) {
+    if (dialog.open) return null;
     const top = node("div", "application-dialog-top");
-    const title = node("h2", "", t(id ? "Bewerbung" : "Bewerbung erfassen"));
+    const title = node("h2", "", titleText);
     title.id = "application-dialog-title";
     title.tabIndex = -1;
     title.setAttribute("autofocus", "");
@@ -243,6 +264,30 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
     dialog.replaceChildren(top, content);
     dialog.showModal();
     dialog.scrollTop = 0;
+    return { title, content };
+  }
+
+  function openReview(item) {
+    const shell = openShell(displayJobTitle(item.title) || t("Position noch nicht erkannt"));
+    if (!shell) return;
+    const job = getJobs().find((candidate) => candidate.id === item.job_id);
+    shell.content.append(node("p", "application-context", item.company),
+      node("p", "applications-notice", t(reviewReasons[item.reason] || "Bewerbungsportal: weiterer Schritt erforderlich")),
+      node("p", "application-context", t("Übermittlung noch nicht bestätigt")));
+    if (job) {
+      const actions = node("div", "application-form-actions");
+      const link = node("a", "card-cta", t("Anzeige öffnen"));
+      link.href = job.original_url; link.target = "_blank"; link.rel = "noopener noreferrer";
+      actions.append(link, button("Jobdetails", "button-secondary", () => { dialog.close(); onOpenJob(job); }));
+      shell.content.append(actions);
+    }
+  }
+
+  async function openEditor(id = "") {
+    let app = id ? data.applications.find((a) => a.id === id) : null;
+    const shell = openShell(displayJobTitle(app?.title) || t(id ? "Bewerbung" : "Bewerbung erfassen"));
+    if (!shell) return;
+    const { title, content } = shell;
     if (id && !offline) {
       content.append(node("p", "", t("Nachrichten werden geladen …")));
       try { app = (await request(`/api/applications/${id}`)).application; }
@@ -251,8 +296,8 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
     }
     content.replaceChildren();
     if (app) {
-      content.append(node("p", "application-context", app.company || t("Unternehmen prüfen")),
-        node("h3", "application-detail-title", displayJobTitle(app.title) || t("Position noch nicht erkannt")));
+      title.textContent = displayJobTitle(app.title) || t("Position noch nicht erkannt");
+      content.append(node("p", "application-context", app.company || t("Unternehmen prüfen")));
       const statusLine = node("div", "application-detail-status");
       statusLine.append(statusBadge(app));
       if (app.applied_at) statusLine.append(node("span", "application-context", t("Beworben am") + " " + shortDate(app.applied_at)));
@@ -263,7 +308,7 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
     const field = (label, input, className = "") => { const wrap = node("label", className); wrap.append(node("span", "", t(label)), input); form.append(wrap); return input; };
     const company = field("Unternehmen", node("input")); company.maxLength = 180; company.value = app?.company || "";
     const role = field("Position", node("input")); role.maxLength = 200; role.value = app?.title || "";
-    const jobs = field("Stelle in Jobfind zuordnen", node("select"), "application-field-wide");
+    const jobs = field("Stelle in Jobfind zuordnen", node("select"));
     const none = node("option", "", t("Keine Zuordnung")); none.value = ""; jobs.append(none);
     const suggestions = new Set((app?.candidates || []).map((c) => c.id));
     const options = [...getJobs()].sort((a, b) => Number(suggestions.has(b.id)) - Number(suggestions.has(a.id)) || a.company.localeCompare(b.company));
@@ -281,7 +326,7 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
       const job = getJobs().find((j) => j.id === jobs.value);
       if (job) { company.value = job.company; role.value = job.title; }
     });
-    const status = field("Stand", node("select"), "application-field-wide");
+    const status = field("Stand", node("select"));
     if (app) { const auto = node("option", "", t("Automatisch aus Mails")); auto.value = ""; status.append(auto); }
     for (const value of statuses) { const option = node("option", "", applicationStatusLabel(value)); option.value = value; status.append(option); }
     status.value = app?.override_status || (app ? "" : "submitted");
@@ -347,5 +392,6 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
     async suspend() { suspended = true; clearTimeout(pollTimer); await idle; },
     resume() { suspended = false; pending = false; },
     isOpen: () => dialog.open,
+    close() { if (dialog.open) dialog.close(); },
   };
 }

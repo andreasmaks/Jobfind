@@ -20,7 +20,7 @@ class Element {
   showModal() { this.open = true; }
   close() { this.open = false; this.events.close?.(); }
 }
-async function environment(language) {
+async function environment(language, automation = { enabled: false, items: [] }) {
   const elements = new Map();
   const body = new Element("body");
   const document = { body, documentElement: {}, addEventListener() {},
@@ -39,7 +39,7 @@ async function environment(language) {
     if (gate) { await gate; gate = null; }
     if (failed) throw new Error("network");
     if (options?.method === "POST") { posts.push([route, JSON.parse(options.body)]); return { ok: true }; }
-    if (route === "/api/applications") return { applications, sync: { enabled: true, status: "ok" } };
+    if (route === "/api/applications") return { applications, automation, sync: { enabled: true, status: "ok", last_success_at: "2026-11-24T07:53:00Z" } };
     return { application: { ...applications.find((a) => route.endsWith(a.id)),
       events: [{ subject: '<img src=x onerror=alert(1)>', excerpt: '<script>untrusted</script>', received_at: "2026-11-20T10:00:00Z", sender: "mail@example.org", confidence: "high", source: "mail" }] } };
   };
@@ -64,7 +64,7 @@ for (const language of ["de-DE", "en-US"]) {
   const english = language === "en-US";
   const panel = env.elements.get("applications-panel");
   const find = (tag, label) => panel.querySelectorAll(tag).find((n) => n.textContent === label);
-  const rows = () => panel.querySelectorAll("button").filter((n) => n.className === "application-row");
+  const rows = () => panel.querySelectorAll("article").filter((n) => n.className === "application-row");
   assert.equal(rows().length, 3, "All keeps uncertain matches accessible and visibly unconfirmed");
   assert.equal(env.elements.get("nav-applications-count").textContent, "2", "Navigation counts all confirmed applications, including rejections");
   const count = panel.querySelectorAll("span").find((node) => node.className === "header-job-count applications-count");
@@ -102,8 +102,9 @@ for (const language of ["de-DE", "en-US"]) {
   const dialog = env.body.children[0];
   const selects = dialog.querySelectorAll("select");
   assert.equal(dialog.querySelectorAll("span").find((node) => node.className === "application-status").dataset.status, "unknown");
-  assert.equal(dialog.querySelectorAll("label").filter((node) => node.className === "application-field-wide").length, 2, "Listing assignment and status each have a full-width row");
+  assert.equal(dialog.querySelectorAll("label").filter((node) => node.className === "application-field-wide").length, 0, "Listing assignment and status share the form's responsive columns");
   assert.equal(selects[0].value, "", "A matching suggestion requires confirmation");
+  assert.equal(dialog.querySelectorAll("h2")[0].textContent, english ? "Position not yet identified" : "Position noch nicht erkannt", "The dialog heading identifies the position");
   assert(dialog.textContent.includes("<script>untrusted</script>"), "Mail text remains inert text");
   const form = dialog.querySelectorAll("form")[0];
   await form.events.submit({ preventDefault() {} });
@@ -121,7 +122,10 @@ for (const language of ["de-DE", "en-US"]) {
 assert(!source("assets/applications.js").includes(".innerHTML"), "Mail UI uses textContent throughout");
 const failedSync = await environment("de-DE");
 failedSync.setFailed();
-const syncControl = failedSync.elements.get("applications-panel").querySelectorAll("button").find((node) => node.attributes["aria-label"] === "Mails abgleichen");
+const syncControl = failedSync.elements.get("applications-panel").querySelectorAll("button").find((node) => node.className === "applications-sync");
+assert(syncControl.textContent.includes("Letzter Abgleich"));
+assert(/24\.11\.26/.test(syncControl.textContent));
+assert(/\d{2}:\d{2}/.test(syncControl.textContent), "Sync pill includes a localized date and time");
 await syncControl.events.click();
 assert.equal(syncControl.attributes["aria-busy"], "false", "A failed sync restores the idle icon state");
 assert.equal(syncControl.children[0].tag, "svg");
@@ -129,7 +133,7 @@ const colourStates = await environment("de-DE");
 for (const status of ["submitted", "reviewing", "interview", "offer", "rejected", "withdrawn", "delivery_failed"]) {
   colourStates.applications[0].status = status;
   await colourStates.view.refresh();
-  const row = colourStates.elements.get("applications-panel").querySelectorAll("button").find((node) => node.className === "application-row");
+  const row = colourStates.elements.get("applications-panel").querySelectorAll("article").find((node) => node.className === "application-row");
   assert.equal(row.querySelectorAll("span").find((node) => node.className === "application-status").dataset.status, status);
   if (status === "delivery_failed") assert(row.textContent.includes("Nicht zugestellt"));
   await row.events.click();
@@ -148,7 +152,7 @@ assert.equal(finished.elements.get("nav-applications-count").hidden, false);
 const filtered = await environment("de-DE");
 const filteredPanel = filtered.elements.get("applications-panel");
 const selectFilter = (key) => filteredPanel.querySelectorAll("button").find((n) => n.dataset.filter === key).events.click();
-const filteredRows = () => filteredPanel.querySelectorAll("button").filter((n) => n.className === "application-row");
+const filteredRows = () => filteredPanel.querySelectorAll("article").filter((n) => n.className === "application-row");
 for (const status of ["submitted", "reviewing", "interview", "offer", "rejected", "withdrawn", "unknown", "delivery_failed"]) {
   filtered.applications[0].status = status;
   await filtered.view.refresh();
@@ -170,7 +174,21 @@ release();
 await Promise.all([inflight, suspended]);
 await logout.view.refresh();
 assert.equal(logout.getWrites(), writesBefore, "Logout blocks pending and future cache writes before clearing storage");
+const queued = await environment("de-DE", { enabled: true, items: [
+  { job_id: "queued", company: "Queued employer", title: "Product Owner", state: "pending", reason: "portal_required", checked_at: "2026-11-24T08:00:00Z" },
+  { job_id: "j", company: "Example", title: "UX Designer", state: "unknown", reason: "delivery_unknown" },
+] });
+const queuedPanel = queued.elements.get("applications-panel");
+const queuedRows = queuedPanel.querySelectorAll("article");
+assert.equal(queuedRows.length, 4, "Unsubmitted intents share the list without duplicating existing applications");
+assert.equal(queued.elements.get("nav-applications-count").textContent, "2", "Review intents do not count as successful applications");
+assert(!queuedPanel.querySelectorAll("details").length, "No separate automatic applications panel");
+const queuedRow = queuedRows.find((row) => row.textContent.includes("Queued employer"));
+await queuedRow.querySelectorAll("button").find((control) => control.textContent === "Prüfen").events.click();
+assert.equal(queued.body.children[0].querySelectorAll("h2")[0].textContent, "Product Owner");
+assert.equal(queued.body.children[0].querySelectorAll("form").length, 0, "Reviewing an intent cannot record or send an application");
+assert.equal(queued.posts.length, 0);
 assert(source("assets/app.js").indexOf("await applicationsView.suspend()") < source("assets/app.js").indexOf("await clearOfflineData()"));
-assert(source("sw.js").includes('"/assets/applications.js?v=16"'));
+assert(source("sw.js").includes('"/assets/applications.js?v=18"'));
 assert(source("assets/styles.css").includes('.top-nav [data-tab="applications"] .nav-count{display:inline-flex}'), "Application total remains visible on mobile");
 console.log("Application UI checks passed: DE/EN, counts, filters, explicit matches, safe evidence, save, offline.");

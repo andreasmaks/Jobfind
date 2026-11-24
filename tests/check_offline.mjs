@@ -117,7 +117,10 @@ assert.equal((await api.namespace.loadPortal()).offline, true);
 ctx.fetch = async () => ({ status: 401 });
 ctx.window.location = { href: "" };
 await assert.rejects(api.namespace.loadPortal(), (error) => error.authRequired);
-assert.equal(ctx.window.location.href, "/login?next=/");
+assert.equal(ctx.window.location.href, "/login?next=%2F");
+ctx.window.location.pathname = "/bewerbungen";
+await assert.rejects(api.namespace.loadPortal(), (error) => error.authRequired);
+assert.equal(ctx.window.location.href, "/login?next=%2Fbewerbungen", "Re-authentication retains the selected section");
 ctx.fetch = async (route) => ({ status: 200, ok: true, json: async () =>
   route.includes("jobs") ? { ok: true, jobs: [{ id: "a" }] } : route.includes("csrf") ? { ok: true, token: "fresh" } : { ok: true, total: 1 } });
 assert.equal((await api.namespace.loadPortal()).csrf, "fresh");
@@ -424,6 +427,30 @@ assert.equal(merged[0].user_status, "saved");
 assert.equal(merged[0].liked, true);
 
 // Service worker never intercepts writes, APIs or remote URLs. Shell install rejects redirected login.
+const navigationButtons = ["all", "saved", "applications"].map((tab) => ({ dataset: { tab }, attributes: {}, events: {},
+  classList: { toggle() {} }, setAttribute(key, value) { this.attributes[key] = value; },
+  removeAttribute(key) { delete this.attributes[key]; }, addEventListener(key, handler) { this.events[key] = handler; } }));
+const navigationEvents = new Map();
+const navigationLocation = { pathname: "/bewerbungen" };
+const navigationContext = vm.createContext({
+  state: { tab: "all" }, dialog: { open: false }, feedbackDialog: { open: false },
+  applicationsView: { close() {}, refresh() {} }, $: () => ({ value: "visible" }), render() {},
+  document: { querySelectorAll: () => navigationButtons },
+  window: { location: navigationLocation, addEventListener: (key, handler) => navigationEvents.set(key, handler),
+    history: { pushState(value, unused, path) { navigationLocation.pathname = path; } } },
+});
+vm.runInContext(app.match(/^const tabPaths = .*;$/m)[0] + "\n" + functionText("tabForPathname", "setupHeaderInfoMenu") + "\nsetupNavigation();", navigationContext);
+assert.equal(navigationContext.state.tab, "applications", "Direct links select Applications on boot");
+navigationButtons[1].events.click();
+assert.equal(navigationLocation.pathname, "/gemerkte");
+assert.equal(navigationContext.state.tab, "saved");
+navigationLocation.pathname = "/bewerbungen";
+navigationEvents.get("popstate")();
+assert.equal(navigationContext.state.tab, "applications", "Browser back/forward restores the correct section");
+assert.equal(navigationButtons[2].attributes["aria-current"], "page");
+navigationButtons[0].events.click();
+assert.equal(navigationLocation.pathname, "/");
+
 const listeners = new Map();
 const swCtx = vm.createContext({ URL, Response, console,
   self: { location: { origin: "http://localhost:8124" }, addEventListener: (name, fn) => listeners.set(name, fn), skipWaiting: async () => {}, clients: { claim: async () => {} } },
@@ -440,6 +467,13 @@ for (const request of [
   { method: "GET", url: "https://example.org/" },
 ]) {
   listeners.get("fetch")({ request, respondWith() { throw new Error("Unexpected caching"); } });
+}
+swCtx.fetch = async () => { throw new Error("offline"); };
+swCtx.caches.match = async (path) => ({ cached: path });
+for (const path of ["/gemerkte", "/bewerbungen"]) {
+  let fallback;
+  listeners.get("fetch")({ request: { method: "GET", mode: "navigate", url: "http://localhost:8124" + path }, respondWith(promise) { fallback = promise; } });
+  assert.equal((await fallback).cached, "/", "Offline section links use the shared shell without changing the URL");
 }
 const appPath = source("index.html").match(/src="([^\"]*\/app\.js\?v=\d+)"/)[1];
 assert(source("sw.js").includes(`"${appPath}"`), "Shell must cache the current app entry point");
