@@ -1,5 +1,5 @@
-import { request } from "/assets/api.js?v=18";
-import { readApplicationsSnapshot, saveApplicationsSnapshot } from "/assets/offline.js?v=27";
+import { request } from "/assets/api.js?v=19";
+import { readApplicationsSnapshot, saveApplicationsSnapshot } from "/assets/offline.js?v=28";
 import { companyMark, displayJobTitle, shortDate, applicationStatusLabel } from "/assets/ui.js?v=8";
 
 const { t } = window.JobfindI18n;
@@ -233,7 +233,11 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
     const top = node("div", "application-dialog-top");
     const title = node("h2", "", t(id ? "Bewerbung" : "Bewerbung erfassen"));
     title.id = "application-dialog-title";
-    top.append(title, button("Schließen", "theme-toggle", () => dialog.close()));
+    title.tabIndex = -1;
+    title.setAttribute("autofocus", "");
+    const close = iconButton("Schließen", ["M18 6 6 18", "m6 6 12 12"], () => dialog.close());
+    close.className = "dialog-close";
+    top.append(title, close);
     const content = node("div", "application-dialog-content");
     dialog.replaceChildren(top, content);
     dialog.showModal();

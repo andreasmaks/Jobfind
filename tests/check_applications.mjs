@@ -170,6 +170,6 @@ await Promise.all([inflight, suspended]);
 await logout.view.refresh();
 assert.equal(logout.getWrites(), writesBefore, "Logout blocks pending and future cache writes before clearing storage");
 assert(source("assets/app.js").indexOf("await applicationsView.suspend()") < source("assets/app.js").indexOf("await clearOfflineData()"));
-assert(source("sw.js").includes('"/assets/applications.js?v=13"'));
+assert(source("sw.js").includes('"/assets/applications.js?v=14"'));
 assert(source("assets/styles.css").includes('.top-nav [data-tab="applications"] .nav-count{display:inline-flex}'), "Application total remains visible on mobile");
 console.log("Application UI checks passed: DE/EN, counts, filters, explicit matches, safe evidence, save, offline.");

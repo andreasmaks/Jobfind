@@ -1,4 +1,4 @@
-import { readSnapshot } from "/assets/offline.js?v=27";
+import { readSnapshot } from "/assets/offline.js?v=28";
 
 export async function request(path, options = {}) {
   let response;
