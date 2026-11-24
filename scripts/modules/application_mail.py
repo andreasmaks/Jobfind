@@ -11,7 +11,7 @@ import ssl
 import sqlite3
 import threading
 from contextlib import closing
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from email.header import decode_header, make_header
 from email.policy import default
 from email.utils import parsedate_to_datetime
@@ -23,6 +23,7 @@ from store import connect as jobs_connect, now_iso
 from applications import connect, ingest_message
 
 SEARCH_TERMS = ("Bewerb", "application", "interview", "Absage", "Kennenlernen", "Vorstellung", "Recruit", "ckmeldung", "Gespr", "Arbeitsvertrag", "candidacy")
+DELIVERY_TERMS = ("Undelivered", "Undeliverable", "Delivery Status", "Mail delivery", "Returned to sender", "Unzustellbar", "Zustell", "Failure Notice")
 MAX_MESSAGE = 262144
 
 
@@ -59,6 +60,51 @@ def current_text(text):
     return re.sub(r"[ \t]+", " ", "\n".join(kept)).strip()[:14000]
 
 
+def delivery_report(message, body):
+    """Only permanent DSNs with an original Message-ID and exact recipient qualify.
+
+    Generic 'rejected' prose, quoted hiring decisions and temporary delays do not.
+    Original attachments are inspected for headers only, never retained.
+    """
+    originals, recipients = [], []
+    report = False
+    for part in message.walk():
+        kind = part.get_content_type()
+        if kind == "message/delivery-status":
+            report = True
+            for block in part.get_payload() or []:
+                if not hasattr(block, "get"): continue
+                original = block.get("Original-Message-ID")
+                if original: originals.append(str(original).strip())
+                if str(block.get("Action", "")).strip().lower() != "failed": continue
+                status = str(block.get("Status", "")).strip()
+                if not re.fullmatch(r"5\.\d{1,3}\.\d{1,3}", status): continue
+                target = str(block.get("Original-Recipient") or block.get("Final-Recipient") or "").split(";", 1)[-1].strip()
+                recipients.append((target, status, "CS101" if "[CS101]" in str(block.get("Diagnostic-Code", "")) else ""))
+        elif kind == "message/rfc822":
+            for original in part.get_payload() or []:
+                if hasattr(original, "get") and original.get("Message-ID"): originals.append(str(original["Message-ID"]).strip())
+        elif kind == "text/rfc822-headers":
+            try:
+                original = email.message_from_string(part.get_content(), policy=default)
+                if original.get("Message-ID"): originals.append(str(original["Message-ID"]).strip())
+            except (ValueError, TypeError, LookupError): pass
+    # Some providers deliver the DSN fields and original headers as plain text.
+    if (re.search(r"could not\s+be delivered|undelivered mail|delivery (?:failure|failed)|nicht zugestellt|unzustellbar", body, re.I)
+            and re.search(r"(?im)^Action:\s*failed\s*$", body)):
+        report = True
+        status = re.search(r"(?im)^Status:\s*(5\.\d{1,3}\.\d{1,3})\s*$", body)
+        recipient = re.search(r"(?im)^Original-Recipient:\s*rfc822;\s*([^\s<>;]+@[^\s<>;]+)", body)
+        if not recipient: recipient = re.search(r"(?im)^Final-Recipient:\s*rfc822;\s*([^\s<>;]+@[^\s<>;]+)", body)
+        if status and recipient: recipients.append((recipient[1], status[1], "CS101" if "[CS101]" in body else ""))
+        originals.extend(re.findall(r"(?im)^Message-ID:\s*(<[^<>\r\n\s]+>)", body))
+    originals = set(value for value in originals if re.fullmatch(r"<[^<>\s]{3,598}>", value))
+    failures = [{"original_message_id": original, "recipient": recipient.casefold(), "status": status, "code": code}
+                for recipient, status, code in recipients if re.fullmatch(r"[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+", recipient)
+                for original in originals]
+    return report, failures[:20]
+
+
 def decode_message(raw, fallback_id, sent=False):
     message = email.message_from_bytes(raw, policy=default)
     texts, html = [], []
@@ -76,6 +122,7 @@ def decode_message(raw, fallback_id, sent=False):
         parser = Text()
         parser.feed("\n".join(html))
         body = "".join(parser.parts)
+    is_report, failures = delivery_report(message, body)
     try: date = parsedate_to_datetime(str(message.get("Date", "")))
     except (ValueError, TypeError, OverflowError): date = None
     # An undated mail remains evidence but is explicitly placed at sync time.
@@ -86,10 +133,12 @@ def decode_message(raw, fallback_id, sent=False):
     return {"key": hashlib.sha256(message_id.encode()).hexdigest(), "message_id": message_id[:600],
         "references": list(reversed(references[-30:])), "subject": header(message.get("Subject"))[:500],
         "sender": header(message.get("From"))[:400], "recipient": header(message.get("To"))[:400], "received_at": date.astimezone(timezone.utc).isoformat(timespec="seconds"),
-        "body": current_text(body), "sent": sent}
+        "body": current_text(body), "sent": sent, "delivery_report": is_report, "delivery_failures": failures}
 
 
 def classify_message(message):
+    if message.get("delivery_report"):
+        return {"status": "delivery_failed", "confidence": "high", "proof": True} if message.get("delivery_failures") else None
     subject, body = message["subject"], message["body"]
     text = re.sub(r"\s+", " ", subject + " " + body).casefold()
     if re.search(r"job.?alert|jobs (?:for you|für dich)|stellenempfehlung|bewerbungstipps|newsletter|regarding.*visa|tourist visa|beta[ -]?test|testflight|beta program|wohnungsbewerbung|mietbewerbung|wohnungsbesichtigung|rental application|mortgage application|loan application", text[:1500]): return None
@@ -123,8 +172,8 @@ def ids(response):
     return [int(value) for value in (data[0] or b"").split()] if data else []
 
 
-def search_expression():
-    parts = ['SUBJECT "' + term + '"' for term in SEARCH_TERMS]
+def search_expression(terms=SEARCH_TERMS + DELIVERY_TERMS):
+    parts = ['SUBJECT "' + term + '"' for term in terms]
     expression = parts[-1]
     for part in reversed(parts[:-1]): expression = "OR " + part + " " + expression
     return "(" + expression + ")"
@@ -180,6 +229,12 @@ def sync_applications(client_factory=None):
                         batch = sorted(older, reverse=True)[:limit - len(pending)]
                         pending.extend(batch)
                         backfill = min(batch) if len(older) > len(batch) else 0
+                    # Revisit a bounded recent DSN window after upgrading the recognizer.
+                    # This leaves the normal incremental checkpoint and backfill intact.
+                    if not folder["sent"] and len(pending) < limit:
+                        since = (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%d-%b-%Y")
+                        recent = ids(mail.uid("search", None, "SINCE " + since + " " + search_expression(DELIVERY_TERMS)))
+                        pending.extend([uid for uid in sorted(recent, reverse=True) if uid not in pending][:limit - len(pending)])
                 # Fetch without \Seen; no STORE, COPY, MOVE, EXPUNGE or SMTP operations.
                 decoded = []
                 for uid in pending:

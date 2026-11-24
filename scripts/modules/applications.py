@@ -15,7 +15,7 @@ from urllib.parse import urlsplit
 from config import CONFIG, ensure_data_dir
 from store import connect as jobs_connect, now_iso
 
-STATUSES = {"submitted", "reviewing", "interview", "offer", "rejected", "withdrawn"}
+STATUSES = {"submitted", "reviewing", "interview", "offer", "rejected", "withdrawn", "delivery_failed"}
 DATABASE = CONFIG["data_path"] / "applications.sqlite3"
 GENERIC_HOSTS = {"personio.com", "personio.de", "smartrecruiters.com", "lever.co", "join.com",
     "workdayjobs.com", "myworkdayjobs.com", "recruitee.com", "softgarden.de", "concludis.de",
@@ -186,8 +186,28 @@ def portal_job_ids(application, jobs, db):
     return result
 
 
+def ingest_delivery_failure(message):
+    """Correlate only a durable outbound intent, never an employer-name guess."""
+    changed = False
+    with closing(connect()) as db, db:
+        if not db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='application_outbox'").fetchone(): return False
+        for failure in message.get("delivery_failures", []):
+            row = db.execute("SELECT * FROM application_outbox WHERE message_id=? AND lower(recipient)=? AND state IN ('sent','unknown','failed')", (failure["original_message_id"], failure["recipient"].casefold())).fetchone()
+            if not row: continue
+            event_id = hashlib.sha256(("delivery:" + message["key"] + ":" + row["job_id"]).encode()).hexdigest()
+            app_id = hashlib.sha256(("auto:" + row["job_id"]).encode()).hexdigest()[:24]
+            stamp = row["sent_at"] or row["created_at"]
+            db.execute("INSERT OR IGNORE INTO applications(id,company,title,job_id,confirmed,match_state,manual_link,created_at,applied_at) VALUES(?,?,?,?,1,'matched',1,?,?)", (app_id, row["company"], row["title"], row["job_id"], stamp, stamp))
+            description = "Technische Nichtzustellung (SMTP " + failure["status"] + ("; " + failure["code"] if failure["code"] else "") + "). Keine Absage des Unternehmens. Kein automatischer Neuversand."
+            inserted = db.execute("INSERT OR IGNORE INTO events VALUES(?,?,?,?,?,?,?,?,?,?)", (event_id, app_id, message["message_id"], message["received_at"], "delivery_failed", "high", message["subject"][:500] or "Zustellung fehlgeschlagen", message["sender"][:400], description, "delivery")).rowcount
+            db.execute("UPDATE application_outbox SET state='failed',reason='delivery_failed',checked_at=?,application_id=? WHERE job_id=?", (message["received_at"], app_id, row["job_id"]))
+            changed = changed or bool(inserted)
+    return changed
+
+
 def ingest_message(message, classification, jobs):
     """A mail is evidence, not a command; ambiguous matches never set a job link."""
+    if message.get("delivery_report"): return ingest_delivery_failure(message)
     with closing(connect()) as db, db:
         if db.execute("SELECT 1 FROM events WHERE id=?", (message["key"],)).fetchone(): return False
         app = None
@@ -263,7 +283,7 @@ def ingest_message(message, classification, jobs):
 def effective_status(events, override=""):
     if override: return override
     meaningful = [e for e in events if e["confidence"] == "high" and e["status"] in STATUSES]
-    advanced = [e for e in meaningful if e["status"] != "submitted"]
+    advanced = [e for e in meaningful if e["status"] not in {"submitted", "delivery_failed"}]
     return (advanced or meaningful)[0]["status"] if meaningful else "unknown"
 
 

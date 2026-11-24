@@ -78,6 +78,16 @@ class Checks(unittest.TestCase):
         result, sender = self.delivery(ambiguous); sender.assert_not_called()
         self.assertNotIn("private-server-error", json.dumps(auto.status()))
 
+    def test_failed_delivery_is_blocked_even_without_the_application_record(self):
+        self.delivery(lambda message, person, before: before())
+        with closing(auto.connect()) as db, db:
+            db.execute("UPDATE application_outbox SET state='failed',reason='delivery_failed'")
+            db.execute("DELETE FROM events")
+            db.execute("DELETE FROM applications")
+        _, sender = self.delivery(lambda *args: self.fail("failed delivery must not be retried"))
+        sender.assert_not_called()
+        self.assertEqual(auto.status()["items"][0]["state"], "failed")
+
     def test_existing_rejected_candidate_is_skipped(self):
         app_id = applications.create_manual({"company": "Example Services", "title": "Some title", "override_status": "rejected"})
         with closing(applications.connect()) as db, db:

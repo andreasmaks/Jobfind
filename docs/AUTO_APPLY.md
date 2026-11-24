@@ -63,6 +63,11 @@ such a record. A confirmed SMTP acceptance creates a linked application with a
 submission event; this is not an employer receipt. Incoming receipts and later
 replies continue through the existing read-only mailbox sync.
 
+A later permanent bounce changes the application to **Not delivered** and the
+outbox intent to `failed`. It is not an employer rejection. A failed intent is
+never automatically resent, even if its application record was removed. SMTP
+acceptance alone must not be presented as proof of receipt by the employer.
+
 The outbox is stored in the private application database. The authenticated API
 exposes only job identity, fixed state/reason codes and check time. Pending items
 are omitted from offline application snapshots. No documents or SMTP settings

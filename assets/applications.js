@@ -1,9 +1,9 @@
-import { request } from "/assets/api.js?v=20";
-import { readApplicationsSnapshot, saveApplicationsSnapshot } from "/assets/offline.js?v=29";
-import { companyMark, displayJobTitle, shortDate, applicationStatusLabel } from "/assets/ui.js?v=8";
+import { request } from "/assets/api.js?v=21";
+import { readApplicationsSnapshot, saveApplicationsSnapshot } from "/assets/offline.js?v=30";
+import { companyMark, displayJobTitle, shortDate, applicationStatusLabel } from "/assets/ui.js?v=9";
 
 const { t } = window.JobfindI18n;
-const statuses = ["submitted", "reviewing", "interview", "offer", "rejected", "withdrawn"];
+const statuses = ["submitted", "reviewing", "interview", "offer", "rejected", "withdrawn", "delivery_failed"];
 const node = (tag, className = "", text) => {
   const el = document.createElement(tag);
   el.className = className;
@@ -138,6 +138,7 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
       listing_expired: "Anzeige abgelaufen",
       route_unverified: "Bewerbungsadresse muss erneut geprüft werden",
       delivery_unknown: "Versandantwort unklar · kein erneuter Versand",
+      delivery_failed: "Nicht zugestellt · manueller Schritt erforderlich",
       mail_connection_failed: "Mail-Verbindung fehlgeschlagen",
       sender_rejected: "Absender wurde nicht akzeptiert",
       recipient_rejected: "Empfänger wurde nicht akzeptiert",

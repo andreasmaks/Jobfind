@@ -4,6 +4,8 @@
   const language = /^de(?:-|$)/i.test(preferred) ? "de" : "en";
   const locale = language === "de" ? "de-DE" : "en-GB";
   const english = {
+    "Nicht zugestellt": "Not delivered",
+    "Nicht zugestellt · manueller Schritt erforderlich": "Not delivered · manual action required",
     "Eingeladen": "Invited",
     "Für diese Auswahl gibt es noch keine Bewerbungen.": "No applications match this selection yet.",
     "Automatische Bewerbung · ab 9/10 · {count} offen": "Automatic applications · 9/10 and above · {count} pending",

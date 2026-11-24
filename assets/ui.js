@@ -50,7 +50,7 @@ export function displayJobTitle(value) {
 }
 
 export function applicationStatusLabel(value) {
-  return t(({ submitted: "Eingegangen", reviewing: "In Prüfung", interview: "Im Gespräch", offer: "Angebot", rejected: "Absage", withdrawn: "Zurückgezogen" })[value] || "Stand prüfen");
+  return t(({ submitted: "Eingegangen", reviewing: "In Prüfung", interview: "Im Gespräch", offer: "Angebot", rejected: "Absage", withdrawn: "Zurückgezogen", delivery_failed: "Nicht zugestellt" })[value] || "Stand prüfen");
 }
 
 export function shortDate(value) {

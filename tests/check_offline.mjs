@@ -247,7 +247,7 @@ keptBookmark.application_status = "rejected";
 checkCount("saved", 0);
 assert.equal(element("export-saved").disabled, true, "Only rejected bookmarks cannot be exported");
 assert.equal(element("nav-saved-count").hidden, true);
-keptBookmark.application_status = "reviewing";
+keptBookmark.application_status = "delivery_failed";
 checkCount("saved", 1);
 assert.equal(element("export-saved").disabled, false, "Correcting the rejection restores the bookmark without data loss");
 viewCtx.state.offline = true;

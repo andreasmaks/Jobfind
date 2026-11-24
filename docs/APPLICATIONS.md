@@ -42,6 +42,19 @@ Mailboxes are opened read-only; messages are fetched using `BODY.PEEK`. The inte
 
 ## Recognition and correction
 
+Permanent delivery-status notifications are matched by **original Message-ID and
+recipient** against the private outbound intent. They create the distinct orange
+**Not delivered** status, not a hiring rejection or an employer receipt. Failed
+delivery therefore does not hide a listing from job lists. The outgoing attempt
+remains blocked from automatic retry. Generic rejection prose, unmatched reports,
+temporary 4.x delays and delivery reports for other recipients do not qualify.
+An employer's genuine review/interview/decision remains stronger evidence than a
+transport failure. A later actual receipt can supersede a failed initial attempt.
+
+The reader revisits a bounded seven-day window of delivery-report subjects when
+capacity remains in its normal batch, so recently skipped bounces are recognized
+after an update. It retains incremental checkpoints, idempotence and BODY.PEEK.
+
 Explicit receipts, rejections, offers and other clear application messages establish an application. Ambiguous recruiting messages remain in **Needs review** until confirmed. This is a local rule-based recognizer, so unusual wording can require manual correction. Quoted email history is excluded from status detection. Message IDs deduplicate copies across folders; thread references combine replies, including out-of-order imports. A delayed receipt does not reopen a more advanced application status.
 
 Listings are linked automatically only with strong, unique evidence: an exact listing URL or both employer and role. Old applications are not automatically linked to newly found listings. Company-only matches are suggestions that require confirmation. Users can correct the company, role, listing, note and status; a manual status overrides later automatic updates until changed back to **Automatic from emails**. Ignoring a false positive retains its deduplication record, so it does not reappear on the next scan.

@@ -126,11 +126,12 @@ await syncControl.events.click();
 assert.equal(syncControl.attributes["aria-busy"], "false", "A failed sync restores the idle icon state");
 assert.equal(syncControl.children[0].tag, "svg");
 const colourStates = await environment("de-DE");
-for (const status of ["submitted", "reviewing", "interview", "offer", "rejected", "withdrawn"]) {
+for (const status of ["submitted", "reviewing", "interview", "offer", "rejected", "withdrawn", "delivery_failed"]) {
   colourStates.applications[0].status = status;
   await colourStates.view.refresh();
   const row = colourStates.elements.get("applications-panel").querySelectorAll("button").find((node) => node.className === "application-row");
   assert.equal(row.querySelectorAll("span").find((node) => node.className === "application-status").dataset.status, status);
+  if (status === "delivery_failed") assert(row.textContent.includes("Nicht zugestellt"));
   await row.events.click();
   const detail = colourStates.body.children[0];
   const assignment = detail.querySelectorAll("select")[0];
@@ -148,7 +149,7 @@ const filtered = await environment("de-DE");
 const filteredPanel = filtered.elements.get("applications-panel");
 const selectFilter = (key) => filteredPanel.querySelectorAll("button").find((n) => n.dataset.filter === key).events.click();
 const filteredRows = () => filteredPanel.querySelectorAll("button").filter((n) => n.className === "application-row");
-for (const status of ["submitted", "reviewing", "interview", "offer", "rejected", "withdrawn", "unknown"]) {
+for (const status of ["submitted", "reviewing", "interview", "offer", "rejected", "withdrawn", "unknown", "delivery_failed"]) {
   filtered.applications[0].status = status;
   await filtered.view.refresh();
   await selectFilter("received");
@@ -170,6 +171,6 @@ await Promise.all([inflight, suspended]);
 await logout.view.refresh();
 assert.equal(logout.getWrites(), writesBefore, "Logout blocks pending and future cache writes before clearing storage");
 assert(source("assets/app.js").indexOf("await applicationsView.suspend()") < source("assets/app.js").indexOf("await clearOfflineData()"));
-assert(source("sw.js").includes('"/assets/applications.js?v=15"'));
+assert(source("sw.js").includes('"/assets/applications.js?v=16"'));
 assert(source("assets/styles.css").includes('.top-nav [data-tab="applications"] .nav-count{display:inline-flex}'), "Application total remains visible on mobile");
 console.log("Application UI checks passed: DE/EN, counts, filters, explicit matches, safe evidence, save, offline.");

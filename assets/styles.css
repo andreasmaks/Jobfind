@@ -83,6 +83,7 @@ a{color:inherit}
 .application-status[data-status="offer"]{--status-bg:var(--accent);--status-ink:#073c33}
 .application-status[data-status="rejected"]{--status-bg:var(--tag-pink);--status-ink:#3b1024}
 .application-status[data-status="withdrawn"]{--status-bg:#91a3bb;--status-ink:#142135}
+.application-status[data-status="delivery_failed"]{--status-bg:#ff9e4f;--status-ink:#41270d}
 .application-detail-status{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:-10px 0 24px}
 .application-date{display:grid;gap:5px;color:var(--muted);font-size:10px;font-variant-numeric:tabular-nums}
 .application-date time{font-size:12px;color:var(--ink)}

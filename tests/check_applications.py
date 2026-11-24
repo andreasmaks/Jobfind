@@ -38,6 +38,7 @@ import store
 import applications as apps
 import application_mail as mail
 import import_jobs
+import auto_apply
 
 def message(subject="Your application at Example Services", body="Thanks for your application!", uid="one", **updates):
     result = {"key": hashlib.sha256(uid.encode()).hexdigest(), "message_id": f"<{uid}@example.org>", "references": [],
@@ -53,6 +54,18 @@ def raw(uid, subject="Your application at Example Services", body="Thanks for yo
     value["Date"] = date
     value.set_content(body)
     return value.as_bytes()
+
+
+def bounce(uid="bounce-one", action="failed", status="5.7.1", recipient="jobs@example.org", original="<outgoing@example.org>"):
+    return (f"From: Mail Delivery System <mailer-daemon@provider.example>\n"
+        f"To: owner@example.org\nSubject: Undelivered Mail Returned to Sender\nMessage-ID: <{uid}@provider.example>\n"
+        "Date: Tue, 24 Nov 2026 07:22:00 +0000\nMIME-Version: 1.0\nContent-Type: multipart/report; report-type=delivery-status; boundary=dsn\n\n"
+        "--dsn\nContent-Type: text/plain\n\nYour email could not be delivered.\n"
+        "--dsn\nContent-Type: message/delivery-status\n\nReporting-MTA: dns; outbound.provider.example\n\n"
+        f"Original-Recipient: rfc822;{recipient}\nFinal-Recipient: rfc822;masked@masked.example\nAction: {action}\nStatus: {status}\n"
+        "Diagnostic-Code: smtp; 550 5.7.1 [CS101] Message rejected due to local policy\n\n"
+        "--dsn\nContent-Type: text/rfc822-headers\n\n"
+        f"Message-ID: {original}\nSubject: Bewerbung UX Designer\nTo: {recipient}\n\n--dsn--\n").encode()
 
 class FakeIMAP:
     def __init__(self, values=None, validity=b"1", fail=False):
@@ -85,6 +98,7 @@ class FakeIMAP:
 class Checks(unittest.TestCase):
     def setUp(self):
         with closing(apps.connect()) as db, db:
+            if db.execute("SELECT 1 FROM sqlite_master WHERE name='application_outbox'").fetchone(): db.execute("DELETE FROM application_outbox")
             for name in ("thread_links", "events", "applications", "mailbox_state"):
                 db.execute("DELETE FROM " + name)
             db.execute("UPDATE sync_state SET status='idle',last_success_at='',error='' WHERE id=1")
@@ -114,6 +128,53 @@ class Checks(unittest.TestCase):
         self.assertFalse(unknown["proof"])
         self.assertEqual(mail.classify_message(message(body="Hiermit bewerbe ich mich als UX Designer.", sent=True))["status"], "submitted")
         self.assertFalse(mail.classify_message(message(body="Danke für deine Bewerbung.", sent=True))["proof"])
+
+    def prepare_outgoing(self):
+        job = store.list_jobs()[0]
+        store.set_user_status(job["id"], "saved")
+        app_id = auto_apply.record_sent(job, "<outgoing@example.org>", "2026-11-24T07:21:00+00:00")
+        with closing(auto_apply.connect()) as db, db:
+            db.execute("INSERT INTO application_outbox(job_id,fingerprint,company,title,state,recipient,message_id,created_at,checked_at,sent_at) VALUES(?,?,?,?,'sent',?,?,?, ?,?)", (job["id"], "fictional-fingerprint", job["company"], job["title"], "jobs@example.org", "<outgoing@example.org>", "2026-11-24T07:21:00+00:00", "2026-11-24T07:21:00+00:00", "2026-11-24T07:21:00+00:00"))
+        return app_id
+
+    def test_permanent_dsn_is_not_a_hiring_rejection(self):
+        app_id = self.prepare_outgoing()
+        decoded = mail.decode_message(bounce(), "fallback")
+        self.assertTrue(decoded["delivery_report"])
+        self.assertEqual(decoded["delivery_failures"][0]["original_message_id"], "<outgoing@example.org>")
+        self.assertTrue(apps.ingest_message(decoded, mail.classify_message(decoded), self.jobs))
+        detail = apps.application_detail(app_id)
+        self.assertEqual(detail["status"], "delivery_failed")
+        self.assertIn("CS101", detail["events"][0]["excerpt"])
+        self.assertEqual(store.list_jobs()[0]["application_status"], "delivery_failed")
+        self.assertEqual(store.list_jobs()[0]["user_status"], "saved")
+        self.assertEqual(auto_apply.status()["items"][0]["state"], "failed")
+        self.assertFalse(apps.ingest_message(decoded, mail.classify_message(decoded), self.jobs))
+        # A later real employer receipt recovers the initial submission state.
+        receipt = message(uid="later-receipt", subject="Your application at Example Services", body="Thanks for your application!", received_at="2026-11-24T08:00:00+00:00", references=["<outgoing@example.org>"])
+        apps.ingest_message(receipt, mail.classify_message(receipt), self.jobs)
+        self.assertEqual(apps.application_detail(app_id)["status"], "submitted")
+
+    def test_delay_or_unmatched_dsn_does_not_change_application(self):
+        app_id = self.prepare_outgoing()
+        for changes in ({"recipient": "other@example.org"}, {"original": "<other@example.org>"}, {"action": "delayed", "status": "4.2.0"}):
+            decoded = mail.decode_message(bounce(**changes), "fallback")
+            self.assertFalse(apps.ingest_message(decoded, mail.classify_message(decoded), self.jobs))
+            self.assertEqual(apps.application_detail(app_id)["status"], "submitted")
+        self.assertEqual(auto_apply.status()["items"][0]["state"], "sent")
+
+    def test_plain_provider_bounce_and_recent_backfill(self):
+        app_id = self.prepare_outgoing()
+        body = "This is a system-generated message. Your email could not be delivered.\nOriginal-Recipient: rfc822;jobs@example.org\nAction: failed\nStatus: 5.7.1\nDiagnostic-Code: smtp; 550 [CS101] local policy\nMessage-ID: <outgoing@example.org>\n"
+        decoded = mail.decode_message(raw("plain-bounce", subject="Undelivered mail", body=body, date="Tue, 24 Nov 2026 07:22:00 +0000"), "fallback")
+        self.assertEqual(mail.classify_message(decoded)["status"], "delivery_failed")
+        # Simulate the old recognizer having advanced its UID checkpoint already.
+        fake = FakeIMAP(values={1: bounce()})
+        key = hashlib.sha256((cfg["applications_mail"]["host"] + "|" + cfg["applications_mail"]["username"] + "|INBOX").encode()).hexdigest()
+        with closing(apps.connect()) as db, db: db.execute("INSERT INTO mailbox_state VALUES(?,?,?,?)", (key, "1", 1, 0))
+        self.assertEqual(mail.sync_applications(lambda: fake)["new_events"], 1)
+        self.assertEqual(apps.application_detail(app_id)["status"], "delivery_failed")
+        self.assertTrue(any(command[0] == "search" and "SINCE " in command[1][-1] for command in fake.commands if isinstance(command, tuple)))
 
     def test_quotes_html_mime_and_dedup(self):
         decoded = mail.decode_message(raw("quoted", body="Vielen Dank für die Bewerbung, wir laden dich zum Gespräch ein.\nAm 1. Oktober schrieb Someone:\nLeider müssen wir die Bewerbung absagen."), "fallback")

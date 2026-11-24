@@ -269,7 +269,7 @@ def run(dry_run=False):
                 # Reconcile local bookkeeping after a confirmed SMTP success, without resending.
                 if row and row["state"] == "sent":
                     record_sent(job, row["message_id"], row["sent_at"]); counts["skipped"] += 1; continue
-                if row and row["state"] in {"sending", "unknown"}:
+                if row and row["state"] in {"sending", "unknown", "failed"}:
                     counts["skipped"] += 1; continue
                 if already_applied(job): counts["skipped"] += 1; continue
                 stamp = now_iso()
