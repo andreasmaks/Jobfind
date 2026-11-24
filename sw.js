@@ -1,11 +1,11 @@
-const SHELL = "jobfind-shell-v26";
+const SHELL = "jobfind-shell-v27";
 const LOGOS = "jobfind-logos-v1";
 const PREFIX = "jobfind-";
 const CORE = [
-  "/assets/applications.js?v=9",
+  "/assets/applications.js?v=10",
   "/assets/passkeys.js?v=2",
-  "/", "/assets/app.js?v=29", "/assets/api.js?v=14", "/assets/offline.js?v=23", "/assets/ui.js?v=7",
-  "/assets/i18n.js?v=6", "/assets/theme.js?v=2", "/assets/styles.css?v=21", "/assets/local.css", "/assets/brand-mark.svg", "/favicon.svg",
+  "/", "/assets/app.js?v=30", "/assets/api.js?v=15", "/assets/offline.js?v=24", "/assets/ui.js?v=7",
+  "/assets/i18n.js?v=7", "/assets/theme.js?v=2", "/assets/styles.css?v=22", "/assets/local.css", "/assets/brand-mark.svg", "/favicon.svg",
   "/manifest.webmanifest",
 ];
 const CURATED_LOGOS = [];

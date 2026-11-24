@@ -140,7 +140,7 @@ export async function prepareOffline(jobs, meta) {
   }
   let shellReady = false;
   for (let attempt = 0; attempt < 40; attempt += 1) {
-    const shell = await caches.open("jobfind-shell-v26");
+    const shell = await caches.open("jobfind-shell-v27");
     if (await shell.match("/")) {
       shellReady = true;
       break;

@@ -29,7 +29,7 @@
     "Bewerbungen werden geladen …": "Loading applications …",
     "Hier beginnt dein nächster Schritt.": "Your next step starts here.",
     "Aktuell gibt es keine Treffer zu prüfen.": "There are currently no matches to review.",
-    "Bewerbungen aus deinen Mails erscheinen hier. Du kannst sie auch selbst erfassen.": "Applications from your emails appear here. You can also add them yourself.",
+    "Bewerbungen zu deinen Jobfind-Stellen erscheinen hier.": "Applications for your Jobfind listings appear here.",
     "Der Mail-Abgleich konnte nicht gestartet werden. Bitte prüfe deine Verbindung.": "Email sync could not be started. Please check your connection.",
     "Bewerbung": "Application",
     "Nachrichten werden geladen …": "Loading messages …",

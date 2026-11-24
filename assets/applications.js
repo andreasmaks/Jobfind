@@ -1,5 +1,5 @@
-import { request } from "/assets/api.js?v=14";
-import { readApplicationsSnapshot, saveApplicationsSnapshot } from "/assets/offline.js?v=23";
+import { request } from "/assets/api.js?v=15";
+import { readApplicationsSnapshot, saveApplicationsSnapshot } from "/assets/offline.js?v=24";
 import { companyMark, displayJobTitle, shortDate, applicationStatusLabel } from "/assets/ui.js?v=7";
 
 const { t } = window.JobfindI18n;
@@ -58,8 +58,7 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
   count.append(countValue, countLabel);
   const actions = node("div", "search-actions");
   const syncButton = iconButton("Mails abgleichen", ["M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8", "M21 3v5h-5", "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16", "M8 16H3v5"], sync);
-  const addButton = iconButton("Bewerbung erfassen", ["M12 5v14M5 12h14"], () => openEditor());
-  actions.append(syncButton, addButton);
+  actions.append(syncButton);
   const filters = node("div", "applications-filters");
   filters.setAttribute("role", "group");
   filters.setAttribute("aria-label", t("Bewerbungen filtern"));
@@ -119,7 +118,6 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
     syncButton.setAttribute("aria-label", t(syncing ? "Wird abgeglichen …" : "Mails abgleichen"));
     syncButton.setAttribute("aria-busy", String(syncing));
     syncButton.title = t(syncing ? "Wird abgeglichen …" : "Mails abgleichen");
-    addButton.disabled = offline || !navigator.onLine;
     const notes = [];
     if (offline) notes.push(t("Offline: Gespeicherte Bewerbungen. Zum Bearbeiten bitte verbinden."));
     else if (data.sync.status === "error") notes.push(t("Der Mail-Abgleich ist fehlgeschlagen. Vorhandene Bewerbungen bleiben erhalten. Bitte erneut versuchen."));
@@ -150,7 +148,7 @@ export function createApplicationsView({ getJobs, getCsrf, onOpenJob, onDataChan
     }
     empty.hidden = items.length > 0;
     empty.replaceChildren(node("h2", "", t(loading ? "Bewerbungen werden geladen …" : "Hier beginnt dein nächster Schritt.")),
-      node("p", "", t(filter === "review" ? "Aktuell gibt es keine Treffer zu prüfen." : "Bewerbungen aus deinen Mails erscheinen hier. Du kannst sie auch selbst erfassen.")));
+      node("p", "", t(filter === "review" ? "Aktuell gibt es keine Treffer zu prüfen." : "Bewerbungen zu deinen Jobfind-Stellen erscheinen hier.")));
   }
 
   async function refresh() {
